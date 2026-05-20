@@ -1,0 +1,10 @@
+spring:
+  jpa:
+    hibernate:
+      # 'update' automatically creates the 'account' table based on AccountJpaEntity
+      ddl-auto: update 
+    # Show the generated SQL in your terminal so you can see it working
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
