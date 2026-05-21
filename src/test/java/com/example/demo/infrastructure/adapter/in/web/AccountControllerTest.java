@@ -51,4 +51,22 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.accountNumber").value("ACC123"))
                 .andExpect(jsonPath("$.balance").value(0.00));
     }
+
+    @Test
+    void shouldReturn400BadRequestWhenNameIsBlank() throws Exception {
+        // Arrange: Provide an empty name
+        String jsonPayload = """
+                {
+                    "name": "",
+                    "surname": "Dalsuna"
+                }
+                """;
+
+        // Act & Assert: We do not mock the Use Case here because
+        // the request should be blocked before it ever reaches the Use Case!
+        mockMvc.perform(post("/api/accounts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonPayload))
+                .andExpect(status().isBadRequest()); // Expect HTTP 400
+    }
 }
