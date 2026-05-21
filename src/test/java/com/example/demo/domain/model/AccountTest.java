@@ -37,7 +37,7 @@ class AccountTest {
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             new Account("   ", "Dalsuna"); // Passing only spaces
         });
-        assertEquals("Account name cannot be blank", exception.getMessage());
+        assertEquals("Name cannot be blank", exception.getMessage());
     }
 
     @Test
@@ -46,6 +46,6 @@ class AccountTest {
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             new Account("Berat", "   "); // Passing only spaces
         });
-        assertEquals("Account surname cannot be blank", exception.getMessage());
+        assertEquals("Surname cannot be blank", exception.getMessage());
     }
 }
