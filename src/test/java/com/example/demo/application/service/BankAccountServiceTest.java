@@ -4,11 +4,15 @@ import com.example.demo.application.port.in.CreateAccountUseCase.CreateAccountCo
 import com.example.demo.application.port.in.DepositMoneyUseCase.DepositCommand;
 import com.example.demo.application.port.in.WithdrawMoneyUseCase.WithdrawCommand;
 import com.example.demo.application.port.out.AccountRepository;
+import com.example.demo.application.port.out.TransactionRecordRepository;
 import com.example.demo.domain.model.Account;
+import com.example.demo.domain.model.TransactionRecord;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -17,6 +21,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -31,12 +36,18 @@ class BankAccountServiceTest {
     @Mock
     private AccountRepository accountRepository; // Fake the Outbound Port
 
+    @Mock
+    private TransactionRecordRepository transactionRecordRepository;
+
     private BankAccountService bankAccountService;
+
+    @Captor
+    private ArgumentCaptor<TransactionRecord> transactionCaptor;
 
     @BeforeEach
     void setUp() {
         // Inject the fake repository into our real service
-        bankAccountService = new BankAccountService(accountRepository);
+        bankAccountService = new BankAccountService(accountRepository, transactionRecordRepository);
     }
 
     @Test
@@ -114,6 +125,14 @@ class BankAccountServiceTest {
 
         verify(accountRepository, times(1)).findByAccountNumber(accountNumber);
         verify(accountRepository, times(1)).save(existingAccount);
+
+        // Assert Ledger
+        verify(transactionRecordRepository, times(1)).save(transactionCaptor.capture());
+        TransactionRecord savedLedger = transactionCaptor.getValue();
+        assertNull(savedLedger.getSourceAccountNumber());
+        assertEquals(accountNumber, savedLedger.getTargetAccountNumber());
+        assertEquals(new BigDecimal("250.00"), savedLedger.getAmount());
+        assertEquals(TransactionRecord.TransactionType.DEPOSIT, savedLedger.getType());
     }
 
     @Test
@@ -132,6 +151,7 @@ class BankAccountServiceTest {
         assertEquals("Account not found", exception.getMessage());
         verify(accountRepository, times(1)).findByAccountNumber(nonExistentAccountNumber);
         verify(accountRepository, never()).save(any(Account.class));
+        verify(transactionRecordRepository, never()).save(any());
     }
 
     @Test
@@ -155,6 +175,12 @@ class BankAccountServiceTest {
         // Verify orchestration order
         verify(accountRepository).findByAccountNumber(accountNumber);
         verify(accountRepository).save(existingAccount);
+
+        verify(transactionRecordRepository).save(transactionCaptor.capture());
+        TransactionRecord savedLedger = transactionCaptor.getValue();
+        assertNull(savedLedger.getSourceAccountNumber());
+        assertEquals(accountNumber, savedLedger.getTargetAccountNumber());
+        assertEquals(TransactionRecord.TransactionType.DEPOSIT, savedLedger.getType());
     }
 
     @Test
@@ -176,6 +202,7 @@ class BankAccountServiceTest {
         // Crucial: Ensure we NEVER attempt to save corrupted/null state back to the DB
         verify(accountRepository).findByAccountNumber(accountNumber);
         verify(accountRepository, never()).save(any());
+        verify(transactionRecordRepository, never()).save(any());
     }
 
     @Test
@@ -193,12 +220,20 @@ class BankAccountServiceTest {
         // Act
         Account updatedAccount = bankAccountService.withdraw(command);
 
-        // Assert
+        // Assert Account
         assertEquals(new BigDecimal("350.00"), updatedAccount.getBalance());
 
         // Verify the orchestrator called the port methods in the correct order
         verify(accountRepository).findByAccountNumber(accountNumber);
         verify(accountRepository).save(existingAccount);
+
+        // Assert Ledger
+        verify(transactionRecordRepository).save(transactionCaptor.capture());
+        TransactionRecord savedLedger = transactionCaptor.getValue();
+        assertEquals(accountNumber, savedLedger.getSourceAccountNumber());
+        assertNull(savedLedger.getTargetAccountNumber());
+        assertEquals(new BigDecimal("150.00"), savedLedger.getAmount());
+        assertEquals(TransactionRecord.TransactionType.WITHDRAWAL, savedLedger.getType());
     }
 
     @Test
@@ -220,6 +255,7 @@ class BankAccountServiceTest {
         // Crucial: Ensure we NEVER attempt to save if the account wasn't found
         verify(accountRepository).findByAccountNumber(accountNumber);
         verify(accountRepository, never()).save(any());
+        verify(transactionRecordRepository, never()).save(any());
     }
 
     @Test
@@ -242,5 +278,6 @@ class BankAccountServiceTest {
         // operation
         verify(accountRepository).findByAccountNumber(accountNumber);
         verify(accountRepository, never()).save(any());
+        verify(transactionRecordRepository, never()).save(any());
     }
 }

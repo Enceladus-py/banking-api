@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
 @RestController
@@ -27,6 +29,7 @@ public class AccountController {
     private final WithdrawMoneyUseCase withdrawMoneyUseCase;
 
     @PostMapping
+    @Transactional
     public ResponseEntity<AccountResponse> createAccount(@Valid @RequestBody CreateAccountRequest request) {
 
         // 1. Map incoming HTTP Request to the core Use Case Command
@@ -49,6 +52,7 @@ public class AccountController {
     }
 
     @PutMapping("/deposit")
+    @Transactional
     public ResponseEntity<AccountResponse> depositMoney(@Valid @RequestBody DepositRequest request) {
 
         // Maps clean data from validated DTO into our internal command
@@ -68,6 +72,7 @@ public class AccountController {
     }
 
     @PutMapping("/withdraw")
+    @Transactional
     public ResponseEntity<AccountResponse> withdrawMoney(@Valid @RequestBody WithdrawRequest request) {
 
         WithdrawMoneyUseCase.WithdrawCommand command = new WithdrawMoneyUseCase.WithdrawCommand(request.accountNumber(),
