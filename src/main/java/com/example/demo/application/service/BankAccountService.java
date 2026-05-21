@@ -2,12 +2,13 @@ package com.example.demo.application.service;
 
 import com.example.demo.application.port.in.CreateAccountUseCase;
 import com.example.demo.application.port.in.DepositMoneyUseCase;
+import com.example.demo.application.port.in.WithdrawMoneyUseCase;
 import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.domain.model.Account;
 
 import java.util.UUID;
 
-public class BankAccountService implements CreateAccountUseCase, DepositMoneyUseCase {
+public class BankAccountService implements CreateAccountUseCase, DepositMoneyUseCase, WithdrawMoneyUseCase {
 
     private final AccountRepository accountRepository;
 
@@ -44,6 +45,19 @@ public class BankAccountService implements CreateAccountUseCase, DepositMoneyUse
         account.deposit(command.amount());
 
         // 3. Save the updated state
+        return accountRepository.save(account);
+    }
+
+    @Override
+    public Account withdraw(WithdrawCommand command) {
+        // 1. Load from DB
+        Account account = accountRepository.findByAccountNumber(command.accountId())
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+
+        // 2. Execute business logic (Domain protects itself against over-drafting)
+        account.withdraw(command.amount());
+
+        // 3. Save to DB
         return accountRepository.save(account);
     }
 }

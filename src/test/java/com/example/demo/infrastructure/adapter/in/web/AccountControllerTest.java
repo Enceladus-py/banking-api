@@ -3,6 +3,7 @@ package com.example.demo.infrastructure.adapter.in.web;
 import com.example.demo.application.port.in.CreateAccountUseCase;
 import com.example.demo.application.port.in.CreateAccountUseCase.CreateAccountCommand;
 import com.example.demo.application.port.in.DepositMoneyUseCase;
+import com.example.demo.application.port.in.WithdrawMoneyUseCase;
 import com.example.demo.application.port.in.DepositMoneyUseCase.DepositCommand;
 import com.example.demo.domain.model.Account;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,9 @@ class AccountControllerTest {
 
     @MockitoBean
     private DepositMoneyUseCase depositMoneyUseCase;
+
+    @MockitoBean
+    private WithdrawMoneyUseCase withdrawMoneyUseCase;
 
     @Test
     void shouldReturn201WhenAccountIsCreated() throws Exception {
@@ -192,5 +196,71 @@ class AccountControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
                 .andExpect(status().isNotFound()); // We expect an HTTP 404
+    }
+
+    @Test
+    void shouldReturn200AndUpdatedAccountOnSuccessfulWithdrawal() throws Exception {
+        // Arrange
+        String accountNumber = "1122334455";
+        Account expectedAccount = new Account("uuid-999", "Berat", "Dalsuna", accountNumber, new BigDecimal("350.00"));
+
+        when(withdrawMoneyUseCase.withdraw(any(WithdrawMoneyUseCase.WithdrawCommand.class)))
+                .thenReturn(expectedAccount);
+
+        String validPayload = """
+                {
+                    "accountNumber": "1122334455",
+                    "amount": 150.00
+                }
+                """;
+
+        // Act & Assert
+        mockMvc.perform(put("/api/accounts/withdraw")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validPayload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountNumber").value(accountNumber))
+                .andExpect(jsonPath("$.balance").value(350.00));
+    }
+
+    @Test
+    void shouldReturn400BadRequestWhenInsufficientFunds() throws Exception {
+        // Arrange: Simulate the domain rejecting the withdrawal
+        when(withdrawMoneyUseCase.withdraw(any(WithdrawMoneyUseCase.WithdrawCommand.class)))
+                .thenThrow(new IllegalStateException("Insufficient funds for withdrawal"));
+
+        String overDraftPayload = """
+                {
+                    "accountNumber": "1122334455",
+                    "amount": 9000.00
+                }
+                """;
+
+        // Act & Assert: GlobalExceptionHandler should map this to HTTP 400
+        mockMvc.perform(put("/api/accounts/withdraw")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(overDraftPayload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Insufficient funds for withdrawal"));
+    }
+
+    @Test
+    void shouldReturn400BadRequestWhenWithdrawalPayloadIsInvalid() throws Exception {
+        // Arrange: Negative amount violates @Positive
+        String invalidPayload = """
+                {
+                    "accountNumber": "1122334455",
+                    "amount": -20.00
+                }
+                """;
+
+        // Act & Assert
+        mockMvc.perform(put("/api/accounts/withdraw")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidPayload))
+                .andExpect(status().isBadRequest());
+
+        // Ensure the core business logic was never touched
+        verify(withdrawMoneyUseCase, never()).withdraw(any(WithdrawMoneyUseCase.WithdrawCommand.class));
     }
 }

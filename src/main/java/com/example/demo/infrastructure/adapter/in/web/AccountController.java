@@ -2,10 +2,12 @@ package com.example.demo.infrastructure.adapter.in.web;
 
 import com.example.demo.application.port.in.CreateAccountUseCase;
 import com.example.demo.application.port.in.DepositMoneyUseCase;
+import com.example.demo.application.port.in.WithdrawMoneyUseCase;
 import com.example.demo.domain.model.Account;
 import com.example.demo.infrastructure.adapter.in.web.dto.AccountResponse;
 import com.example.demo.infrastructure.adapter.in.web.dto.CreateAccountRequest;
 import com.example.demo.infrastructure.adapter.in.web.dto.DepositRequest;
+import com.example.demo.infrastructure.adapter.in.web.dto.WithdrawRequest;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +24,7 @@ public class AccountController {
     // created earlier)
     private final CreateAccountUseCase createAccountUseCase;
     private final DepositMoneyUseCase depositMoneyUseCase;
+    private final WithdrawMoneyUseCase withdrawMoneyUseCase;
 
     @PostMapping
     public ResponseEntity<AccountResponse> createAccount(@Valid @RequestBody CreateAccountRequest request) {
@@ -53,6 +56,24 @@ public class AccountController {
                 request.amount());
 
         Account updatedAccount = depositMoneyUseCase.deposit(command);
+
+        AccountResponse response = new AccountResponse(
+                updatedAccount.getId(),
+                updatedAccount.getName(),
+                updatedAccount.getSurname(),
+                updatedAccount.getAccountNumber(),
+                updatedAccount.getBalance());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/withdraw")
+    public ResponseEntity<AccountResponse> withdrawMoney(@Valid @RequestBody WithdrawRequest request) {
+
+        WithdrawMoneyUseCase.WithdrawCommand command = new WithdrawMoneyUseCase.WithdrawCommand(request.accountNumber(),
+                request.amount());
+
+        Account updatedAccount = withdrawMoneyUseCase.withdraw(command);
 
         AccountResponse response = new AccountResponse(
                 updatedAccount.getId(),
