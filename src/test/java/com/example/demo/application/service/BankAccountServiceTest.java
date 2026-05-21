@@ -1,6 +1,7 @@
 package com.example.demo.application.service;
 
 import com.example.demo.application.port.in.CreateAccountUseCase.CreateAccountCommand;
+import com.example.demo.application.port.in.DepositMoneyUseCase.DepositCommand;
 import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.domain.model.Account;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,11 +12,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -64,12 +68,13 @@ class BankAccountServiceTest {
     void shouldRetryGeneratingNumberWhenFirstNumberAlreadyExists() {
         // Arrange
         CreateAccountCommand command = new CreateAccountCommand("Berat", "Dalsuna");
+        Account account = new Account("Berat", "Dalsuna", "A1B2C3D4E5");
 
         // Mock the uniqueness check:
         // 1st call returns TRUE (collision!), 2nd call returns FALSE (free!)
-        when(accountRepository.existsByAccountNumber(anyString()))
-                .thenReturn(true)
-                .thenReturn(false);
+        when(accountRepository.findByAccountNumber(anyString()))
+                .thenReturn(Optional.of(account))
+                .thenReturn(Optional.empty());
 
         // Mock the save operation
         when(accountRepository.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -82,9 +87,49 @@ class BankAccountServiceTest {
         assertEquals(10, result.getAccountNumber().length());
 
         // **The crucial assertion:** Verify the do-while loop actually ran twice!
-        verify(accountRepository, times(2)).existsByAccountNumber(anyString());
+        verify(accountRepository, times(2)).findByAccountNumber(anyString());
 
         // Verify it still only saved once
         verify(accountRepository, times(1)).save(any(Account.class));
+    }
+
+    @Test
+    void shouldSuccessfullyDepositMoneyAndSave() {
+        // Arrange
+        String accountNumber = "A1B2C3D4E5";
+        DepositCommand command = new DepositCommand(accountNumber, new BigDecimal("250.00"));
+
+        Account existingAccount = new Account("uuid-123", "Berat", "Dalsuna", accountNumber, BigDecimal.ZERO);
+
+        when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
+        when(accountRepository.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        Account updatedAccount = bankAccountService.deposit(command);
+
+        // Assert
+        assertNotNull(updatedAccount);
+        assertEquals(new BigDecimal("250.00"), updatedAccount.getBalance());
+
+        verify(accountRepository, times(1)).findByAccountNumber(accountNumber);
+        verify(accountRepository, times(1)).save(existingAccount);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenAccountDoesNotExist() {
+        // Arrange
+        String nonExistentAccountNumber = "NOTFOUND12";
+        DepositCommand command = new DepositCommand(nonExistentAccountNumber, new BigDecimal("100.00"));
+
+        when(accountRepository.findByAccountNumber(nonExistentAccountNumber)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            bankAccountService.deposit(command);
+        });
+
+        assertEquals("Account not found", exception.getMessage());
+        verify(accountRepository, times(1)).findByAccountNumber(nonExistentAccountNumber);
+        verify(accountRepository, never()).save(any(Account.class));
     }
 }

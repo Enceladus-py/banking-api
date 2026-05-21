@@ -69,4 +69,69 @@ class AccountTest {
         });
         assertEquals("Account number must be exactly 10 characters", longException.getMessage());
     }
+
+    @Test
+    void shouldDepositMoneySuccessfully() {
+        // Arrange
+        Account account = new Account("Berat", "Dalsuna", "A1B2C3D4E5");
+
+        // Act
+        account.deposit(new BigDecimal("100.50"));
+
+        // Assert
+        assertEquals(new BigDecimal("100.50"), account.getBalance());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenDepositingNegativeOrZeroAmount() {
+        Account account = new Account("Berat", "Dalsuna", "A1B2C3D4E5");
+
+        Exception zeroException = assertThrows(IllegalArgumentException.class, () -> {
+            account.deposit(BigDecimal.ZERO);
+        });
+        assertEquals("Deposit amount must be greater than zero", zeroException.getMessage());
+
+        Exception negativeException = assertThrows(IllegalArgumentException.class, () -> {
+            account.deposit(new BigDecimal("-50.00"));
+        });
+        assertEquals("Deposit amount must be greater than zero", negativeException.getMessage());
+    }
+
+    @Test
+    void shouldWithdrawMoneySuccessfully() {
+        // Arrange
+        Account account = new Account("Berat", "Dalsuna", "A1B2C3D4E5");
+        account.deposit(new BigDecimal("200.00"));
+
+        // Act
+        account.withdraw(new BigDecimal("50.00"));
+
+        // Assert
+        assertEquals(new BigDecimal("150.00"), account.getBalance());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenWithdrawingMoreThanBalance() {
+        Account account = new Account("Berat", "Dalsuna", "A1B2C3D4E5");
+        account.deposit(new BigDecimal("100.00"));
+
+        Exception exception = assertThrows(IllegalStateException.class, () -> {
+            account.withdraw(new BigDecimal("150.00")); // Trying to overdraft
+        });
+        assertEquals("Insufficient funds", exception.getMessage());
+        
+        // Ensure balance wasn't changed
+        assertEquals(new BigDecimal("100.00"), account.getBalance()); 
+    }
+
+    @Test
+    void shouldThrowExceptionWhenWithdrawingNegativeOrZeroAmount() {
+        Account account = new Account("Berat", "Dalsuna", "A1B2C3D4E5");
+        account.deposit(new BigDecimal("100.00"));
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            account.withdraw(new BigDecimal("-20.00"));
+        });
+        assertEquals("Withdrawal amount must be greater than zero", exception.getMessage());
+    }
 }

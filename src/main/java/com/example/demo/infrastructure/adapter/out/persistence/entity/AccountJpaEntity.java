@@ -5,6 +5,8 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import org.springframework.data.domain.Persistable;
+
 @Entity
 @Table(name = "account")
 @Getter
@@ -12,18 +14,22 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AccountJpaEntity {
+public class AccountJpaEntity implements Persistable<UUID> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
     private String name;
-
     private String surname;
-
-    @Column(name = "account_number", unique = true, nullable = false)
     private String accountNumber;
-
     private BigDecimal balance;
+
+    @Version
+    private Long version; // Managed automatically by Hibernate for optimistic locking
+
+    @Override
+    public boolean isNew() {
+        // If version is null, it's a brand new insert!
+        // This explicitly guides Spring Data Repository without any extra queries.
+        return version == null;
+    }
 }

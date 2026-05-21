@@ -48,4 +48,24 @@ class PostgresAccountAdapterTest {
         assertEquals("Berat", dbEntity.get().getName());
         assertEquals(savedAccount.getAccountNumber(), dbEntity.get().getAccountNumber());
     }
+
+    @Test
+    void shouldUpdateExistingAccountBalanceSuccessfullyWithoutStateCollisions() {
+        // Arrange: Directly populate an account row into the database first
+        Account baseAccount = new Account("Berat", "Dalsuna", "9876543210");
+        adapter.save(baseAccount);
+
+        // Act: Retrieve it, apply a deposit mutation, and save it back
+        Optional<Account> fetchedOpt = adapter.findByAccountNumber("9876543210");
+        assertTrue(fetchedOpt.isPresent());
+
+        Account domainModel = fetchedOpt.get();
+        domainModel.deposit(new BigDecimal("250.50"));
+
+        Account updatedAccount = adapter.save(domainModel);
+
+        // Assert: Ensure identity remains stable while balance scales
+        assertEquals(baseAccount.getId(), updatedAccount.getId());
+        assertEquals(new BigDecimal("250.50"), updatedAccount.getBalance());
+    }
 }
