@@ -1,10 +1,14 @@
 package com.example.demo.infrastructure.adapter.out.persistence;
 
+import com.example.demo.application.port.in.dto.PageResult;
 import com.example.demo.application.port.out.TransactionRecordRepository;
 import com.example.demo.domain.model.TransactionRecord;
 import com.example.demo.infrastructure.adapter.out.persistence.entity.TransactionJpaEntity;
 import com.example.demo.infrastructure.adapter.out.persistence.repository.SpringDataTransactionRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -24,12 +28,30 @@ public class PostgresTransactionAdapter implements TransactionRecordRepository {
     }
 
     @Override
-    public List<TransactionRecord> findByAccountNumber(String accountNumber) {
-        return repository
-                .findBySourceAccountNumberOrTargetAccountNumberOrderByTimestampDesc(accountNumber, accountNumber)
-                .stream()
+    public PageResult<TransactionRecord> findByAccountNumber(String accountNumber,
+            com.example.demo.application.port.in.dto.PageRequest purePageRequest) {
+
+        // 1. Translate core PageRequest to Spring Data Pageable
+        Pageable springPageable = org.springframework.data.domain.PageRequest.of(
+                purePageRequest.pageNumber(),
+                purePageRequest.pageSize());
+
+        // 2. Execute paginated query
+        Page<TransactionJpaEntity> springPage = repository
+                .findBySourceAccountNumberOrTargetAccountNumberOrderByTimestampDesc(accountNumber, accountNumber,
+                        springPageable);
+
+        // 3. Translate Spring Page back to core PageResult
+        List<TransactionRecord> domainContent = springPage.getContent().stream()
                 .map(this::toDomainModel)
                 .collect(Collectors.toList());
+
+        return new PageResult<>(
+                domainContent,
+                springPage.getNumber(),
+                springPage.getSize(),
+                springPage.getTotalElements(),
+                springPage.getTotalPages());
     }
 
     private TransactionJpaEntity toJpaEntity(TransactionRecord domain) {

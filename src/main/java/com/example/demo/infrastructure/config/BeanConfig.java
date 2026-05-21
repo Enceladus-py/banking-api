@@ -3,6 +3,7 @@ package com.example.demo.infrastructure.config;
 import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.application.port.out.TransactionRecordRepository;
 import com.example.demo.application.service.BankAccountService;
+import com.example.demo.application.service.TransactionQueryService;
 import com.example.demo.application.service.TransferService;
 
 import org.springframework.context.annotation.Bean;
@@ -29,5 +30,11 @@ public class BeanConfig {
             AccountRepository accountRepository,
             TransactionRecordRepository transactionRecordRepository) {
         return new TransferService(accountRepository, transactionRecordRepository);
+    }
+
+    @Bean
+    public TransactionQueryService transactionQueryService(
+            TransactionRecordRepository transactionRecordRepository) {
+        return new TransactionQueryService(transactionRecordRepository);
     }
 }

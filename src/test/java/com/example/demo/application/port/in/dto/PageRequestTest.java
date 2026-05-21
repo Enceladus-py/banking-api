@@ -1,0 +1,36 @@
+package com.example.demo.application.port.in.dto;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class PageRequestTest {
+
+    @Test
+    void shouldCreateValidPageRequest() {
+        PageRequest request = new PageRequest(0, 10);
+        assertEquals(0, request.pageNumber());
+        assertEquals(10, request.pageSize());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenPageNumberIsNegative() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            new PageRequest(-1, 10);
+        });
+        assertEquals("Page number cannot be less than zero", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenPageSizeIsZeroOrNegative() {
+        IllegalArgumentException exception1 = assertThrows(IllegalArgumentException.class, () -> {
+            new PageRequest(0, 0);
+        });
+        assertEquals("Page size must not be less than one", exception1.getMessage());
+
+        IllegalArgumentException exception2 = assertThrows(IllegalArgumentException.class, () -> {
+            new PageRequest(0, -5);
+        });
+        assertEquals("Page size must not be less than one", exception2.getMessage());
+    }
+}
