@@ -22,8 +22,8 @@ public class Account {
             throw new IllegalArgumentException("Surname cannot be blank");
         }
 
-        this.name = name;
-        this.surname = surname;
+        this.name = name.trim();
+        this.surname = surname.trim();
         this.accountNumber = UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
         this.balance = BigDecimal.ZERO;
     }

@@ -2,6 +2,7 @@ package com.example.demo.domain.model;
 
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class AccountTest {
@@ -17,24 +18,34 @@ class AccountTest {
         assertEquals(BigDecimal.ZERO, account.getBalance());
 
         assertNotNull(account.getAccountNumber());
-        assertEquals(10, account.getAccountNumber().length(), "Account number should be 10 characters");
+        assertEquals(10, account.getAccountNumber().length());
     }
 
     @Test
-    void shouldThrowExceptionWhenNameIsBlank() {
-        // Act & Assert
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            new Account("", "Dalsuna");
-        });
-        assertEquals("Name cannot be blank", exception.getMessage());
+    void shouldTrimWhitespaceFromNameAndSurname() {
+        // Act: Pass in strings with leading and trailing spaces
+        Account account = new Account("  Berat  ", "   Dalsuna ");
+
+        // Assert: The Domain Model should have trimmed them automatically
+        assertEquals("Berat", account.getName());
+        assertEquals("Dalsuna", account.getSurname());
     }
 
     @Test
-    void shouldThrowExceptionWhenSurnameIsBlank() {
+    void shouldThrowExceptionWhenNameIsBlankOrOnlySpaces() {
         // Act & Assert
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            new Account("Berat", null);
+            new Account("   ", "Dalsuna"); // Passing only spaces
         });
-        assertEquals("Surname cannot be blank", exception.getMessage());
+        assertEquals("Account name cannot be blank", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenSurnameIsBlankOrOnlySpaces() {
+        // Act & Assert
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            new Account("Berat", "   "); // Passing only spaces
+        });
+        assertEquals("Account surname cannot be blank", exception.getMessage());
     }
 }

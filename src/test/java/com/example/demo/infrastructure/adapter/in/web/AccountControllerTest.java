@@ -16,6 +16,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @WebMvcTest(AccountController.class)
 class AccountControllerTest {
@@ -68,5 +69,35 @@ class AccountControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
                 .andExpect(status().isBadRequest()); // Expect HTTP 400
+    }
+
+    @Test
+    void shouldTrimWhitespaceBeforeCallingUseCase() throws Exception {
+        // Arrange: Provide strings with extra spaces
+        Account mockDomainAccount = new Account("uuid-1", "Berat", "Dalsuna", "ACC123", BigDecimal.ZERO);
+        when(createAccountUseCase.createAccount(any(CreateAccountCommand.class))).thenReturn(mockDomainAccount);
+
+        String jsonPayload = """
+                {
+                    "name": "  Berat  ",
+                    "surname": " Dalsuna "
+                }
+                """;
+
+        // Act
+        mockMvc.perform(post("/api/accounts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonPayload))
+                .andExpect(status().isCreated());
+
+        // Assert: Verify the Command passed to the Use Case was completely trimmed
+        org.mockito.ArgumentCaptor<CreateAccountCommand> commandCaptor = org.mockito.ArgumentCaptor
+                .forClass(CreateAccountCommand.class);
+
+        org.mockito.Mockito.verify(createAccountUseCase).createAccount(commandCaptor.capture());
+
+        CreateAccountCommand capturedCommand = commandCaptor.getValue();
+        assertEquals("Berat", capturedCommand.name());
+        assertEquals("Dalsuna", capturedCommand.surname());
     }
 }
