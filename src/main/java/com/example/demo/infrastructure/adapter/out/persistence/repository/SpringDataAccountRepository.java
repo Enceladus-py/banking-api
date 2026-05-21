@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.UUID;
 
 public interface SpringDataAccountRepository extends JpaRepository<AccountJpaEntity, UUID> {
-    // We can add custom query methods here later if needed
+    boolean existsByAccountNumber(String accountNumber);
 }

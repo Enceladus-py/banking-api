@@ -30,7 +30,7 @@ class PostgresAccountAdapterTest {
     @Test
     void shouldMapAndSaveAccountToDatabase() {
         // 1. Arrange: Create a pure domain object
-        Account domainAccount = new Account("Berat", "Dalsuna");
+        Account domainAccount = new Account("Berat", "Dalsuna", "1234567890");
 
         // 2. Act: Save it through the adapter
         Account savedAccount = adapter.save(domainAccount);

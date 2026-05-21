@@ -47,4 +47,9 @@ public class PostgresAccountAdapter implements AccountRepository {
                 entity.getAccountNumber(),
                 entity.getBalance());
     }
+
+    @Override
+    public boolean existsByAccountNumber(String accountNumber) {
+        return repository.existsByAccountNumber(accountNumber);
+    }
 }

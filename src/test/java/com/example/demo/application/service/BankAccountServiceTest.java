@@ -13,7 +13,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -55,5 +58,33 @@ class BankAccountServiceTest {
         assertEquals("Berat", capturedAccount.getName());
         assertEquals("Dalsuna", capturedAccount.getSurname());
         assertEquals(BigDecimal.ZERO, capturedAccount.getBalance());
+    }
+
+    @Test
+    void shouldRetryGeneratingNumberWhenFirstNumberAlreadyExists() {
+        // Arrange
+        CreateAccountCommand command = new CreateAccountCommand("Berat", "Dalsuna");
+
+        // Mock the uniqueness check:
+        // 1st call returns TRUE (collision!), 2nd call returns FALSE (free!)
+        when(accountRepository.existsByAccountNumber(anyString()))
+                .thenReturn(true)
+                .thenReturn(false);
+
+        // Mock the save operation
+        when(accountRepository.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        Account result = bankAccountService.createAccount(command);
+
+        // Assert
+        assertNotNull(result.getAccountNumber());
+        assertEquals(10, result.getAccountNumber().length());
+
+        // **The crucial assertion:** Verify the do-while loop actually ran twice!
+        verify(accountRepository, times(2)).existsByAccountNumber(anyString());
+
+        // Verify it still only saved once
+        verify(accountRepository, times(1)).save(any(Account.class));
     }
 }

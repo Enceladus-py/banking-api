@@ -4,6 +4,8 @@ import com.example.demo.application.port.in.CreateAccountUseCase;
 import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.domain.model.Account;
 
+import java.util.UUID;
+
 public class BankAccountService implements CreateAccountUseCase {
 
     private final AccountRepository accountRepository;
@@ -16,10 +18,17 @@ public class BankAccountService implements CreateAccountUseCase {
 
     @Override
     public Account createAccount(CreateAccountCommand command) {
-        // 1. Delegate business rules to the Domain entity
-        Account newAccount = new Account(command.name(), command.surname());
+        String uniqueAccountNumber = generateUniqueAccountNumber();
+        Account account = new Account(command.name(), command.surname(), uniqueAccountNumber);
+        return accountRepository.save(account);
+    }
 
-        // 2. Delegate persistence to the Outbound Port
-        return accountRepository.save(newAccount);
+    private String generateUniqueAccountNumber() {
+        String accountNumber;
+        do {
+            accountNumber = UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
+        } while (accountRepository.existsByAccountNumber(accountNumber));
+
+        return accountNumber;
     }
 }
