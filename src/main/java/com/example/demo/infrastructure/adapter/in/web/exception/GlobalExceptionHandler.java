@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
         body.put("timestamp", LocalDateTime.now());
         body.put("message", ex.getMessage());
 
-        // This handles "Insufficient funds for withdrawal"
+        // This handles "Insufficient funds"
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 }

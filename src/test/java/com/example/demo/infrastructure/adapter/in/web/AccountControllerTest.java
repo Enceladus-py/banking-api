@@ -227,7 +227,7 @@ class AccountControllerTest {
     void shouldReturn400BadRequestWhenInsufficientFunds() throws Exception {
         // Arrange: Simulate the domain rejecting the withdrawal
         when(withdrawMoneyUseCase.withdraw(any(WithdrawMoneyUseCase.WithdrawCommand.class)))
-                .thenThrow(new IllegalStateException("Insufficient funds for withdrawal"));
+                .thenThrow(new IllegalStateException("Insufficient funds"));
 
         String overDraftPayload = """
                 {
@@ -241,7 +241,7 @@ class AccountControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(overDraftPayload))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Insufficient funds for withdrawal"));
+                .andExpect(jsonPath("$.message").value("Insufficient funds"));
     }
 
     @Test
