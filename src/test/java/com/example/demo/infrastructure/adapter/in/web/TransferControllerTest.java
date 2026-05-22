@@ -2,12 +2,14 @@ package com.example.demo.infrastructure.adapter.in.web;
 
 import com.example.demo.application.port.in.TransferMoneyUseCase;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -31,14 +33,64 @@ class TransferControllerTest {
                     "amount": 100.50
                 }
                 """;
+        String requesterId = "USER-123";
 
-        // Since it's a void method, we just let it execute without throwing
         doNothing().when(transferMoneyUseCase).transfer(any(TransferMoneyUseCase.TransferCommand.class));
 
         mockMvc.perform(post("/api/transfers")
+                .header("X-User-Id", requesterId) // Added Security Header
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(validPayload))
                 .andExpect(status().isOk());
+
+        // Capture and verify the command mapping
+        ArgumentCaptor<TransferMoneyUseCase.TransferCommand> commandCaptor = ArgumentCaptor
+                .forClass(TransferMoneyUseCase.TransferCommand.class);
+        verify(transferMoneyUseCase).transfer(commandCaptor.capture());
+
+        TransferMoneyUseCase.TransferCommand capturedCommand = commandCaptor.getValue();
+        assertEquals(requesterId, capturedCommand.requesterId());
+        assertEquals("1111111111", capturedCommand.sourceAccountNumber());
+    }
+
+    @Test
+    void shouldReturn400WhenUserIdHeaderIsMissing() throws Exception {
+        String validPayload = """
+                {
+                    "sourceAccountNumber": "1111111111",
+                    "targetAccountNumber": "2222222222",
+                    "amount": 100.50
+                }
+                """;
+
+        // Attempting to call the endpoint without the authentication header
+        mockMvc.perform(post("/api/transfers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validPayload))
+                .andExpect(status().isBadRequest());
+
+        verify(transferMoneyUseCase, never()).transfer(any());
+    }
+
+    @Test
+    void shouldReturn403ForbiddenWhenUserAttemptsTransferFromAnotherUsersAccount() throws Exception {
+        String payload = """
+                {
+                    "sourceAccountNumber": "1111111111",
+                    "targetAccountNumber": "2222222222",
+                    "amount": 50.00
+                }
+                """;
+
+        doThrow(new SecurityException("You are not authorized to transfer money from this account"))
+                .when(transferMoneyUseCase).transfer(any(TransferMoneyUseCase.TransferCommand.class));
+
+        mockMvc.perform(post("/api/transfers")
+                .header("X-User-Id", "HACKER-ID")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You are not authorized to transfer money from this account"));
     }
 
     @Test
@@ -55,6 +107,7 @@ class TransferControllerTest {
                 .when(transferMoneyUseCase).transfer(any(TransferMoneyUseCase.TransferCommand.class));
 
         mockMvc.perform(post("/api/transfers")
+                .header("X-User-Id", "USER-123")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(overdraftPayload))
                 .andExpect(status().isBadRequest())
@@ -62,8 +115,29 @@ class TransferControllerTest {
     }
 
     @Test
+    void shouldReturn404WhenTargetAccountIsNotFound() throws Exception {
+        String payload = """
+                {
+                    "sourceAccountNumber": "1111111111",
+                    "targetAccountNumber": "9999999999",
+                    "amount": 100.00
+                }
+                """;
+
+        // The domain/service layer throws IllegalArgumentException with "not found"
+        doThrow(new IllegalArgumentException("Target account not found"))
+                .when(transferMoneyUseCase).transfer(any(TransferMoneyUseCase.TransferCommand.class));
+
+        mockMvc.perform(post("/api/transfers")
+                .header("X-User-Id", "USER-123")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+                .andExpect(status().isNotFound()); // Mapped by GlobalExceptionHandler
+    }
+
+    @Test
     void shouldReturn400WhenPayloadViolatesValidation() throws Exception {
-        // Negative amount violates @Positive
+        // Negative amount violates Web DTO @Positive constraint
         String invalidPayload = """
                 {
                     "sourceAccountNumber": "1111111111",
@@ -73,6 +147,7 @@ class TransferControllerTest {
                 """;
 
         mockMvc.perform(post("/api/transfers")
+                .header("X-User-Id", "USER-123")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidPayload))
                 .andExpect(status().isBadRequest());

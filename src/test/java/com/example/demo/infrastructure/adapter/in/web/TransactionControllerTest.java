@@ -33,39 +33,45 @@ class TransactionControllerTest {
     void shouldReturnPaginatedTransactionsWithCustomParams() throws Exception {
         // Arrange
         String accountNumber = "1234567890";
+        String requesterId = "USER-123";
         PageResult<?> emptyResult = new PageResult<>(Collections.emptyList(), 2, 5, 10, 2);
 
-        when(getAccountTransactionsUseCase.getTransactions(eq(accountNumber), any(PageRequest.class)))
+        when(getAccountTransactionsUseCase.getTransactions(eq(accountNumber), any(PageRequest.class), eq(requesterId)))
                 .thenAnswer(invocation -> emptyResult);
 
         // Act & Assert
         mockMvc.perform(get("/api/transactions/{accountNumber}?page=2&size=5", accountNumber)
+                .header("X-User-Id", requesterId) // Added the authentication header
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pageNumber").value(2))
                 .andExpect(jsonPath("$.pageSize").value(5))
                 .andExpect(jsonPath("$.totalElements").value(10));
 
-        // Verify the Controller passed the exact HTTP params to the Use Case
-        verify(getAccountTransactionsUseCase).getTransactions(accountNumber, new PageRequest(2, 5));
+        // Verify the Controller passed the exact HTTP params AND the user ID to the Use
+        // Case
+        verify(getAccountTransactionsUseCase).getTransactions(accountNumber, new PageRequest(2, 5), requesterId);
     }
 
     @Test
     void shouldReturnPaginatedTransactionsWithDefaultParams() throws Exception {
         // Arrange
         String accountNumber = "1234567890";
+        String requesterId = "USER-123";
         PageResult<?> defaultResult = new PageResult<>(Collections.emptyList(), 0, 10, 0, 0);
 
-        when(getAccountTransactionsUseCase.getTransactions(eq(accountNumber), any(PageRequest.class)))
+        when(getAccountTransactionsUseCase.getTransactions(eq(accountNumber), any(PageRequest.class), eq(requesterId)))
                 .thenAnswer(invocation -> defaultResult);
 
         // Act & Assert
         // We omit ?page= and ?size=
         mockMvc.perform(get("/api/transactions/{accountNumber}", accountNumber)
+                .header("X-User-Id", requesterId) // Added the authentication header
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
-        // Verify the Controller used the default values defined in @RequestParam
-        verify(getAccountTransactionsUseCase).getTransactions(accountNumber, new PageRequest(0, 10));
+        // Verify the Controller used the default values defined in @RequestParam AND
+        // extracted the user ID
+        verify(getAccountTransactionsUseCase).getTransactions(accountNumber, new PageRequest(0, 10), requesterId);
     }
 }

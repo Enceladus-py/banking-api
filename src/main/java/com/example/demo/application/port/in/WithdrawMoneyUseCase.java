@@ -7,6 +7,6 @@ public interface WithdrawMoneyUseCase {
 
     Account withdraw(WithdrawCommand command);
 
-    record WithdrawCommand(String accountId, BigDecimal amount) {
+    record WithdrawCommand(String accountId, BigDecimal amount, String requesterId) {
     }
 }

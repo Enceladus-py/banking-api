@@ -17,12 +17,14 @@ public class TransferController {
 
     @PostMapping
     @Transactional // Critical: Both accounts and the ledger must save atomically!
-    public ResponseEntity<Void> transferMoney(@Valid @RequestBody TransferRequest request) {
+    public ResponseEntity<Void> transferMoney(@Valid @RequestBody TransferRequest request,
+            @RequestHeader("X-User-Id") String requesterId) {
 
         TransferMoneyUseCase.TransferCommand command = new TransferMoneyUseCase.TransferCommand(
                 request.sourceAccountNumber(),
                 request.targetAccountNumber(),
-                request.amount());
+                request.amount(),
+                requesterId);
 
         transferMoneyUseCase.transfer(command);
 

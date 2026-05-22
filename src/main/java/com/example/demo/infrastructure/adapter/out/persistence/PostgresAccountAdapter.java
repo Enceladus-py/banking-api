@@ -24,8 +24,7 @@ public class PostgresAccountAdapter implements AccountRepository {
                 .orElseGet(AccountJpaEntity::new);
 
         managedEntity.setId(entityId);
-        managedEntity.setName(account.getName());
-        managedEntity.setSurname(account.getSurname());
+        managedEntity.setOwnerId(account.getOwnerId());
         managedEntity.setAccountNumber(account.getAccountNumber());
         managedEntity.setBalance(account.getBalance());
 
@@ -37,8 +36,7 @@ public class PostgresAccountAdapter implements AccountRepository {
     private Account toDomainModel(AccountJpaEntity entity) {
         return new Account(
                 entity.getId().toString(),
-                entity.getName(),
-                entity.getSurname(),
+                entity.getOwnerId(),
                 entity.getAccountNumber(),
                 entity.getBalance());
     }

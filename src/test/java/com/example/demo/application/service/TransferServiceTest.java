@@ -40,12 +40,13 @@ class TransferServiceTest {
         // Arrange
         String sourceId = "SRC1234567";
         String targetId = "TGT1234567";
+        String requesterId = "USER-1";
         BigDecimal amount = new BigDecimal("150.00");
 
-        Account sourceAccount = new Account("uuid-1", "Berat", "Dalsuna", sourceId, new BigDecimal("500.00"));
-        Account targetAccount = new Account("uuid-2", "John", "Doe", targetId, new BigDecimal("100.00"));
+        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("500.00"));
+        Account targetAccount = new Account("uuid-2", "USER-2", targetId, new BigDecimal("100.00"));
 
-        TransferCommand command = new TransferCommand(sourceId, targetId, amount);
+        TransferCommand command = new TransferCommand(sourceId, targetId, amount, requesterId);
 
         when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
         when(accountRepository.findByAccountNumber(targetId)).thenReturn(Optional.of(targetAccount));
@@ -71,14 +72,37 @@ class TransferServiceTest {
     }
 
     @Test
+    void shouldAbortWhenHackerAttemptsTransfer() {
+        // Arrange
+        String sourceId = "SRC1234567";
+        String targetId = "TGT1234567";
+        Account sourceAccount = new Account("uuid-1", "USER-1", sourceId, new BigDecimal("500.00"));
+
+        TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("100.00"), "HACKER-ID");
+
+        when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
+
+        // Act & Assert
+        SecurityException exception = assertThrows(SecurityException.class, () -> {
+            transferService.transfer(command);
+        });
+
+        assertEquals("You are not authorized to transfer money from this account", exception.getMessage());
+
+        verify(accountRepository, never()).save(any());
+        verify(transactionRecordRepository, never()).save(any());
+    }
+
+    @Test
     void shouldAbortWhenSourceAccountHasInsufficientFunds() {
         // Arrange
         String sourceId = "SRC1234567";
         String targetId = "TGT1234567";
-        Account sourceAccount = new Account("uuid-1", "Berat", "Dalsuna", sourceId, new BigDecimal("50.00"));
-        Account targetAccount = new Account("uuid-2", "John", "Doe", targetId, new BigDecimal("100.00"));
+        String requesterId = "USER-1";
+        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("50.00"));
+        Account targetAccount = new Account("uuid-2", "USER-2", targetId, new BigDecimal("100.00"));
 
-        TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("1000.00"));
+        TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("1000.00"), requesterId);
 
         when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
         when(accountRepository.findByAccountNumber(targetId)).thenReturn(Optional.of(targetAccount));
@@ -90,7 +114,6 @@ class TransferServiceTest {
 
         assertEquals("Insufficient funds", exception.getMessage());
 
-        // Verify completely aborted
         verify(accountRepository, never()).save(any());
         verify(transactionRecordRepository, never()).save(any());
     }
@@ -100,9 +123,10 @@ class TransferServiceTest {
         // Arrange
         String sourceId = "SRC1234567";
         String targetId = "TGT1234567";
-        Account sourceAccount = new Account("uuid-1", "Berat", "Dalsuna", sourceId, new BigDecimal("500.00"));
+        String requesterId = "USER-1";
+        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("500.00"));
 
-        TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("100.00"));
+        TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("100.00"), requesterId);
 
         when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
         when(accountRepository.findByAccountNumber(targetId)).thenReturn(Optional.empty());

@@ -18,10 +18,11 @@ public class AccountJpaEntity implements Persistable<UUID> {
 
     @Id
     private UUID id;
-    private String name;
-    private String surname;
     private String accountNumber;
     private BigDecimal balance;
+
+    @Column(name = "owner_id", nullable = false)
+    private String ownerId;
 
     @Transient
     @Builder.Default

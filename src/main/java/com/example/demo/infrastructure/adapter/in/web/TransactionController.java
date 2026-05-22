@@ -19,11 +19,11 @@ public class TransactionController {
     public ResponseEntity<PageResult<TransactionRecord>> getTransactions(
             @PathVariable String accountNumber,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size, @RequestHeader("X-User-Id") String requesterId) {
 
         PageRequest pageRequest = new PageRequest(page, size);
         PageResult<TransactionRecord> result = getAccountTransactionsUseCase.getTransactions(accountNumber,
-                pageRequest);
+                pageRequest, requesterId);
 
         return ResponseEntity.ok(result);
     }

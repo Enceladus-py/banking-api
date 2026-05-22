@@ -20,22 +20,26 @@ public class TransferService implements TransferMoneyUseCase {
 
     @Override
     public void transfer(TransferCommand command) {
-        // 1. Load both accounts
+        // Load both accounts
         Account sourceAccount = accountRepository.findByAccountNumber(command.sourceAccountNumber())
                 .orElseThrow(() -> new IllegalArgumentException("Source account not found"));
 
+        if (!sourceAccount.isOwnedBy(command.requesterId())) {
+            throw new SecurityException("You are not authorized to transfer money from this account");
+        }
+        
         Account targetAccount = accountRepository.findByAccountNumber(command.targetAccountNumber())
                 .orElseThrow(() -> new IllegalArgumentException("Target account not found"));
 
-        // 2. Execute Domain logic
+        // Execute Domain logic
         sourceAccount.withdraw(command.amount());
         targetAccount.deposit(command.amount());
 
-        // 3. Save updated states
+        // Save updated states
         accountRepository.save(sourceAccount);
         accountRepository.save(targetAccount);
 
-        // 4. Create and Save Immutable Ledger Record
+        // Create and Save Immutable Ledger Record
         TransactionRecord ledgerEntry = new TransactionRecord(
                 sourceAccount.getAccountNumber(),
                 targetAccount.getAccountNumber(),

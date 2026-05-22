@@ -10,10 +10,10 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 
 import java.math.BigDecimal;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-// @DataJpaTest automatically replaces your Postgres DataSource with the H2 in-memory DB
 @DataJpaTest
 class PostgresAccountAdapterTest {
 
@@ -30,29 +30,33 @@ class PostgresAccountAdapterTest {
     @Test
     void shouldMapAndSaveAccountToDatabase() {
         // 1. Arrange: Create a pure domain object
-        Account domainAccount = new Account("Berat", "Dalsuna", "1234567890");
+        String ownerId = "USER-12345";
+        Account domainAccount = new Account(ownerId, "1234567890");
 
         // 2. Act: Save it through the adapter
         Account savedAccount = adapter.save(domainAccount);
 
         // 3. Assert: Verify the Domain model returned looks correct
         assertNotNull(savedAccount.getId());
-        assertEquals("Berat", savedAccount.getName());
-        assertEquals("Dalsuna", savedAccount.getSurname());
+        assertEquals(ownerId, savedAccount.getOwnerId());
+        assertEquals("1234567890", savedAccount.getAccountNumber());
         assertEquals(BigDecimal.ZERO, savedAccount.getBalance());
 
         // 4. Deep Assert: Verify it actually went into the database correctly
         Optional<AccountJpaEntity> dbEntity = springDataRepository
-                .findById(java.util.UUID.fromString(savedAccount.getId()));
+                .findById(UUID.fromString(savedAccount.getId()));
+
         assertTrue(dbEntity.isPresent());
-        assertEquals("Berat", dbEntity.get().getName());
+        assertEquals(ownerId, dbEntity.get().getOwnerId());
         assertEquals(savedAccount.getAccountNumber(), dbEntity.get().getAccountNumber());
+        assertEquals(0, BigDecimal.ZERO.compareTo(dbEntity.get().getBalance()));
     }
 
     @Test
     void shouldUpdateExistingAccountBalanceSuccessfullyWithoutStateCollisions() {
         // Arrange: Directly populate an account row into the database first
-        Account baseAccount = new Account("Berat", "Dalsuna", "9876543210");
+        String ownerId = "USER-98765";
+        Account baseAccount = new Account(ownerId, "9876543210");
         adapter.save(baseAccount);
 
         // Act: Retrieve it, apply a deposit mutation, and save it back
@@ -66,6 +70,6 @@ class PostgresAccountAdapterTest {
 
         // Assert: Ensure identity remains stable while balance scales
         assertEquals(baseAccount.getId(), updatedAccount.getId());
-        assertEquals(new BigDecimal("250.50"), updatedAccount.getBalance());
+        assertEquals(0, new BigDecimal("250.50").compareTo(updatedAccount.getBalance()));
     }
 }

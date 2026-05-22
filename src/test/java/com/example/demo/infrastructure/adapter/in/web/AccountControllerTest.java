@@ -22,7 +22,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 @WebMvcTest(AccountController.class)
 class AccountControllerTest {
@@ -40,84 +39,40 @@ class AccountControllerTest {
     private WithdrawMoneyUseCase withdrawMoneyUseCase;
 
     @Test
-    void shouldReturn201WhenAccountIsCreated() throws Exception {
+    void shouldReturn200WhenAccountIsCreated() throws Exception {
         // 1. Arrange: Prepare the mock response from the Domain
-        Account mockDomainAccount = new Account("uuid-1", "Berat", "Dalsuna", "ACC1234567", BigDecimal.ZERO);
+        Account mockDomainAccount = new Account("uuid-1", "USER-123", "ACC1234567", BigDecimal.ZERO);
         when(createAccountUseCase.createAccount(any(CreateAccountCommand.class))).thenReturn(mockDomainAccount);
 
-        // Prepare the JSON body we will send
-        String jsonPayload = """
-                {
-                    "name": "Berat",
-                    "surname": "Dalsuna"
-                }
-                """;
-
-        // 2 & 3. Act & Assert: Send the request and verify the response
+        // 2 & 3. Act & Assert: Send request with ONLY the User ID header (no JSON body
+        // needed anymore)
         mockMvc.perform(post("/api/accounts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(jsonPayload))
-                .andExpect(status().isCreated()) // Expect HTTP 201
+                .header("X-User-Id", "USER-123"))
+                .andExpect(status().isOk()) // HTTP 200 OK
                 .andExpect(jsonPath("$.id").value("uuid-1"))
-                .andExpect(jsonPath("$.name").value("Berat"))
-                .andExpect(jsonPath("$.surname").value("Dalsuna"))
+                .andExpect(jsonPath("$.ownerId").value("USER-123"))
                 .andExpect(jsonPath("$.accountNumber").value("ACC1234567"))
                 .andExpect(jsonPath("$.balance").value(0.00));
     }
 
     @Test
-    void shouldReturn400BadRequestWhenNameIsBlank() throws Exception {
-        // Arrange: Provide an empty name
-        String jsonPayload = """
-                {
-                    "name": "",
-                    "surname": "Dalsuna"
-                }
-                """;
+    void shouldReturn400BadRequestWhenUserIdHeaderIsMissing() throws Exception {
+        // Act & Assert: Attempting to call the endpoint without the authentication
+        // header
+        mockMvc.perform(post("/api/accounts"))
+                .andExpect(status().isBadRequest()); // Spring automatically blocks requests missing
+                                                     // required headers
 
-        // Act & Assert: We do not mock the Use Case here because
-        // the request should be blocked before it ever reaches the Use Case!
-        mockMvc.perform(post("/api/accounts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(jsonPayload))
-                .andExpect(status().isBadRequest()); // Expect HTTP 400
-    }
-
-    @Test
-    void shouldTrimWhitespaceBeforeCallingUseCase() throws Exception {
-        // Arrange: Provide strings with extra spaces
-        Account mockDomainAccount = new Account("uuid-1", "Berat", "Dalsuna", "ACC1234567", BigDecimal.ZERO);
-        when(createAccountUseCase.createAccount(any(CreateAccountCommand.class))).thenReturn(mockDomainAccount);
-
-        String jsonPayload = """
-                {
-                    "name": "  Berat  ",
-                    "surname": " Dalsuna "
-                }
-                """;
-
-        // Act
-        mockMvc.perform(post("/api/accounts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(jsonPayload))
-                .andExpect(status().isCreated());
-
-        // Assert: Verify the Command passed to the Use Case was completely trimmed
-        org.mockito.ArgumentCaptor<CreateAccountCommand> commandCaptor = org.mockito.ArgumentCaptor
-                .forClass(CreateAccountCommand.class);
-
-        org.mockito.Mockito.verify(createAccountUseCase).createAccount(commandCaptor.capture());
-
-        CreateAccountCommand capturedCommand = commandCaptor.getValue();
-        assertEquals("Berat", capturedCommand.name());
-        assertEquals("Dalsuna", capturedCommand.surname());
+        // Ensure use case is never called
+        verify(createAccountUseCase, never()).createAccount(any());
     }
 
     @Test
     void shouldReturn200WhenDepositIsSuccessful() throws Exception {
         // Arrange
         String accountNumber = "A1B2C3D4E5";
-        Account updatedAccount = new Account("uuid-123", "Berat", "Dalsuna", accountNumber, new BigDecimal("100.00"));
+        String requesterId = "USER-123";
+        Account updatedAccount = new Account("uuid-123", requesterId, accountNumber, new BigDecimal("100.00"));
 
         when(depositMoneyUseCase.deposit(any(DepositCommand.class))).thenReturn(updatedAccount);
 
@@ -130,6 +85,7 @@ class AccountControllerTest {
 
         // Act & Assert
         mockMvc.perform(put("/api/accounts/deposit")
+                .header("X-User-Id", requesterId) // Added Security Header
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
                 .andExpect(status().isOk())
@@ -140,7 +96,7 @@ class AccountControllerTest {
     }
 
     @Test
-    void shouldReturn400BadRequestWhenAmountIsNegative() throws Exception {
+    void shouldReturn400BadRequestWhenDepositAmountIsNegative() throws Exception {
         // Arrange
         String jsonPayload = """
                 {
@@ -151,6 +107,7 @@ class AccountControllerTest {
 
         // Act & Assert
         mockMvc.perform(put("/api/accounts/deposit")
+                .header("X-User-Id", "USER-123")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
                 .andExpect(status().isBadRequest()); // Blocked by Web DTO Validation (@Positive)
@@ -160,22 +117,48 @@ class AccountControllerTest {
     }
 
     @Test
-    void shouldReturn400BadRequestWhenAccountNumberIsInvalidLength() throws Exception {
+    void shouldReturn400BadRequestWhenAccountNumberIsBlank() throws Exception {
         // Arrange
         String jsonPayload = """
                 {
-                    "accountNumber": "ABC",
+                    "accountNumber": "",
                     "amount": 50.00
                 }
                 """;
 
         // Act & Assert
         mockMvc.perform(put("/api/accounts/deposit")
+                .header("X-User-Id", "USER-123")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
-                .andExpect(status().isBadRequest()); // Blocked by Web DTO Validation (@Size)
+                .andExpect(status().isBadRequest()); // Blocked by Web DTO Validation (@NotBlank)
 
         verify(depositMoneyUseCase, never()).deposit(any(DepositCommand.class));
+    }
+
+    @Test
+    void shouldReturn403ForbiddenWhenUserAttemptsToTouchAnotherUsersAccount() throws Exception {
+        // Arrange: Simulate the domain rejecting the action based on ownership
+        when(depositMoneyUseCase.deposit(any(DepositCommand.class)))
+                .thenThrow(new SecurityException(
+                        "You are not authorized to deposit into this account"));
+
+        String jsonPayload = """
+                {
+                    "accountNumber": "A1B2C3D4E5",
+                    "amount": 100.00
+                }
+                """;
+
+        // Act & Assert
+        mockMvc.perform(put("/api/accounts/deposit")
+                .header("X-User-Id", "HACKER-ID")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonPayload))
+                .andExpect(status().isForbidden()) // Ensure GlobalExceptionHandler maps
+                                                   // SecurityException to 403
+                .andExpect(jsonPath("$.message")
+                        .value("You are not authorized to deposit into this account"));
     }
 
     @Test
@@ -193,6 +176,7 @@ class AccountControllerTest {
 
         // Act & Assert
         mockMvc.perform(put("/api/accounts/deposit")
+                .header("X-User-Id", "USER-123")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
                 .andExpect(status().isNotFound()); // We expect an HTTP 404
@@ -202,7 +186,8 @@ class AccountControllerTest {
     void shouldReturn200AndUpdatedAccountOnSuccessfulWithdrawal() throws Exception {
         // Arrange
         String accountNumber = "1122334455";
-        Account expectedAccount = new Account("uuid-999", "Berat", "Dalsuna", accountNumber, new BigDecimal("350.00"));
+        String requesterId = "USER-123";
+        Account expectedAccount = new Account("uuid-999", requesterId, accountNumber, new BigDecimal("350.00"));
 
         when(withdrawMoneyUseCase.withdraw(any(WithdrawMoneyUseCase.WithdrawCommand.class)))
                 .thenReturn(expectedAccount);
@@ -216,6 +201,7 @@ class AccountControllerTest {
 
         // Act & Assert
         mockMvc.perform(put("/api/accounts/withdraw")
+                .header("X-User-Id", requesterId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(validPayload))
                 .andExpect(status().isOk())
@@ -238,6 +224,7 @@ class AccountControllerTest {
 
         // Act & Assert: GlobalExceptionHandler should map this to HTTP 400
         mockMvc.perform(put("/api/accounts/withdraw")
+                .header("X-User-Id", "USER-123")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(overDraftPayload))
                 .andExpect(status().isBadRequest())
@@ -256,6 +243,7 @@ class AccountControllerTest {
 
         // Act & Assert
         mockMvc.perform(put("/api/accounts/withdraw")
+                .header("X-User-Id", "USER-123")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidPayload))
                 .andExpect(status().isBadRequest());

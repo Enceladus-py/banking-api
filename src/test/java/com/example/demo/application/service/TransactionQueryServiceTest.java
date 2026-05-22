@@ -2,8 +2,9 @@ package com.example.demo.application.service;
 
 import com.example.demo.application.port.in.dto.PageRequest;
 import com.example.demo.application.port.in.dto.PageResult;
+import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.application.port.out.TransactionRecordRepository;
-import com.example.demo.domain.model.TransactionRecord;
+import com.example.demo.domain.model.Account;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -11,8 +12,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -20,28 +22,35 @@ class TransactionQueryServiceTest {
 
     @Mock
     private TransactionRecordRepository transactionRecordRepository;
+    @Mock
+    private AccountRepository accountRepository;
 
     @InjectMocks
-    private TransactionQueryService transactionQueryService;
+    private TransactionQueryService service;
 
     @Test
-    void shouldRetrievePaginatedTransactions() {
-        // Arrange
-        String accountNumber = "1234567890";
-        PageRequest pageRequest = new PageRequest(1, 10);
+    void shouldRetrieveTransactionsWhenAuthorized() {
+        Account account = new Account("USER-1", "ACC-123456");
+        PageRequest pageRequest = new PageRequest(0, 10);
 
-        PageResult<TransactionRecord> expectedResult = new PageResult<>(
-                Collections.emptyList(), 1, 10, 0, 0);
+        when(accountRepository.findByAccountNumber("ACC-123456")).thenReturn(Optional.of(account));
+        when(transactionRecordRepository.findByAccountNumber("ACC-123456", pageRequest))
+                .thenReturn(new PageResult<>(Collections.emptyList(), 0, 10, 0, 0));
 
-        when(transactionRecordRepository.findByAccountNumber(accountNumber, pageRequest))
-                .thenReturn(expectedResult);
+        service.getTransactions("ACC-123456", pageRequest, "USER-1");
 
-        // Act
-        PageResult<TransactionRecord> actualResult = transactionQueryService.getTransactions(accountNumber,
-                pageRequest);
+        verify(transactionRecordRepository).findByAccountNumber("ACC-123456", pageRequest);
+    }
 
-        // Assert
-        assertEquals(expectedResult, actualResult);
-        verify(transactionRecordRepository, times(1)).findByAccountNumber(accountNumber, pageRequest);
+    @Test
+    void shouldBlockRetrievingTransactionsForUnauthorizedUser() {
+        Account account = new Account("USER-1", "ACC-123456");
+        PageRequest pageRequest = new PageRequest(0, 10);
+
+        when(accountRepository.findByAccountNumber("ACC-123456")).thenReturn(Optional.of(account));
+
+        assertThrows(SecurityException.class, () -> service.getTransactions("ACC-123456", pageRequest, "HACKER"));
+
+        verify(transactionRecordRepository, never()).findByAccountNumber(anyString(), any());
     }
 }

@@ -6,34 +6,32 @@ import java.math.BigDecimal;
 @Getter
 public class Account {
     private String id;
-    private String name;
-    private String surname;
+    private String ownerId;
     private String accountNumber;
     private BigDecimal balance;
 
     // For creating BRAND NEW accounts (Business Layer call)
-    public Account(String name, String surname, String accountNumber) {
-        // Chain to the main constructor, generating a fresh UUID and starting at 0
-        this(java.util.UUID.randomUUID().toString(), name, surname, accountNumber, BigDecimal.ZERO);
+    public Account(String ownerId, String accountNumber) {
+        this(java.util.UUID.randomUUID().toString(), ownerId, accountNumber, BigDecimal.ZERO);
     }
 
     // The Master Constructor: Used for DB Re-hydration AND guarded new creation
-    public Account(String id, String name, String surname, String accountNumber, BigDecimal balance) {
-        if (name == null || name.trim().isBlank()) {
-            throw new IllegalArgumentException("Name cannot be blank");
-        }
-        if (surname == null || surname.trim().isBlank()) {
-            throw new IllegalArgumentException("Surname cannot be blank");
-        }
+    public Account(String id, String ownerId, String accountNumber, BigDecimal balance) {
         if (accountNumber == null || accountNumber.length() != 10) {
             throw new IllegalArgumentException("Account number must be exactly 10 characters");
         }
+        if (ownerId == null || ownerId.trim().isBlank()) {
+            throw new IllegalArgumentException("Owner ID cannot be blank");
+        }
 
         this.id = id;
-        this.name = name.trim(); // Trimming happens safely for both paths
-        this.surname = surname.trim(); // Trimming happens safely for both paths
         this.accountNumber = accountNumber;
         this.balance = balance;
+        this.ownerId = ownerId;
+    }
+
+    public boolean isOwnedBy(String userId) {
+        return this.ownerId.equals(userId);
     }
 
     public void deposit(BigDecimal amount) {

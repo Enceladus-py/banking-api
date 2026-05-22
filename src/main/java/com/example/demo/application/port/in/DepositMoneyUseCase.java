@@ -7,6 +7,6 @@ public interface DepositMoneyUseCase {
 
     Account deposit(DepositCommand command);
 
-    record DepositCommand(String accountId, BigDecimal amount) {
+    record DepositCommand(String accountId, BigDecimal amount, String requesterId) {
     }
 }

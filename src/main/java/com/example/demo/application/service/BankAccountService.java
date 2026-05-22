@@ -5,6 +5,7 @@ import com.example.demo.application.port.in.DepositMoneyUseCase;
 import com.example.demo.application.port.in.WithdrawMoneyUseCase;
 import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.application.port.out.TransactionRecordRepository;
+import com.example.demo.application.port.out.UserRepository;
 import com.example.demo.domain.model.Account;
 import com.example.demo.domain.model.TransactionRecord;
 import com.example.demo.domain.model.TransactionRecord.TransactionType;
@@ -15,19 +16,24 @@ public class BankAccountService implements CreateAccountUseCase, DepositMoneyUse
 
     private final AccountRepository accountRepository;
     private final TransactionRecordRepository transactionRecordRepository;
+    private final UserRepository userRepository;
 
     // Dependency Injection via constructor (Spring will wire this later in the
     // Infrastructure layer)
     public BankAccountService(AccountRepository accountRepository,
-            TransactionRecordRepository transactionRecordRepository) {
+            TransactionRecordRepository transactionRecordRepository,
+            UserRepository userRepository) {
         this.accountRepository = accountRepository;
         this.transactionRecordRepository = transactionRecordRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
     public Account createAccount(CreateAccountCommand command) {
+        userRepository.findById(command.requesterId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
         String uniqueAccountNumber = generateUniqueAccountNumber();
-        Account account = new Account(command.name(), command.surname(), uniqueAccountNumber);
+        Account account = new Account(command.requesterId(), uniqueAccountNumber);
         return accountRepository.save(account);
     }
 
@@ -45,6 +51,11 @@ public class BankAccountService implements CreateAccountUseCase, DepositMoneyUse
         // 1. Fetch the account
         Account account = accountRepository.findByAccountNumber(command.accountId())
                 .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+
+        // Enforce ownership
+        if (!account.isOwnedBy(command.requesterId())) {
+            throw new SecurityException("You are not authorized to deposit into this account");
+        }
 
         // 2. Execute core business logic (the Domain Model protects itself against bad
         // amounts)
@@ -66,17 +77,22 @@ public class BankAccountService implements CreateAccountUseCase, DepositMoneyUse
 
     @Override
     public Account withdraw(WithdrawCommand command) {
-        // 1. Load from DB
+        // Load from DB
         Account account = accountRepository.findByAccountNumber(command.accountId())
                 .orElseThrow(() -> new IllegalArgumentException("Account not found"));
 
-        // 2. Execute business logic (Domain protects itself against over-drafting)
+        // Enforce ownership
+        if (!account.isOwnedBy(command.requesterId())) {
+            throw new SecurityException("You are not authorized to withdraw from this account");
+        }
+
+        // Execute business logic (Domain protects itself against over-drafting)
         account.withdraw(command.amount());
 
-        // 3. Save Account State
+        // Save Account State
         Account savedAccount = accountRepository.save(account);
 
-        // 4. Create and Save Immutable Ledger Record
+        // Create and Save Immutable Ledger Record
         TransactionRecord ledgerEntry = new TransactionRecord(
                 account.getAccountNumber(), // Source is this account
                 null, // Withdrawals have no target

@@ -6,6 +6,7 @@ public interface TransferMoneyUseCase {
 
     void transfer(TransferCommand command);
 
-    record TransferCommand(String sourceAccountNumber, String targetAccountNumber, BigDecimal amount) {
+    record TransferCommand(String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
+            String requesterId) {
     }
 }

@@ -6,9 +6,6 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-    labels:
-      # Tells the local Spring Boot compose extension to skip this container
-      org.springframework.boot.ignore: "true"
     depends_on:
       - postgres
 
