@@ -23,13 +23,24 @@ public class AccountJpaEntity implements Persistable<UUID> {
     private String accountNumber;
     private BigDecimal balance;
 
-    @Version
-    private Long version; // Managed automatically by Hibernate for optimistic locking
+    @Transient
+    @Builder.Default
+    private boolean isNew = true;
 
     @Override
     public boolean isNew() {
-        // If version is null, it's a brand new insert!
-        // This explicitly guides Spring Data Repository without any extra queries.
-        return version == null;
+        return this.isNew;
+    }
+
+    // Runs automatically after the entity is loaded from the DB
+    @PostLoad
+    void markNotNew() {
+        this.isNew = false;
+    }
+
+    // Runs automatically just before the entity is inserted into the DB
+    @PrePersist
+    void markNotNewAfterInsert() {
+        this.isNew = false;
     }
 }
