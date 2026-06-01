@@ -23,15 +23,15 @@ public class TransferService implements TransferMoneyUseCase {
 
     @Override
     public void transfer(TransferCommand command) {
-        // Load both accounts
-        Account sourceAccount = accountRepository.findByAccountNumber(command.sourceAccountNumber())
+        // Load both accounts (Pessimistic write lock)
+        Account sourceAccount = accountRepository.findByAccountNumberForWrite(command.sourceAccountNumber())
                 .orElseThrow(() -> new EntityNotFoundException("Source account not found"));
 
         if (!sourceAccount.isOwnedBy(command.requesterId())) {
             throw new SecurityException("You are not authorized to transfer money from this account");
         }
         
-        Account targetAccount = accountRepository.findByAccountNumber(command.targetAccountNumber())
+        Account targetAccount = accountRepository.findByAccountNumberForWrite(command.targetAccountNumber())
                 .orElseThrow(() -> new EntityNotFoundException("Target account not found"));
 
         // Execute Domain logic

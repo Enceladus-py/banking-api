@@ -45,13 +45,13 @@ class TransferServiceTest {
         String requesterId = "USER-1";
         BigDecimal amount = new BigDecimal("150.00");
 
-        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("500.00"), false);
-        Account targetAccount = new Account("uuid-2", "USER-2", targetId, new BigDecimal("100.00"), false);
+        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("500.00"), 1L);
+        Account targetAccount = new Account("uuid-2", "USER-2", targetId, new BigDecimal("100.00"), 1L);
 
         TransferCommand command = new TransferCommand(sourceId, targetId, amount, requesterId);
 
-        when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
-        when(accountRepository.findByAccountNumber(targetId)).thenReturn(Optional.of(targetAccount));
+        when(accountRepository.findByAccountNumberForWrite(sourceId)).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.findByAccountNumberForWrite(targetId)).thenReturn(Optional.of(targetAccount));
 
         // Act
         transferService.transfer(command);
@@ -78,11 +78,11 @@ class TransferServiceTest {
         // Arrange
         String sourceId = "SRC1234567";
         String targetId = "TGT1234567";
-        Account sourceAccount = new Account("uuid-1", "USER-1", sourceId, new BigDecimal("500.00"), false);
+        Account sourceAccount = new Account("uuid-1", "USER-1", sourceId, new BigDecimal("500.00"), 1L);
 
         TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("100.00"), "HACKER-ID");
 
-        when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.findByAccountNumberForWrite(sourceId)).thenReturn(Optional.of(sourceAccount));
 
         // Act & Assert
         SecurityException exception = assertThrows(SecurityException.class, () -> {
@@ -101,13 +101,13 @@ class TransferServiceTest {
         String sourceId = "SRC1234567";
         String targetId = "TGT1234567";
         String requesterId = "USER-1";
-        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("50.00"), false);
-        Account targetAccount = new Account("uuid-2", "USER-2", targetId, new BigDecimal("100.00"), false);
+        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("50.00"), 1L);
+        Account targetAccount = new Account("uuid-2", "USER-2", targetId, new BigDecimal("100.00"), 1L);
 
         TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("1000.00"), requesterId);
 
-        when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
-        when(accountRepository.findByAccountNumber(targetId)).thenReturn(Optional.of(targetAccount));
+        when(accountRepository.findByAccountNumberForWrite(sourceId)).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.findByAccountNumberForWrite(targetId)).thenReturn(Optional.of(targetAccount));
 
         // Act & Assert
         InsufficientFundsException exception = assertThrows(InsufficientFundsException.class, () -> {
@@ -126,12 +126,12 @@ class TransferServiceTest {
         String sourceId = "SRC1234567";
         String targetId = "TGT1234567";
         String requesterId = "USER-1";
-        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("500.00"), false);
+        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("500.00"), 1L);
 
         TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("100.00"), requesterId);
 
-        when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
-        when(accountRepository.findByAccountNumber(targetId)).thenReturn(Optional.empty());
+        when(accountRepository.findByAccountNumberForWrite(sourceId)).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.findByAccountNumberForWrite(targetId)).thenReturn(Optional.empty());
 
         // Act & Assert
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {

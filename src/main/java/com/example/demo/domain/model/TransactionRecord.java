@@ -26,11 +26,22 @@ public class TransactionRecord {
     public TransactionRecord(String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
             TransactionType type) {
         this(UUID.randomUUID().toString(), sourceAccountNumber, targetAccountNumber, amount, type, LocalDateTime.now());
+        validate(sourceAccountNumber, targetAccountNumber, amount, type);
     }
 
-    // Main Constructor (Data mapping & Validation)
+    // Lenient Constructor for database re-hydration and mapping
     public TransactionRecord(String id, String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
             TransactionType type, LocalDateTime timestamp) {
+        this.id = id;
+        this.sourceAccountNumber = sourceAccountNumber;
+        this.targetAccountNumber = targetAccountNumber;
+        this.amount = amount;
+        this.type = type;
+        this.timestamp = timestamp;
+    }
+
+    private static void validate(String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
+            TransactionType type) {
         // 1. Amount validations
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Transaction amount must be strictly positive");
@@ -69,13 +80,6 @@ public class TransactionRecord {
                 }
             }
         }
-
-        this.id = id;
-        this.sourceAccountNumber = sourceAccountNumber;
-        this.targetAccountNumber = targetAccountNumber;
-        this.amount = amount;
-        this.type = type;
-        this.timestamp = timestamp;
     }
 
 }

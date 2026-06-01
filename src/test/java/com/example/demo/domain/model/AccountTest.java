@@ -39,14 +39,14 @@ class AccountTest {
 
     @Test
     void shouldWithdrawMoneySuccessfully() {
-        Account account = new Account("ID", "USER-1", "ACC-123456", new BigDecimal("100.00"), false);
+        Account account = new Account("ID", "USER-1", "ACC-123456", new BigDecimal("100.00"), 1L);
         account.withdraw(new BigDecimal("40.00"));
         assertEquals(new BigDecimal("60.00"), account.getBalance());
     }
 
     @Test
     void shouldThrowExceptionWhenInsufficientFunds() {
-        Account account = new Account("ID", "USER-1", "ACC-123456", new BigDecimal("50.00"), false);
+        Account account = new Account("ID", "USER-1", "ACC-123456", new BigDecimal("50.00"), 1L);
         assertThrows(InsufficientFundsException.class, () -> account.withdraw(new BigDecimal("100.00")));
     }
 
@@ -57,16 +57,16 @@ class AccountTest {
         assertEquals("USER-123", account.getOwnerId());
         assertEquals("ACC-999999", account.getAccountNumber());
         assertEquals(BigDecimal.ZERO, account.getBalance());
-        assertTrue(account.isNew());
+        assertNull(account.getVersion());
     }
 
     @Test
     void shouldCreateRehydratedAccountWithMasterConstructorAndNotBeMarkedAsNew() {
-        Account account = new Account("ID-123", "USER-123", "ACC-999999", new BigDecimal("250.00"), false);
+        Account account = new Account("ID-123", "USER-123", "ACC-999999", new BigDecimal("250.00"), 1L);
         assertEquals("ID-123", account.getId());
         assertEquals("USER-123", account.getOwnerId());
         assertEquals("ACC-999999", account.getAccountNumber());
         assertEquals(new BigDecimal("250.00"), account.getBalance());
-        assertFalse(account.isNew());
+        assertEquals(1L, account.getVersion());
     }
 }

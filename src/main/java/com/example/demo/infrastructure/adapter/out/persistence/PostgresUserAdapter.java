@@ -21,14 +21,15 @@ public class PostgresUserAdapter implements UserRepository {
         UserJpaEntity entity = new UserJpaEntity(
                 UUID.fromString(user.getId()),
                 user.getName(),
-                user.getSurname());
+                user.getSurname(),
+                user.getVersion());
         UserJpaEntity saved = repository.save(entity);
-        return new User(saved.getId().toString(), saved.getName(), saved.getSurname());
+        return new User(saved.getId().toString(), saved.getName(), saved.getSurname(), saved.getVersion());
     }
 
     @Override
     public Optional<User> findById(String id) {
         return repository.findById(UUID.fromString(id))
-                .map(entity -> new User(entity.getId().toString(), entity.getName(), entity.getSurname()));
+                .map(entity -> new User(entity.getId().toString(), entity.getName(), entity.getSurname(), entity.getVersion()));
     }
 }

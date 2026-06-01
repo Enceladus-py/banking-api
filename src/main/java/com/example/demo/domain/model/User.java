@@ -9,12 +9,13 @@ public class User {
     private String id;
     private String name;
     private String surname;
+    private final Long version;
 
     public User(String name, String surname) {
-        this(UUID.randomUUID().toString(), name, surname);
+        this(UUID.randomUUID().toString(), name, surname, null);
     }
 
-    public User(String id, String name, String surname) {
+    public User(String id, String name, String surname, Long version) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Name cannot be null or empty");
         }
@@ -25,5 +26,6 @@ public class User {
         this.id = id;
         this.name = name.trim();
         this.surname = surname.trim();
+        this.version = version;
     }
 }

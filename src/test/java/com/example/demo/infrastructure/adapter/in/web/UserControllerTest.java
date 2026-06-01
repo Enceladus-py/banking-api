@@ -32,7 +32,7 @@ class UserControllerTest {
 
     @Test
     void shouldRegisterUserSuccessfully() throws Exception {
-        User user = new User("uuid-123", "Alice", "Smith");
+        User user = new User("uuid-123", "Alice", "Smith", 1L);
         when(registerUserUseCase.registerUser(any(RegisterUserUseCase.RegisterUserCommand.class)))
                 .thenReturn(user);
 
@@ -56,7 +56,7 @@ class UserControllerTest {
 
     @Test
     void shouldGetUserByIdSuccessfully() throws Exception {
-        User user = new User("uuid-123", "Alice", "Smith");
+        User user = new User("uuid-123", "Alice", "Smith", 1L);
         when(getUserUseCase.getUserById("uuid-123")).thenReturn(user);
 
         mockMvc.perform(get("/api/users/uuid-123"))

@@ -39,7 +39,7 @@ class UserServiceTest {
 
     @Test
     void shouldGetUserById() {
-        User existingUser = new User("USER-1", "Alice", "Smith");
+        User existingUser = new User("USER-1", "Alice", "Smith", 1L);
         when(userRepository.findById("USER-1")).thenReturn(Optional.of(existingUser));
 
         User result = userService.getUserById("USER-1");

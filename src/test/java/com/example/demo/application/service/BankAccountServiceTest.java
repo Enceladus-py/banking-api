@@ -64,10 +64,10 @@ class BankAccountServiceTest {
         CreateAccountCommand command = new CreateAccountCommand(requesterId);
 
         // Mock User exists
-        when(userRepository.findById(requesterId)).thenReturn(Optional.of(new User(requesterId, "Berat", "Dalsuna")));
+        when(userRepository.findById(requesterId)).thenReturn(Optional.of(new User(requesterId, "Berat", "Dalsuna", 1L)));
 
         // When the fake repo is asked to save ANY Account, return this specific one
-        Account mockSavedAccount = new Account("uuid-123", requesterId, "A1B2C3D4E5", BigDecimal.ZERO, false);
+        Account mockSavedAccount = new Account("uuid-123", requesterId, "A1B2C3D4E5", BigDecimal.ZERO, 1L);
         when(accountRepository.save(any(Account.class))).thenReturn(mockSavedAccount);
 
         // 2. Act
@@ -109,7 +109,7 @@ class BankAccountServiceTest {
         CreateAccountCommand command = new CreateAccountCommand(requesterId);
         Account account = Account.createNew(requesterId, "A1B2C3D4E5");
 
-        when(userRepository.findById(requesterId)).thenReturn(Optional.of(new User(requesterId, "Berat", "Dalsuna")));
+        when(userRepository.findById(requesterId)).thenReturn(Optional.of(new User(requesterId, "Berat", "Dalsuna", 1L)));
 
         // Mock the uniqueness check: 1st call returns TRUE (collision!), 2nd call
         // returns FALSE (free!)
@@ -141,9 +141,9 @@ class BankAccountServiceTest {
         String accountNumber = "A1B2C3D4E5";
         DepositCommand command = new DepositCommand(accountNumber, new BigDecimal("250.00"), requesterId);
 
-        Account existingAccount = new Account("uuid-123", requesterId, accountNumber, BigDecimal.ZERO, false);
+        Account existingAccount = new Account("uuid-123", requesterId, accountNumber, BigDecimal.ZERO, 1L);
 
-        when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
+        when(accountRepository.findByAccountNumberForWrite(accountNumber)).thenReturn(Optional.of(existingAccount));
         when(accountRepository.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
@@ -153,7 +153,7 @@ class BankAccountServiceTest {
         assertNotNull(updatedAccount);
         assertEquals(new BigDecimal("250.00"), updatedAccount.getBalance());
 
-        verify(accountRepository, times(1)).findByAccountNumber(accountNumber);
+        verify(accountRepository, times(1)).findByAccountNumberForWrite(accountNumber);
         verify(accountRepository, times(1)).save(existingAccount);
 
         // Assert Ledger
@@ -169,10 +169,10 @@ class BankAccountServiceTest {
     void shouldThrowSecurityExceptionWhenDepositingAsWrongUser() {
         // Arrange
         String accountNumber = "A1B2C3D4E5";
-        Account existingAccount = new Account("uuid-123", "REAL-OWNER", accountNumber, BigDecimal.ZERO, false);
+        Account existingAccount = new Account("uuid-123", "REAL-OWNER", accountNumber, BigDecimal.ZERO, 1L);
         DepositCommand command = new DepositCommand(accountNumber, new BigDecimal("100.00"), "HACKER");
 
-        when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
+        when(accountRepository.findByAccountNumberForWrite(accountNumber)).thenReturn(Optional.of(existingAccount));
 
         // Act & Assert
         SecurityException exception = assertThrows(SecurityException.class, () -> {
@@ -190,7 +190,7 @@ class BankAccountServiceTest {
         String nonExistentAccountNumber = "NOTFOUND12";
         DepositCommand command = new DepositCommand(nonExistentAccountNumber, new BigDecimal("100.00"), "USER-1");
 
-        when(accountRepository.findByAccountNumber(nonExistentAccountNumber)).thenReturn(Optional.empty());
+        when(accountRepository.findByAccountNumberForWrite(nonExistentAccountNumber)).thenReturn(Optional.empty());
 
         // Act & Assert
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
@@ -200,7 +200,7 @@ class BankAccountServiceTest {
         assertEquals("Account not found", exception.getMessage());
 
         // Crucial: Ensure we NEVER attempt to save corrupted/null state back to the DB
-        verify(accountRepository, times(1)).findByAccountNumber(nonExistentAccountNumber);
+        verify(accountRepository, times(1)).findByAccountNumberForWrite(nonExistentAccountNumber);
         verify(accountRepository, never()).save(any(Account.class));
         verify(transactionRecordRepository, never()).save(any());
     }
@@ -210,12 +210,12 @@ class BankAccountServiceTest {
         // Arrange
         String requesterId = "USER-123";
         String accountNumber = "1234567890";
-        Account existingAccount = new Account("uuid-1", requesterId, accountNumber, new BigDecimal("500.00"), false);
+        Account existingAccount = new Account("uuid-1", requesterId, accountNumber, new BigDecimal("500.00"), 1L);
         WithdrawCommand command = new WithdrawCommand(accountNumber, new BigDecimal("150.00"), requesterId);
 
         // Mock the repository to return the account, and just return whatever is passed
         // to save()
-        when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
+        when(accountRepository.findByAccountNumberForWrite(accountNumber)).thenReturn(Optional.of(existingAccount));
         when(accountRepository.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
@@ -225,7 +225,7 @@ class BankAccountServiceTest {
         assertEquals(new BigDecimal("350.00"), updatedAccount.getBalance());
 
         // Verify the orchestrator called the port methods in the correct order
-        verify(accountRepository).findByAccountNumber(accountNumber);
+        verify(accountRepository).findByAccountNumberForWrite(accountNumber);
         verify(accountRepository).save(existingAccount);
 
         // Assert Ledger
@@ -241,10 +241,10 @@ class BankAccountServiceTest {
     void shouldThrowSecurityExceptionWhenWithdrawingAsWrongUser() {
         // Arrange
         String accountNumber = "1234567890";
-        Account existingAccount = new Account("uuid-1", "REAL-OWNER", accountNumber, new BigDecimal("500.00"), false);
+        Account existingAccount = new Account("uuid-1", "REAL-OWNER", accountNumber, new BigDecimal("500.00"), 1L);
         WithdrawCommand command = new WithdrawCommand(accountNumber, new BigDecimal("150.00"), "HACKER");
 
-        when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
+        when(accountRepository.findByAccountNumberForWrite(accountNumber)).thenReturn(Optional.of(existingAccount));
 
         // Act & Assert
         SecurityException exception = assertThrows(SecurityException.class, () -> {
@@ -263,7 +263,7 @@ class BankAccountServiceTest {
         WithdrawCommand command = new WithdrawCommand(accountNumber, new BigDecimal("100.00"), "USER-1");
 
         // Simulate database returning empty
-        when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.empty());
+        when(accountRepository.findByAccountNumberForWrite(accountNumber)).thenReturn(Optional.empty());
 
         // Act & Assert
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
@@ -273,7 +273,7 @@ class BankAccountServiceTest {
         assertEquals("Account not found", exception.getMessage());
 
         // Crucial: Ensure we NEVER attempt to save if the account wasn't found
-        verify(accountRepository).findByAccountNumber(accountNumber);
+        verify(accountRepository).findByAccountNumberForWrite(accountNumber);
         verify(accountRepository, never()).save(any());
         verify(transactionRecordRepository, never()).save(any());
     }
@@ -283,10 +283,10 @@ class BankAccountServiceTest {
         // Arrange
         String requesterId = "USER-123";
         String accountNumber = "1234567890";
-        Account existingAccount = new Account("uuid-1", requesterId, accountNumber, new BigDecimal("50.00"), false);
+        Account existingAccount = new Account("uuid-1", requesterId, accountNumber, new BigDecimal("50.00"), 1L);
         WithdrawCommand command = new WithdrawCommand(accountNumber, new BigDecimal("100.00"), requesterId);
 
-        when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
+        when(accountRepository.findByAccountNumberForWrite(accountNumber)).thenReturn(Optional.of(existingAccount));
 
         // Act & Assert
         InsufficientFundsException exception = assertThrows(InsufficientFundsException.class, () -> {
@@ -297,7 +297,7 @@ class BankAccountServiceTest {
 
         // Crucial: Ensure the service respects the domain exception and ABORTS the save
         // operation
-        verify(accountRepository).findByAccountNumber(accountNumber);
+        verify(accountRepository).findByAccountNumberForWrite(accountNumber);
         verify(accountRepository, never()).save(any());
         verify(transactionRecordRepository, never()).save(any());
     }

@@ -10,7 +10,7 @@ public class Account {
     private String ownerId;
     private String accountNumber;
     private BigDecimal balance;
-    private final boolean isNew;
+    private final Long version;
 
     // Creation Factory Method (contains all business validations)
     public static Account createNew(String ownerId, String accountNumber) {
@@ -20,16 +20,16 @@ public class Account {
         if (ownerId == null || ownerId.trim().isBlank()) {
             throw new IllegalArgumentException("Owner ID cannot be blank");
         }
-        return new Account(java.util.UUID.randomUUID().toString(), ownerId, accountNumber, BigDecimal.ZERO, true);
+        return new Account(java.util.UUID.randomUUID().toString(), ownerId, accountNumber, BigDecimal.ZERO, null);
     }
 
     // The Master Constructor: Used for DB Re-hydration AND guarded new creation
-    public Account(String id, String ownerId, String accountNumber, BigDecimal balance, boolean isNew) {
+    public Account(String id, String ownerId, String accountNumber, BigDecimal balance, Long version) {
         this.id = id;
         this.ownerId = ownerId;
         this.accountNumber = accountNumber;
         this.balance = balance;
-        this.isNew = isNew;
+        this.version = version;
     }
 
     public boolean isOwnedBy(String userId) {

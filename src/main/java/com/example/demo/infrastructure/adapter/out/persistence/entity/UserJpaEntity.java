@@ -3,7 +3,6 @@ package com.example.demo.infrastructure.adapter.out.persistence.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.domain.Persistable;
 
 import java.util.UUID;
 
@@ -11,7 +10,7 @@ import java.util.UUID;
 @Table(name = "users")
 @Data
 @NoArgsConstructor
-public class UserJpaEntity implements Persistable<UUID> {
+public class UserJpaEntity {
 
     @Id
     private UUID id;
@@ -22,27 +21,13 @@ public class UserJpaEntity implements Persistable<UUID> {
     @Column(nullable = false)
     private String surname;
 
-    @Transient
-    private boolean isNew = true;
+    @Version
+    private Long version;
 
-    public UserJpaEntity(UUID id, String name, String surname) {
+    public UserJpaEntity(UUID id, String name, String surname, Long version) {
         this.id = id;
         this.name = name;
         this.surname = surname;
-    }
-
-    @Override
-    public boolean isNew() {
-        return this.isNew;
-    }
-
-    @PostLoad
-    void markNotNew() {
-        this.isNew = false;
-    }
-
-    @PrePersist
-    void markNotNewAfterInsert() {
-        this.isNew = false;
+        this.version = version;
     }
 }

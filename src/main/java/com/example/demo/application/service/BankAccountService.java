@@ -51,8 +51,8 @@ public class BankAccountService implements CreateAccountUseCase, DepositMoneyUse
 
     @Override
     public Account deposit(DepositCommand command) {
-        // 1. Fetch the account
-        Account account = accountRepository.findByAccountNumber(command.accountId())
+        // 1. Fetch the account (Pessimistic write lock)
+        Account account = accountRepository.findByAccountNumberForWrite(command.accountId())
                 .orElseThrow(() -> new EntityNotFoundException("Account not found"));
 
         // Enforce ownership
@@ -80,8 +80,8 @@ public class BankAccountService implements CreateAccountUseCase, DepositMoneyUse
 
     @Override
     public Account withdraw(WithdrawCommand command) {
-        // Load from DB
-        Account account = accountRepository.findByAccountNumber(command.accountId())
+        // Load from DB (Pessimistic write lock)
+        Account account = accountRepository.findByAccountNumberForWrite(command.accountId())
                 .orElseThrow(() -> new EntityNotFoundException("Account not found"));
 
         // Enforce ownership

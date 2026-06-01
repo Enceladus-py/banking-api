@@ -8,4 +8,6 @@ public interface AccountRepository {
     Account save(Account account);
 
     Optional<Account> findByAccountNumber(String accountId);
+
+    Optional<Account> findByAccountNumberForWrite(String accountNumber);
 }
