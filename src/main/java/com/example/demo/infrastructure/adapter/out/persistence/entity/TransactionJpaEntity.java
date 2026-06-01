@@ -9,6 +9,8 @@ import java.util.UUID;
 
 import com.example.demo.domain.model.TransactionRecord.TransactionType;
 
+import org.springframework.data.domain.Persistable;
+
 @Entity
 @Table(name = "transaction_records")
 @Getter
@@ -16,7 +18,7 @@ import com.example.demo.domain.model.TransactionRecord.TransactionType;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TransactionJpaEntity {
+public class TransactionJpaEntity implements Persistable<UUID> {
 
     @Id
     private UUID id;
@@ -36,4 +38,9 @@ public class TransactionJpaEntity {
 
     @Column(nullable = false)
     private LocalDateTime timestamp;
+
+    @Override
+    public boolean isNew() {
+        return true;
+    }
 }
