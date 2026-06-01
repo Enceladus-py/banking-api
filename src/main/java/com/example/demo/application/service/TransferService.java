@@ -6,7 +6,9 @@ import com.example.demo.application.port.out.TransactionRecordRepository;
 import com.example.demo.domain.model.Account;
 import com.example.demo.domain.model.TransactionRecord;
 import com.example.demo.domain.model.TransactionRecord.TransactionType;
+import jakarta.transaction.Transactional;
 
+@Transactional
 public class TransferService implements TransferMoneyUseCase {
 
     private final AccountRepository accountRepository;

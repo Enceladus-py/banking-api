@@ -11,7 +11,9 @@ import com.example.demo.domain.model.TransactionRecord;
 import com.example.demo.domain.model.TransactionRecord.TransactionType;
 
 import java.util.UUID;
+import jakarta.transaction.Transactional;
 
+@Transactional
 public class BankAccountService implements CreateAccountUseCase, DepositMoneyUseCase, WithdrawMoneyUseCase {
 
     private final AccountRepository accountRepository;

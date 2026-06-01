@@ -5,7 +5,6 @@ import com.example.demo.infrastructure.adapter.in.web.dto.TransferRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,7 +15,6 @@ public class TransferController {
     private final TransferMoneyUseCase transferMoneyUseCase;
 
     @PostMapping
-    @Transactional // Critical: Both accounts and the ledger must save atomically!
     public ResponseEntity<Void> transferMoney(@Valid @RequestBody TransferRequest request,
             @RequestHeader("X-User-Id") String requesterId) {
 

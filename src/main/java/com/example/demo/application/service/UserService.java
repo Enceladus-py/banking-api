@@ -4,7 +4,9 @@ import com.example.demo.application.port.in.GetUserUseCase;
 import com.example.demo.application.port.in.RegisterUserUseCase;
 import com.example.demo.application.port.out.UserRepository;
 import com.example.demo.domain.model.User;
+import jakarta.transaction.Transactional;
 
+@Transactional
 public class UserService implements RegisterUserUseCase, GetUserUseCase {
 
     private final UserRepository userRepository;

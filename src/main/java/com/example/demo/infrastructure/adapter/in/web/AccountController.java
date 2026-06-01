@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
 @RestController
@@ -26,7 +25,6 @@ public class AccountController {
     private final WithdrawMoneyUseCase withdrawMoneyUseCase;
 
     @PostMapping
-    @Transactional
     public ResponseEntity<AccountResponse> createAccount(@RequestHeader("X-User-Id") String requesterId) {
         var command = new CreateAccountUseCase.CreateAccountCommand(requesterId);
         Account account = createAccountUseCase.createAccount(command);
@@ -34,7 +32,6 @@ public class AccountController {
     }
 
     @PutMapping("/deposit")
-    @Transactional
     public ResponseEntity<AccountResponse> depositMoney(
             @Valid @RequestBody TransactionRequest request,
             @RequestHeader("X-User-Id") String requesterId) {
@@ -46,7 +43,6 @@ public class AccountController {
     }
 
     @PutMapping("/withdraw")
-    @Transactional
     public ResponseEntity<AccountResponse> withdrawMoney(
             @Valid @RequestBody TransactionRequest request,
             @RequestHeader("X-User-Id") String requesterId) {
