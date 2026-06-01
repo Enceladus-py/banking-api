@@ -8,5 +8,11 @@ public interface CreateAccountUseCase {
 
     // Immutable record carrying the exact data needed for this use case
     record CreateAccountCommand(String requesterId) {
+        public CreateAccountCommand {
+            java.util.Objects.requireNonNull(requesterId, "Requester ID is required");
+            if (requesterId.trim().isBlank()) {
+                throw new IllegalArgumentException("Requester ID cannot be blank");
+            }
+        }
     }
 }
