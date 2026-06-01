@@ -13,6 +13,8 @@ import com.example.demo.domain.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.example.demo.domain.exception.EntityNotFoundException;
+import com.example.demo.domain.exception.InsufficientFundsException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -92,7 +94,7 @@ class BankAccountServiceTest {
         when(userRepository.findById("GHOST-1")).thenReturn(Optional.empty());
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
             bankAccountService.createAccount(command);
         });
 
@@ -191,7 +193,7 @@ class BankAccountServiceTest {
         when(accountRepository.findByAccountNumber(nonExistentAccountNumber)).thenReturn(Optional.empty());
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
             bankAccountService.deposit(command);
         });
 
@@ -264,7 +266,7 @@ class BankAccountServiceTest {
         when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.empty());
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
             bankAccountService.withdraw(command);
         });
 
@@ -287,7 +289,7 @@ class BankAccountServiceTest {
         when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
 
         // Act & Assert
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+        InsufficientFundsException exception = assertThrows(InsufficientFundsException.class, () -> {
             bankAccountService.withdraw(command);
         });
 

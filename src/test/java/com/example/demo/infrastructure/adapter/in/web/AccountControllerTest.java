@@ -7,6 +7,7 @@ import com.example.demo.application.port.in.WithdrawMoneyUseCase;
 import com.example.demo.application.port.in.DepositMoneyUseCase.DepositCommand;
 import com.example.demo.domain.model.Account;
 import org.junit.jupiter.api.Test;
+import com.example.demo.domain.exception.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -165,7 +166,7 @@ class AccountControllerTest {
     void shouldReturn404NotFoundWhenAccountNumberDoesNotExist() throws Exception {
         // Arrange: Tell the use case to throw an exception when called
         when(depositMoneyUseCase.deposit(any(DepositCommand.class)))
-                .thenThrow(new IllegalArgumentException("Account not found"));
+                .thenThrow(new EntityNotFoundException("Account not found"));
 
         String jsonPayload = """
                 {

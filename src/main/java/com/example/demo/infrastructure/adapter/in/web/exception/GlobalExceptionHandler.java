@@ -10,21 +10,42 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.example.demo.domain.exception.EntityNotFoundException;
+import com.example.demo.domain.exception.InsufficientFundsException;
+import com.example.demo.domain.exception.DomainException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleEntityNotFoundException(EntityNotFoundException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    @ExceptionHandler(InsufficientFundsException.class)
+    public ResponseEntity<Map<String, Object>> handleInsufficientFundsException(InsufficientFundsException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<Map<String, Object>> handleDomainException(DomainException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("message", ex.getMessage());
-
-        // If the core says "not found", return 404. Otherwise, treat as a 400 Bad
-        // Request.
-        if (ex.getMessage().contains("not found")) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
-        }
-
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
@@ -33,8 +54,6 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("message", ex.getMessage());
-
-        // This handles "Insufficient funds"
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 

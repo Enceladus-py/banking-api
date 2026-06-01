@@ -4,6 +4,7 @@ import com.example.demo.application.port.in.GetUserUseCase;
 import com.example.demo.application.port.in.RegisterUserUseCase;
 import com.example.demo.application.port.out.UserRepository;
 import com.example.demo.domain.model.User;
+import com.example.demo.domain.exception.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 @Transactional
@@ -25,6 +26,6 @@ public class UserService implements RegisterUserUseCase, GetUserUseCase {
     @Override
     public User getUserById(String userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
     }
 }

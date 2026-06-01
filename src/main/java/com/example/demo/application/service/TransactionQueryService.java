@@ -8,6 +8,8 @@ import com.example.demo.application.port.out.TransactionRecordRepository;
 import com.example.demo.domain.model.Account;
 import com.example.demo.domain.model.TransactionRecord;
 
+import com.example.demo.domain.exception.EntityNotFoundException;
+
 public class TransactionQueryService implements GetAccountTransactionsUseCase {
 
     private final TransactionRecordRepository transactionRecordRepository;
@@ -23,7 +25,7 @@ public class TransactionQueryService implements GetAccountTransactionsUseCase {
     public PageResult<TransactionRecord> getTransactions(String accountNumber, PageRequest pageRequest,
             String requesterId) {
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Account not found"));
 
         if (!account.isOwnedBy(requesterId)) {
             throw new SecurityException("You are not authorized to view this account's transactions");

@@ -2,6 +2,8 @@ package com.example.demo.infrastructure.adapter.in.web;
 
 import com.example.demo.application.port.in.TransferMoneyUseCase;
 import org.junit.jupiter.api.Test;
+import com.example.demo.domain.exception.EntityNotFoundException;
+import com.example.demo.domain.exception.InsufficientFundsException;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -103,7 +105,7 @@ class TransferControllerTest {
                 }
                 """;
 
-        doThrow(new IllegalStateException("Insufficient funds"))
+        doThrow(new InsufficientFundsException("Insufficient funds"))
                 .when(transferMoneyUseCase).transfer(any(TransferMoneyUseCase.TransferCommand.class));
 
         mockMvc.perform(post("/api/transfers")
@@ -124,8 +126,8 @@ class TransferControllerTest {
                 }
                 """;
 
-        // The domain/service layer throws IllegalArgumentException with "not found"
-        doThrow(new IllegalArgumentException("Target account not found"))
+        // The domain/service layer throws EntityNotFoundException
+        doThrow(new EntityNotFoundException("Target account not found"))
                 .when(transferMoneyUseCase).transfer(any(TransferMoneyUseCase.TransferCommand.class));
 
         mockMvc.perform(post("/api/transfers")

@@ -3,6 +3,7 @@ package com.example.demo.domain.model;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import static org.junit.jupiter.api.Assertions.*;
+import com.example.demo.domain.exception.InsufficientFundsException;
 
 class AccountTest {
 
@@ -46,7 +47,7 @@ class AccountTest {
     @Test
     void shouldThrowExceptionWhenInsufficientFunds() {
         Account account = new Account("ID", "USER-1", "ACC-123456", new BigDecimal("50.00"), false);
-        assertThrows(IllegalStateException.class, () -> account.withdraw(new BigDecimal("100.00")));
+        assertThrows(InsufficientFundsException.class, () -> account.withdraw(new BigDecimal("100.00")));
     }
 
     @Test

@@ -12,6 +12,7 @@ import com.example.demo.domain.model.TransactionRecord.TransactionType;
 
 import java.util.UUID;
 import jakarta.transaction.Transactional;
+import com.example.demo.domain.exception.EntityNotFoundException;
 
 @Transactional
 public class BankAccountService implements CreateAccountUseCase, DepositMoneyUseCase, WithdrawMoneyUseCase {
@@ -33,7 +34,7 @@ public class BankAccountService implements CreateAccountUseCase, DepositMoneyUse
     @Override
     public Account createAccount(CreateAccountCommand command) {
         userRepository.findById(command.requesterId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
         String uniqueAccountNumber = generateUniqueAccountNumber();
         Account account = Account.createNew(command.requesterId(), uniqueAccountNumber);
         return accountRepository.save(account);
@@ -52,7 +53,7 @@ public class BankAccountService implements CreateAccountUseCase, DepositMoneyUse
     public Account deposit(DepositCommand command) {
         // 1. Fetch the account
         Account account = accountRepository.findByAccountNumber(command.accountId())
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Account not found"));
 
         // Enforce ownership
         if (!account.isOwnedBy(command.requesterId())) {
@@ -81,7 +82,7 @@ public class BankAccountService implements CreateAccountUseCase, DepositMoneyUse
     public Account withdraw(WithdrawCommand command) {
         // Load from DB
         Account account = accountRepository.findByAccountNumber(command.accountId())
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Account not found"));
 
         // Enforce ownership
         if (!account.isOwnedBy(command.requesterId())) {

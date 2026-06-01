@@ -7,6 +7,8 @@ import com.example.demo.domain.model.Account;
 import com.example.demo.domain.model.TransactionRecord;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.example.demo.domain.exception.EntityNotFoundException;
+import com.example.demo.domain.exception.InsufficientFundsException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -108,7 +110,7 @@ class TransferServiceTest {
         when(accountRepository.findByAccountNumber(targetId)).thenReturn(Optional.of(targetAccount));
 
         // Act & Assert
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+        InsufficientFundsException exception = assertThrows(InsufficientFundsException.class, () -> {
             transferService.transfer(command);
         });
 
@@ -132,7 +134,7 @@ class TransferServiceTest {
         when(accountRepository.findByAccountNumber(targetId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
             transferService.transfer(command);
         });
 

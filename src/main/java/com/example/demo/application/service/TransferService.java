@@ -6,6 +6,7 @@ import com.example.demo.application.port.out.TransactionRecordRepository;
 import com.example.demo.domain.model.Account;
 import com.example.demo.domain.model.TransactionRecord;
 import com.example.demo.domain.model.TransactionRecord.TransactionType;
+import com.example.demo.domain.exception.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 @Transactional
@@ -24,14 +25,14 @@ public class TransferService implements TransferMoneyUseCase {
     public void transfer(TransferCommand command) {
         // Load both accounts
         Account sourceAccount = accountRepository.findByAccountNumber(command.sourceAccountNumber())
-                .orElseThrow(() -> new IllegalArgumentException("Source account not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Source account not found"));
 
         if (!sourceAccount.isOwnedBy(command.requesterId())) {
             throw new SecurityException("You are not authorized to transfer money from this account");
         }
         
         Account targetAccount = accountRepository.findByAccountNumber(command.targetAccountNumber())
-                .orElseThrow(() -> new IllegalArgumentException("Target account not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Target account not found"));
 
         // Execute Domain logic
         sourceAccount.withdraw(command.amount());

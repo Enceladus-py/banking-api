@@ -1,5 +1,6 @@
 package com.example.demo.domain.model;
 
+import com.example.demo.domain.exception.InsufficientFundsException;
 import lombok.Getter;
 import java.math.BigDecimal;
 
@@ -47,7 +48,7 @@ public class Account {
             throw new IllegalArgumentException("Withdrawal amount must be greater than zero");
         }
         if (this.balance.compareTo(amount) < 0) {
-            throw new IllegalStateException("Insufficient funds");
+            throw new InsufficientFundsException("Insufficient funds");
         }
         this.balance = this.balance.subtract(amount);
     }
