@@ -30,7 +30,7 @@ class TransactionQueryServiceTest {
 
     @Test
     void shouldRetrieveTransactionsWhenAuthorized() {
-        Account account = new Account("USER-1", "ACC-123456");
+        Account account = Account.createNew("USER-1", "ACC-123456");
         PageRequest pageRequest = new PageRequest(0, 10);
 
         when(accountRepository.findByAccountNumber("ACC-123456")).thenReturn(Optional.of(account));
@@ -44,7 +44,7 @@ class TransactionQueryServiceTest {
 
     @Test
     void shouldBlockRetrievingTransactionsForUnauthorizedUser() {
-        Account account = new Account("USER-1", "ACC-123456");
+        Account account = Account.createNew("USER-1", "ACC-123456");
         PageRequest pageRequest = new PageRequest(0, 10);
 
         when(accountRepository.findByAccountNumber("ACC-123456")).thenReturn(Optional.of(account));

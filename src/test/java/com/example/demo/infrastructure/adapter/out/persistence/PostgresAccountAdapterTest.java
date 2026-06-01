@@ -31,7 +31,7 @@ class PostgresAccountAdapterTest {
     void shouldMapAndSaveAccountToDatabase() {
         // 1. Arrange: Create a pure domain object
         String ownerId = "USER-12345";
-        Account domainAccount = new Account(ownerId, "1234567890");
+        Account domainAccount = Account.createNew(ownerId, "1234567890");
 
         // 2. Act: Save it through the adapter
         Account savedAccount = adapter.save(domainAccount);
@@ -56,7 +56,7 @@ class PostgresAccountAdapterTest {
     void shouldUpdateExistingAccountBalanceSuccessfullyWithoutStateCollisions() {
         // Arrange: Directly populate an account row into the database first
         String ownerId = "USER-98765";
-        Account baseAccount = new Account(ownerId, "9876543210");
+        Account baseAccount = Account.createNew(ownerId, "9876543210");
         adapter.save(baseAccount);
 
         // Act: Retrieve it, apply a deposit mutation, and save it back

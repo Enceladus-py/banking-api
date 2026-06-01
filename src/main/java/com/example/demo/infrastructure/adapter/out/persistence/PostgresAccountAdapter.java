@@ -20,15 +20,16 @@ public class PostgresAccountAdapter implements AccountRepository {
     public Account save(Account account) {
         UUID entityId = UUID.fromString(account.getId());
 
-        AccountJpaEntity managedEntity = repository.findById(entityId)
-                .orElseGet(AccountJpaEntity::new);
+        // Leverage Persistable<UUID> by constructing the entity directly and using the domain's isNew status,
+        // avoiding the manual database SELECT (findById) before saving.
+        AccountJpaEntity entity = new AccountJpaEntity();
+        entity.setId(entityId);
+        entity.setOwnerId(account.getOwnerId());
+        entity.setAccountNumber(account.getAccountNumber());
+        entity.setBalance(account.getBalance());
+        entity.setNew(account.isNew());
 
-        managedEntity.setId(entityId);
-        managedEntity.setOwnerId(account.getOwnerId());
-        managedEntity.setAccountNumber(account.getAccountNumber());
-        managedEntity.setBalance(account.getBalance());
-
-        AccountJpaEntity savedEntity = repository.saveAndFlush(managedEntity);
+        AccountJpaEntity savedEntity = repository.saveAndFlush(entity);
 
         return toDomainModel(savedEntity);
     }
@@ -38,7 +39,8 @@ public class PostgresAccountAdapter implements AccountRepository {
                 entity.getId().toString(),
                 entity.getOwnerId(),
                 entity.getAccountNumber(),
-                entity.getBalance());
+                entity.getBalance(),
+                false); // Re-hydrated from DB, so isNew is false
     }
 
     @Override

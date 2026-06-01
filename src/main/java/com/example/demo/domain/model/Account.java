@@ -9,25 +9,26 @@ public class Account {
     private String ownerId;
     private String accountNumber;
     private BigDecimal balance;
+    private final boolean isNew;
 
-    // For creating BRAND NEW accounts (Business Layer call)
-    public Account(String ownerId, String accountNumber) {
-        this(java.util.UUID.randomUUID().toString(), ownerId, accountNumber, BigDecimal.ZERO);
-    }
-
-    // The Master Constructor: Used for DB Re-hydration AND guarded new creation
-    public Account(String id, String ownerId, String accountNumber, BigDecimal balance) {
+    // Creation Factory Method (contains all business validations)
+    public static Account createNew(String ownerId, String accountNumber) {
         if (accountNumber == null || accountNumber.length() != 10) {
             throw new IllegalArgumentException("Account number must be exactly 10 characters");
         }
         if (ownerId == null || ownerId.trim().isBlank()) {
             throw new IllegalArgumentException("Owner ID cannot be blank");
         }
+        return new Account(java.util.UUID.randomUUID().toString(), ownerId, accountNumber, BigDecimal.ZERO, true);
+    }
 
+    // The Master Constructor: Used for DB Re-hydration AND guarded new creation
+    public Account(String id, String ownerId, String accountNumber, BigDecimal balance, boolean isNew) {
         this.id = id;
+        this.ownerId = ownerId;
         this.accountNumber = accountNumber;
         this.balance = balance;
-        this.ownerId = ownerId;
+        this.isNew = isNew;
     }
 
     public boolean isOwnedBy(String userId) {

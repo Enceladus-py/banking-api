@@ -65,7 +65,7 @@ class BankAccountServiceTest {
         when(userRepository.findById(requesterId)).thenReturn(Optional.of(new User(requesterId, "Berat", "Dalsuna")));
 
         // When the fake repo is asked to save ANY Account, return this specific one
-        Account mockSavedAccount = new Account("uuid-123", requesterId, "A1B2C3D4E5", BigDecimal.ZERO);
+        Account mockSavedAccount = new Account("uuid-123", requesterId, "A1B2C3D4E5", BigDecimal.ZERO, false);
         when(accountRepository.save(any(Account.class))).thenReturn(mockSavedAccount);
 
         // 2. Act
@@ -105,7 +105,7 @@ class BankAccountServiceTest {
         // Arrange
         String requesterId = "USER-123";
         CreateAccountCommand command = new CreateAccountCommand(requesterId);
-        Account account = new Account(requesterId, "A1B2C3D4E5");
+        Account account = Account.createNew(requesterId, "A1B2C3D4E5");
 
         when(userRepository.findById(requesterId)).thenReturn(Optional.of(new User(requesterId, "Berat", "Dalsuna")));
 
@@ -139,7 +139,7 @@ class BankAccountServiceTest {
         String accountNumber = "A1B2C3D4E5";
         DepositCommand command = new DepositCommand(accountNumber, new BigDecimal("250.00"), requesterId);
 
-        Account existingAccount = new Account("uuid-123", requesterId, accountNumber, BigDecimal.ZERO);
+        Account existingAccount = new Account("uuid-123", requesterId, accountNumber, BigDecimal.ZERO, false);
 
         when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
         when(accountRepository.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -167,7 +167,7 @@ class BankAccountServiceTest {
     void shouldThrowSecurityExceptionWhenDepositingAsWrongUser() {
         // Arrange
         String accountNumber = "A1B2C3D4E5";
-        Account existingAccount = new Account("uuid-123", "REAL-OWNER", accountNumber, BigDecimal.ZERO);
+        Account existingAccount = new Account("uuid-123", "REAL-OWNER", accountNumber, BigDecimal.ZERO, false);
         DepositCommand command = new DepositCommand(accountNumber, new BigDecimal("100.00"), "HACKER");
 
         when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
@@ -208,7 +208,7 @@ class BankAccountServiceTest {
         // Arrange
         String requesterId = "USER-123";
         String accountNumber = "1234567890";
-        Account existingAccount = new Account("uuid-1", requesterId, accountNumber, new BigDecimal("500.00"));
+        Account existingAccount = new Account("uuid-1", requesterId, accountNumber, new BigDecimal("500.00"), false);
         WithdrawCommand command = new WithdrawCommand(accountNumber, new BigDecimal("150.00"), requesterId);
 
         // Mock the repository to return the account, and just return whatever is passed
@@ -239,7 +239,7 @@ class BankAccountServiceTest {
     void shouldThrowSecurityExceptionWhenWithdrawingAsWrongUser() {
         // Arrange
         String accountNumber = "1234567890";
-        Account existingAccount = new Account("uuid-1", "REAL-OWNER", accountNumber, new BigDecimal("500.00"));
+        Account existingAccount = new Account("uuid-1", "REAL-OWNER", accountNumber, new BigDecimal("500.00"), false);
         WithdrawCommand command = new WithdrawCommand(accountNumber, new BigDecimal("150.00"), "HACKER");
 
         when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
@@ -281,7 +281,7 @@ class BankAccountServiceTest {
         // Arrange
         String requesterId = "USER-123";
         String accountNumber = "1234567890";
-        Account existingAccount = new Account("uuid-1", requesterId, accountNumber, new BigDecimal("50.00"));
+        Account existingAccount = new Account("uuid-1", requesterId, accountNumber, new BigDecimal("50.00"), false);
         WithdrawCommand command = new WithdrawCommand(accountNumber, new BigDecimal("100.00"), requesterId);
 
         when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));

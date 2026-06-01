@@ -35,7 +35,7 @@ public class BankAccountService implements CreateAccountUseCase, DepositMoneyUse
         userRepository.findById(command.requesterId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         String uniqueAccountNumber = generateUniqueAccountNumber();
-        Account account = new Account(command.requesterId(), uniqueAccountNumber);
+        Account account = Account.createNew(command.requesterId(), uniqueAccountNumber);
         return accountRepository.save(account);
     }
 

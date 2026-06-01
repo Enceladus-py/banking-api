@@ -43,8 +43,8 @@ class TransferServiceTest {
         String requesterId = "USER-1";
         BigDecimal amount = new BigDecimal("150.00");
 
-        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("500.00"));
-        Account targetAccount = new Account("uuid-2", "USER-2", targetId, new BigDecimal("100.00"));
+        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("500.00"), false);
+        Account targetAccount = new Account("uuid-2", "USER-2", targetId, new BigDecimal("100.00"), false);
 
         TransferCommand command = new TransferCommand(sourceId, targetId, amount, requesterId);
 
@@ -76,7 +76,7 @@ class TransferServiceTest {
         // Arrange
         String sourceId = "SRC1234567";
         String targetId = "TGT1234567";
-        Account sourceAccount = new Account("uuid-1", "USER-1", sourceId, new BigDecimal("500.00"));
+        Account sourceAccount = new Account("uuid-1", "USER-1", sourceId, new BigDecimal("500.00"), false);
 
         TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("100.00"), "HACKER-ID");
 
@@ -99,8 +99,8 @@ class TransferServiceTest {
         String sourceId = "SRC1234567";
         String targetId = "TGT1234567";
         String requesterId = "USER-1";
-        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("50.00"));
-        Account targetAccount = new Account("uuid-2", "USER-2", targetId, new BigDecimal("100.00"));
+        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("50.00"), false);
+        Account targetAccount = new Account("uuid-2", "USER-2", targetId, new BigDecimal("100.00"), false);
 
         TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("1000.00"), requesterId);
 
@@ -124,7 +124,7 @@ class TransferServiceTest {
         String sourceId = "SRC1234567";
         String targetId = "TGT1234567";
         String requesterId = "USER-1";
-        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("500.00"));
+        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("500.00"), false);
 
         TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("100.00"), requesterId);
 

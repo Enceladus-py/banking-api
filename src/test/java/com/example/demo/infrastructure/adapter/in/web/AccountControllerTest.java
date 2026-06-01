@@ -41,7 +41,7 @@ class AccountControllerTest {
     @Test
     void shouldReturn200WhenAccountIsCreated() throws Exception {
         // 1. Arrange: Prepare the mock response from the Domain
-        Account mockDomainAccount = new Account("uuid-1", "USER-123", "ACC1234567", BigDecimal.ZERO);
+        Account mockDomainAccount = new Account("uuid-1", "USER-123", "ACC1234567", BigDecimal.ZERO, false);
         when(createAccountUseCase.createAccount(any(CreateAccountCommand.class))).thenReturn(mockDomainAccount);
 
         // 2 & 3. Act & Assert: Send request with ONLY the User ID header (no JSON body
@@ -72,7 +72,7 @@ class AccountControllerTest {
         // Arrange
         String accountNumber = "A1B2C3D4E5";
         String requesterId = "USER-123";
-        Account updatedAccount = new Account("uuid-123", requesterId, accountNumber, new BigDecimal("100.00"));
+        Account updatedAccount = new Account("uuid-123", requesterId, accountNumber, new BigDecimal("100.00"), false);
 
         when(depositMoneyUseCase.deposit(any(DepositCommand.class))).thenReturn(updatedAccount);
 
@@ -187,7 +187,7 @@ class AccountControllerTest {
         // Arrange
         String accountNumber = "1122334455";
         String requesterId = "USER-123";
-        Account expectedAccount = new Account("uuid-999", requesterId, accountNumber, new BigDecimal("350.00"));
+        Account expectedAccount = new Account("uuid-999", requesterId, accountNumber, new BigDecimal("350.00"), false);
 
         when(withdrawMoneyUseCase.withdraw(any(WithdrawMoneyUseCase.WithdrawCommand.class)))
                 .thenReturn(expectedAccount);
