@@ -1,10 +1,13 @@
 package com.example.demo.application.service;
 
+import com.example.demo.application.annotation.UseCase;
+
 import com.example.demo.application.port.in.GetAccountUseCase;
 import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.domain.model.Account;
 import com.example.demo.domain.exception.EntityNotFoundException;
 
+@UseCase
 public class AccountQueryService implements GetAccountUseCase {
 
     private final AccountRepository accountRepository;

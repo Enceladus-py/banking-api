@@ -1,5 +1,7 @@
 package com.example.demo.application.service;
 
+import com.example.demo.application.annotation.TransactionalUseCase;
+
 import com.example.demo.application.port.in.WithdrawMoneyUseCase;
 import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.application.port.out.TransactionRecordRepository;
@@ -13,6 +15,7 @@ import com.example.demo.domain.exception.EntityNotFoundException;
 import java.time.Instant;
 import java.util.UUID;
 
+@TransactionalUseCase
 public class WithdrawMoneyService implements WithdrawMoneyUseCase {
 
     private final AccountRepository accountRepository;

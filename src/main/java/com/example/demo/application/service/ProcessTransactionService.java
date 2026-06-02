@@ -1,5 +1,7 @@
 package com.example.demo.application.service;
 
+import com.example.demo.application.annotation.TransactionalUseCase;
+
 import com.example.demo.application.port.in.ProcessTransactionUseCase;
 import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.application.port.out.TransactionRecordRepository;
@@ -13,6 +15,7 @@ import com.example.demo.domain.exception.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@TransactionalUseCase
 public class ProcessTransactionService implements ProcessTransactionUseCase {
 
     private final AccountRepository accountRepository;

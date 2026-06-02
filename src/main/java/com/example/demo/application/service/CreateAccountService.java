@@ -1,5 +1,7 @@
 package com.example.demo.application.service;
 
+import com.example.demo.application.annotation.TransactionalUseCase;
+
 import com.example.demo.application.port.in.CreateAccountUseCase;
 import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.application.port.out.UserRepository;
@@ -8,6 +10,7 @@ import com.example.demo.domain.exception.EntityNotFoundException;
 
 import java.util.UUID;
 
+@TransactionalUseCase
 public class CreateAccountService implements CreateAccountUseCase {
 
     private final AccountRepository accountRepository;

@@ -1,11 +1,14 @@
 package com.example.demo.application.service;
 
+import com.example.demo.application.annotation.TransactionalUseCase;
+
 import com.example.demo.application.port.in.GetUserUseCase;
 import com.example.demo.application.port.in.RegisterUserUseCase;
 import com.example.demo.application.port.out.UserRepository;
 import com.example.demo.domain.model.User;
 import com.example.demo.domain.exception.EntityNotFoundException;
 
+@TransactionalUseCase
 public class UserService implements RegisterUserUseCase, GetUserUseCase {
 
     private final UserRepository userRepository;

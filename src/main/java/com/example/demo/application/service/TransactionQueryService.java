@@ -1,5 +1,7 @@
 package com.example.demo.application.service;
 
+import com.example.demo.application.annotation.UseCase;
+
 import com.example.demo.application.port.in.GetAccountTransactionsUseCase;
 import com.example.demo.application.port.in.GetTransactionUseCase;
 import com.example.demo.application.port.in.dto.PageRequest;
@@ -11,6 +13,7 @@ import com.example.demo.domain.model.TransactionRecord;
 
 import com.example.demo.domain.exception.EntityNotFoundException;
 
+@UseCase
 public class TransactionQueryService implements GetAccountTransactionsUseCase, GetTransactionUseCase {
 
     private final TransactionRecordRepository transactionRecordRepository;

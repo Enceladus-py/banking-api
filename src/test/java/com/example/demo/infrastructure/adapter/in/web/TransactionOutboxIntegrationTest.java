@@ -1,5 +1,6 @@
 package com.example.demo.infrastructure.adapter.in.web;
 
+import com.example.demo.infrastructure.adapter.out.event.OutboxEventScheduler;
 import com.example.demo.infrastructure.adapter.out.persistence.entity.OutboxEventJpaEntity;
 import com.example.demo.infrastructure.adapter.out.persistence.entity.OutboxStatus;
 import com.example.demo.infrastructure.adapter.out.persistence.entity.ProcessedEventJpaEntity;
@@ -21,14 +22,12 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = "outbox.scheduler.delay=9999999")
 @AutoConfigureMockMvc
 class TransactionOutboxIntegrationTest {
 
@@ -49,6 +48,9 @@ class TransactionOutboxIntegrationTest {
 
     @Autowired
     private SpringDataProcessedEventRepository processedEventRepository;
+
+    @Autowired
+    private OutboxEventScheduler outboxEventScheduler;
 
     private final String userId = UUID.randomUUID().toString();
     private final String accountNumber = "ACC9876543";
@@ -111,14 +113,14 @@ class TransactionOutboxIntegrationTest {
         OutboxEventJpaEntity pendingEvent = pendingOutbox.get(0);
         assertEquals("TransactionPendingEvent", pendingEvent.getEventType());
 
-        // 4. Act & Assert: Wait for asynchronous outbox processor to run and complete the update
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            var accountAfter = accountRepository.findByAccountNumber(accountNumber);
-            assertTrue(accountAfter.isPresent());
-            // Balance must be updated to 250.00
-            assertEquals(0, new BigDecimal("250.00").compareTo(accountAfter.get().getBalance()), 
-                    "Balance should be asynchronously updated to 250.00");
-        });
+        // 4. Act: Manually trigger the asynchronous outbox processor to run and complete the update deterministically
+        outboxEventScheduler.publishPendingEvents();
+
+        var accountAfter = accountRepository.findByAccountNumber(accountNumber);
+        assertTrue(accountAfter.isPresent());
+        // Balance must be updated to 250.00
+        assertEquals(0, new BigDecimal("250.00").compareTo(accountAfter.get().getBalance()), 
+                "Balance should be updated to 250.00 after manual outbox trigger");
 
         // 5. Assert final state in Database
         // Outbox event status should be PUBLISHED

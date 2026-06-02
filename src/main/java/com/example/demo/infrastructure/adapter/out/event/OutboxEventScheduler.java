@@ -45,7 +45,7 @@ public class OutboxEventScheduler {
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher localEventPublisher;
 
-    @Scheduled(fixedDelay = 100) // Poll every 100 milliseconds
+    @Scheduled(fixedDelayString = "${outbox.scheduler.delay:100}") // Poll every 100 milliseconds (overridable)
     @Transactional
     public void publishPendingEvents() {
         List<OutboxEventJpaEntity> pendingEvents = outboxRepository

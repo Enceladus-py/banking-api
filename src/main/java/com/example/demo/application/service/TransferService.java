@@ -1,5 +1,7 @@
 package com.example.demo.application.service;
 
+import com.example.demo.application.annotation.TransactionalUseCase;
+
 import com.example.demo.application.port.in.TransferMoneyUseCase;
 import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.application.port.out.EventPublisher;
@@ -26,6 +28,7 @@ import java.util.UUID;
  * The pessimistic write lock is held by {@link ProcessTransactionService} when
  * it performs the actual mutation.
  */
+@TransactionalUseCase
 public class TransferService implements TransferMoneyUseCase {
 
     private final AccountRepository accountRepository;
