@@ -5,9 +5,7 @@ import com.example.demo.application.port.in.RegisterUserUseCase;
 import com.example.demo.application.port.out.UserRepository;
 import com.example.demo.domain.model.User;
 import com.example.demo.domain.exception.EntityNotFoundException;
-import org.springframework.transaction.annotation.Transactional;
 
-@Transactional
 public class UserService implements RegisterUserUseCase, GetUserUseCase {
 
     private final UserRepository userRepository;

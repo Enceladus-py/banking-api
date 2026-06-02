@@ -12,9 +12,7 @@ import com.example.demo.domain.exception.EntityNotFoundException;
 
 import java.time.Instant;
 import java.util.UUID;
-import org.springframework.transaction.annotation.Transactional;
 
-@Transactional
 public class WithdrawMoneyService implements WithdrawMoneyUseCase {
 
     private final AccountRepository accountRepository;

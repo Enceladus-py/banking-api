@@ -9,8 +9,6 @@ import com.example.demo.domain.model.Account;
 import com.example.demo.domain.model.TransactionRecord;
 import com.example.demo.domain.model.TransactionRecord.TransactionType;
 import com.example.demo.domain.exception.EntityNotFoundException;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -28,7 +26,6 @@ import java.util.UUID;
  * The pessimistic write lock is held by {@link ProcessTransactionService} when
  * it performs the actual mutation.
  */
-@Transactional
 public class TransferService implements TransferMoneyUseCase {
 
     private final AccountRepository accountRepository;

@@ -7,9 +7,7 @@ import com.example.demo.domain.model.Account;
 import com.example.demo.domain.exception.EntityNotFoundException;
 
 import java.util.UUID;
-import org.springframework.transaction.annotation.Transactional;
 
-@Transactional
 public class CreateAccountService implements CreateAccountUseCase {
 
     private final AccountRepository accountRepository;

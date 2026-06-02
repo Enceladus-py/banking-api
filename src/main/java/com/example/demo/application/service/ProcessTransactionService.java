@@ -10,10 +10,8 @@ import com.example.demo.domain.model.TransactionRecord.TransactionStatus;
 import com.example.demo.domain.model.TransactionRecord.TransactionType;
 import com.example.demo.domain.exception.EntityNotFoundException;
 
-import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
-@Transactional
 @Slf4j
 public class ProcessTransactionService implements ProcessTransactionUseCase {
 
