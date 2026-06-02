@@ -60,9 +60,11 @@ class TransactionQueryServiceTest {
     void shouldRetrieveTransactionByIdWhenAuthorizedAsSource() {
         TransactionRecord tx = new TransactionRecord("tx-123", "1234567890", "0987654321", new BigDecimal("100"), TransactionRecord.TransactionType.TRANSFER, java.time.LocalDateTime.now(), TransactionRecord.TransactionStatus.PENDING, null);
         Account sourceAccount = Account.createNew("USER-1", "1234567890");
+        Account targetAccount = Account.createNew("USER-2", "0987654321");
         
         when(transactionRecordRepository.findById("tx-123")).thenReturn(Optional.of(tx));
         when(accountRepository.findByAccountNumber("1234567890")).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.findByAccountNumber("0987654321")).thenReturn(Optional.of(targetAccount));
 
         TransactionRecord result = service.getTransaction("tx-123", "USER-1");
 
@@ -72,10 +74,11 @@ class TransactionQueryServiceTest {
     @Test
     void shouldRetrieveTransactionByIdWhenAuthorizedAsTarget() {
         TransactionRecord tx = new TransactionRecord("tx-123", "1234567890", "0987654321", new BigDecimal("100"), TransactionRecord.TransactionType.TRANSFER, java.time.LocalDateTime.now(), TransactionRecord.TransactionStatus.PENDING, null);
+        Account sourceAccount = Account.createNew("USER-1", "1234567890");
         Account targetAccount = Account.createNew("USER-2", "0987654321");
         
         when(transactionRecordRepository.findById("tx-123")).thenReturn(Optional.of(tx));
-        lenient().when(accountRepository.findByAccountNumber("1234567890")).thenReturn(Optional.empty());
+        when(accountRepository.findByAccountNumber("1234567890")).thenReturn(Optional.of(sourceAccount));
         when(accountRepository.findByAccountNumber("0987654321")).thenReturn(Optional.of(targetAccount));
 
         TransactionRecord result = service.getTransaction("tx-123", "USER-2");
@@ -86,11 +89,65 @@ class TransactionQueryServiceTest {
     @Test
     void shouldBlockRetrievingTransactionByIdForUnauthorizedUser() {
         TransactionRecord tx = new TransactionRecord("tx-123", "1234567890", "0987654321", new BigDecimal("100"), TransactionRecord.TransactionType.TRANSFER, java.time.LocalDateTime.now(), TransactionRecord.TransactionStatus.PENDING, null);
+        Account sourceAccount = Account.createNew("USER-1", "1234567890");
+        Account targetAccount = Account.createNew("USER-2", "0987654321");
         
         when(transactionRecordRepository.findById("tx-123")).thenReturn(Optional.of(tx));
-        lenient().when(accountRepository.findByAccountNumber("1234567890")).thenReturn(Optional.empty());
-        lenient().when(accountRepository.findByAccountNumber("0987654321")).thenReturn(Optional.empty());
+        when(accountRepository.findByAccountNumber("1234567890")).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.findByAccountNumber("0987654321")).thenReturn(Optional.of(targetAccount));
 
         assertThrows(SecurityException.class, () -> service.getTransaction("tx-123", "HACKER"));
+    }
+
+    @Test
+    void shouldBlockRetrievingTransactionByIdWhenAccountsAreDeleted() {
+        TransactionRecord tx = new TransactionRecord("tx-123", "1234567890", "0987654321", new BigDecimal("100"), TransactionRecord.TransactionType.TRANSFER, java.time.LocalDateTime.now(), TransactionRecord.TransactionStatus.PENDING, null);
+        
+        when(transactionRecordRepository.findById("tx-123")).thenReturn(Optional.of(tx));
+        when(accountRepository.findByAccountNumber("1234567890")).thenReturn(Optional.empty());
+        when(accountRepository.findByAccountNumber("0987654321")).thenReturn(Optional.empty());
+
+        assertThrows(SecurityException.class, () -> service.getTransaction("tx-123", "USER-1"));
+    }
+
+    @Test
+    void shouldThrowEntityNotFoundWhenAccountNotFoundForGetTransactions() {
+        PageRequest pageRequest = new PageRequest(0, 10);
+        when(accountRepository.findByAccountNumber("ACC-MISSING")).thenReturn(Optional.empty());
+
+        assertThrows(com.example.demo.domain.exception.EntityNotFoundException.class, () -> service.getTransactions("ACC-MISSING", pageRequest, "USER-1"));
+    }
+
+    @Test
+    void shouldThrowEntityNotFoundWhenTransactionNotFound() {
+        when(transactionRecordRepository.findById("tx-missing")).thenReturn(Optional.empty());
+
+        assertThrows(com.example.demo.domain.exception.EntityNotFoundException.class, () -> service.getTransaction("tx-missing", "USER-1"));
+    }
+
+    @Test
+    void shouldRetrieveDepositTransactionWhenAuthorizedAsTarget() {
+        TransactionRecord tx = new TransactionRecord("tx-123", null, "0987654321", new BigDecimal("100"), TransactionRecord.TransactionType.DEPOSIT, java.time.LocalDateTime.now(), TransactionRecord.TransactionStatus.PENDING, null);
+        Account targetAccount = Account.createNew("USER-2", "0987654321");
+
+        when(transactionRecordRepository.findById("tx-123")).thenReturn(Optional.of(tx));
+        when(accountRepository.findByAccountNumber("0987654321")).thenReturn(Optional.of(targetAccount));
+
+        TransactionRecord result = service.getTransaction("tx-123", "USER-2");
+
+        org.junit.jupiter.api.Assertions.assertEquals("tx-123", result.getId());
+    }
+
+    @Test
+    void shouldRetrieveWithdrawalTransactionWhenAuthorizedAsSource() {
+        TransactionRecord tx = new TransactionRecord("tx-123", "1234567890", null, new BigDecimal("100"), TransactionRecord.TransactionType.WITHDRAWAL, java.time.LocalDateTime.now(), TransactionRecord.TransactionStatus.PENDING, null);
+        Account sourceAccount = Account.createNew("USER-1", "1234567890");
+
+        when(transactionRecordRepository.findById("tx-123")).thenReturn(Optional.of(tx));
+        when(accountRepository.findByAccountNumber("1234567890")).thenReturn(Optional.of(sourceAccount));
+
+        TransactionRecord result = service.getTransaction("tx-123", "USER-1");
+
+        org.junit.jupiter.api.Assertions.assertEquals("tx-123", result.getId());
     }
 }

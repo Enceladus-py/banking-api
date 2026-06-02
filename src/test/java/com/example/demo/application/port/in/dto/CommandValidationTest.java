@@ -32,12 +32,15 @@ class CommandValidationTest {
         assertThrows(IllegalArgumentException.class, () -> 
             new TransferMoneyUseCase.TransferCommand("SRC1234567", "TGT1234567", new BigDecimal("100.00"), "  ")
         );
-        // Negative or zero amount
+        // Negative, zero, or null amount
         assertThrows(IllegalArgumentException.class, () -> 
             new TransferMoneyUseCase.TransferCommand("SRC1234567", "TGT1234567", new BigDecimal("-50.00"), "USER-1")
         );
         assertThrows(IllegalArgumentException.class, () -> 
             new TransferMoneyUseCase.TransferCommand("SRC1234567", "TGT1234567", BigDecimal.ZERO, "USER-1")
+        );
+        assertThrows(IllegalArgumentException.class, () -> 
+            new TransferMoneyUseCase.TransferCommand("SRC1234567", "TGT1234567", null, "USER-1")
         );
         // Transfer to same account
         assertThrows(IllegalArgumentException.class, () -> 
@@ -66,6 +69,9 @@ class CommandValidationTest {
         assertThrows(IllegalArgumentException.class, () -> 
             new DepositMoneyUseCase.DepositCommand("ACC1234567", new BigDecimal("50.00"), "")
         );
+        assertThrows(IllegalArgumentException.class, () -> 
+            new DepositMoneyUseCase.DepositCommand("ACC1234567", null, "USER-1")
+        );
     }
 
     @Test
@@ -88,6 +94,9 @@ class CommandValidationTest {
         );
         assertThrows(IllegalArgumentException.class, () -> 
             new WithdrawMoneyUseCase.WithdrawCommand("ACC1234567", new BigDecimal("50.00"), "")
+        );
+        assertThrows(IllegalArgumentException.class, () -> 
+            new WithdrawMoneyUseCase.WithdrawCommand("ACC1234567", null, "USER-1")
         );
     }
 

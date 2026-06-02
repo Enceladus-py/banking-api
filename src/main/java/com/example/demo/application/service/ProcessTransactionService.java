@@ -56,7 +56,8 @@ public class ProcessTransactionService implements ProcessTransactionUseCase {
                 source.withdraw(event.amount());
                 accountRepository.save(source);
 
-            } else if (event.type() == TransactionType.TRANSFER) {
+            } else {
+                // TRANSFER
                 // Lock both accounts in a consistent alphabetical order to prevent deadlocks
                 boolean sourceFirst = event.sourceAccountNumber().compareTo(event.targetAccountNumber()) <= 0;
                 final String firstKey  = sourceFirst ? event.sourceAccountNumber() : event.targetAccountNumber();

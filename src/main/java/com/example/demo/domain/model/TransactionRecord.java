@@ -96,26 +96,20 @@ public class TransactionRecord {
         }
 
         // 4. Specific rules for types
-        switch (type) {
-            case DEPOSIT -> {
-                if (sourceAccountNumber != null)
-                    throw new IllegalArgumentException("Deposits cannot have a source account");
-                if (targetAccountNumber == null)
-                    throw new IllegalArgumentException("Deposits must specify a target account");
+        if (type == TransactionType.DEPOSIT) {
+            if (sourceAccountNumber != null)
+                throw new IllegalArgumentException("Deposits cannot have a source account");
+        } else if (type == TransactionType.WITHDRAWAL) {
+            if (sourceAccountNumber == null)
+                throw new IllegalArgumentException("Withdrawals must specify a source account");
+            if (targetAccountNumber != null)
+                throw new IllegalArgumentException("Withdrawals cannot have a target account");
+        } else {
+            if (sourceAccountNumber == null || targetAccountNumber == null) {
+                throw new IllegalArgumentException("Transfers must specify both source and target accounts");
             }
-            case WITHDRAWAL -> {
-                if (sourceAccountNumber == null)
-                    throw new IllegalArgumentException("Withdrawals must specify a source account");
-                if (targetAccountNumber != null)
-                    throw new IllegalArgumentException("Withdrawals cannot have a target account");
-            }
-            case TRANSFER -> {
-                if (sourceAccountNumber == null || targetAccountNumber == null) {
-                    throw new IllegalArgumentException("Transfers must specify both source and target accounts");
-                }
-                if (sourceAccountNumber.equals(targetAccountNumber)) {
-                    throw new IllegalArgumentException("Cannot transfer money to the same account");
-                }
+            if (sourceAccountNumber.equals(targetAccountNumber)) {
+                throw new IllegalArgumentException("Cannot transfer money to the same account");
             }
         }
     }

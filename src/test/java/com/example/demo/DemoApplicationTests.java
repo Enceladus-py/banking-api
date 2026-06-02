@@ -10,4 +10,9 @@ class DemoApplicationTests {
 	void contextLoads() {
 	}
 
+	@Test
+	void mainTest() {
+		DemoApplication.main(new String[] {});
+	}
+
 }

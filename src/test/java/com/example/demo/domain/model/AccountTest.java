@@ -19,8 +19,10 @@ class AccountTest {
 
     @Test
     void shouldThrowExceptionWhenOwnerIdOrAccountNumberIsBlank() {
-        assertThrows(IllegalArgumentException.class, () -> Account.createNew("  ", "ACC-999"));
-        assertThrows(IllegalArgumentException.class, () -> Account.createNew("USER-123", "  "));
+        assertThrows(IllegalArgumentException.class, () -> Account.createNew("USER-123", "ACC-999"));
+        assertThrows(IllegalArgumentException.class, () -> Account.createNew("USER-123", null));
+        assertThrows(IllegalArgumentException.class, () -> Account.createNew(null, "ACC-999999"));
+        assertThrows(IllegalArgumentException.class, () -> Account.createNew("  ", "ACC-999999"));
     }
 
     @Test
@@ -38,10 +40,26 @@ class AccountTest {
     }
 
     @Test
+    void shouldThrowExceptionWhenDepositIsInvalid() {
+        Account account = Account.createNew("USER-1", "ACC-123456");
+        assertThrows(IllegalArgumentException.class, () -> account.deposit(null));
+        assertThrows(IllegalArgumentException.class, () -> account.deposit(BigDecimal.ZERO));
+        assertThrows(IllegalArgumentException.class, () -> account.deposit(new BigDecimal("-10.00")));
+    }
+
+    @Test
     void shouldWithdrawMoneySuccessfully() {
         Account account = new Account("ID", "USER-1", "ACC-123456", new BigDecimal("100.00"), 1L);
         account.withdraw(new BigDecimal("40.00"));
         assertEquals(new BigDecimal("60.00"), account.getBalance());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenWithdrawalIsInvalid() {
+        Account account = new Account("ID", "USER-1", "ACC-123456", new BigDecimal("100.00"), 1L);
+        assertThrows(IllegalArgumentException.class, () -> account.withdraw(null));
+        assertThrows(IllegalArgumentException.class, () -> account.withdraw(BigDecimal.ZERO));
+        assertThrows(IllegalArgumentException.class, () -> account.withdraw(new BigDecimal("-10.00")));
     }
 
     @Test

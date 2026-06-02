@@ -194,6 +194,126 @@ class ProcessTransactionServiceTest {
     }
 
     @Test
+    void shouldSuccessfullyProcessPendingTransferEvent() {
+        String txId = "tx-transfer";
+        String sourceAccountNumber = "A1B2C3D4E5"; // First alphabetically
+        String targetAccountNumber = "X9Y8Z7W6V5"; // Second alphabetically
+        TransactionRecord pendingTx = new TransactionRecord(
+                txId, sourceAccountNumber, targetAccountNumber, new BigDecimal("50.00"),
+                TransactionType.TRANSFER, LocalDateTime.now(), TransactionStatus.PENDING, null
+        );
+        TransactionPendingEvent event = new TransactionPendingEvent(
+                UUID.randomUUID(), txId, Instant.now(), sourceAccountNumber, targetAccountNumber,
+                new BigDecimal("50.00"), TransactionType.TRANSFER, "USER-123"
+        );
+        Account sourceAccount = new Account("uuid-1", "USER-123", sourceAccountNumber, new BigDecimal("100.00"), 1L);
+        Account targetAccount = new Account("uuid-2", "USER-456", targetAccountNumber, new BigDecimal("20.00"), 1L);
+
+        when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
+        when(accountRepository.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.lockAndLoad(targetAccountNumber)).thenReturn(Optional.of(targetAccount));
+
+        processTransactionService.process(event);
+
+        assertEquals(new BigDecimal("50.00"), sourceAccount.getBalance());
+        assertEquals(new BigDecimal("70.00"), targetAccount.getBalance());
+        verify(accountRepository, times(1)).save(sourceAccount);
+        verify(accountRepository, times(1)).save(targetAccount);
+
+        verify(transactionRecordRepository, times(1)).save(transactionCaptor.capture());
+        TransactionRecord finalTx = transactionCaptor.getValue();
+        assertEquals(txId, finalTx.getId());
+        assertEquals(TransactionStatus.COMPLETED, finalTx.getStatus());
+    }
+
+    @Test
+    void shouldSuccessfullyProcessPendingTransferEventReverseAlphabetical() {
+        String txId = "tx-transfer-rev";
+        String sourceAccountNumber = "X9Y8Z7W6V5"; // Second alphabetically
+        String targetAccountNumber = "A1B2C3D4E5"; // First alphabetically
+        TransactionRecord pendingTx = new TransactionRecord(
+                txId, sourceAccountNumber, targetAccountNumber, new BigDecimal("50.00"),
+                TransactionType.TRANSFER, LocalDateTime.now(), TransactionStatus.PENDING, null
+        );
+        TransactionPendingEvent event = new TransactionPendingEvent(
+                UUID.randomUUID(), txId, Instant.now(), sourceAccountNumber, targetAccountNumber,
+                new BigDecimal("50.00"), TransactionType.TRANSFER, "USER-123"
+        );
+        Account sourceAccount = new Account("uuid-1", "USER-123", sourceAccountNumber, new BigDecimal("100.00"), 1L);
+        Account targetAccount = new Account("uuid-2", "USER-456", targetAccountNumber, new BigDecimal("20.00"), 1L);
+
+        when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
+        when(accountRepository.lockAndLoad(targetAccountNumber)).thenReturn(Optional.of(targetAccount));
+        when(accountRepository.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.of(sourceAccount));
+
+        processTransactionService.process(event);
+
+        assertEquals(new BigDecimal("50.00"), sourceAccount.getBalance());
+        assertEquals(new BigDecimal("70.00"), targetAccount.getBalance());
+        verify(accountRepository, times(1)).save(sourceAccount);
+        verify(accountRepository, times(1)).save(targetAccount);
+
+        verify(transactionRecordRepository, times(1)).save(transactionCaptor.capture());
+        TransactionRecord finalTx = transactionCaptor.getValue();
+        assertEquals(txId, finalTx.getId());
+        assertEquals(TransactionStatus.COMPLETED, finalTx.getStatus());
+    }
+
+    @Test
+    void shouldMarkTransactionAsFailedWhenFirstAccountNotFoundForTransfer() {
+        String txId = "tx-transfer";
+        String sourceAccountNumber = "A1B2C3D4E5";
+        String targetAccountNumber = "X9Y8Z7W6V5";
+        TransactionRecord pendingTx = new TransactionRecord(
+                txId, sourceAccountNumber, targetAccountNumber, new BigDecimal("50.00"),
+                TransactionType.TRANSFER, LocalDateTime.now(), TransactionStatus.PENDING, null
+        );
+        TransactionPendingEvent event = new TransactionPendingEvent(
+                UUID.randomUUID(), txId, Instant.now(), sourceAccountNumber, targetAccountNumber,
+                new BigDecimal("50.00"), TransactionType.TRANSFER, "USER-123"
+        );
+
+        when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
+        when(accountRepository.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.empty()); // first alphabetically
+
+        processTransactionService.process(event);
+
+        verify(transactionRecordRepository, times(1)).save(transactionCaptor.capture());
+        TransactionRecord finalTx = transactionCaptor.getValue();
+        assertEquals(txId, finalTx.getId());
+        assertEquals(TransactionStatus.FAILED, finalTx.getStatus());
+        assertEquals("Account not found: " + sourceAccountNumber, finalTx.getFailureReason());
+    }
+
+    @Test
+    void shouldMarkTransactionAsFailedWhenSecondAccountNotFoundForTransfer() {
+        String txId = "tx-transfer";
+        String sourceAccountNumber = "A1B2C3D4E5";
+        String targetAccountNumber = "X9Y8Z7W6V5";
+        TransactionRecord pendingTx = new TransactionRecord(
+                txId, sourceAccountNumber, targetAccountNumber, new BigDecimal("50.00"),
+                TransactionType.TRANSFER, LocalDateTime.now(), TransactionStatus.PENDING, null
+        );
+        TransactionPendingEvent event = new TransactionPendingEvent(
+                UUID.randomUUID(), txId, Instant.now(), sourceAccountNumber, targetAccountNumber,
+                new BigDecimal("50.00"), TransactionType.TRANSFER, "USER-123"
+        );
+        Account sourceAccount = new Account("uuid-1", "USER-123", sourceAccountNumber, new BigDecimal("100.00"), 1L);
+
+        when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
+        when(accountRepository.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.of(sourceAccount)); // first alphabetically
+        when(accountRepository.lockAndLoad(targetAccountNumber)).thenReturn(Optional.empty()); // second alphabetically
+
+        processTransactionService.process(event);
+
+        verify(transactionRecordRepository, times(1)).save(transactionCaptor.capture());
+        TransactionRecord finalTx = transactionCaptor.getValue();
+        assertEquals(txId, finalTx.getId());
+        assertEquals(TransactionStatus.FAILED, finalTx.getStatus());
+        assertEquals("Account not found: " + targetAccountNumber, finalTx.getFailureReason());
+    }
+
+    @Test
     void shouldIgnoreProcessingWhenTransactionAlreadyProcessed() {
         String txId = "tx-789";
         TransactionRecord completedTx = new TransactionRecord(
