@@ -1,5 +1,27 @@
 CREATE SCHEMA IF NOT EXISTS events_schema;
 
+-- Outbox events table: used by OutboxEventPublisherAdapter to write events atomically
+-- with business state changes. OutboxEventScheduler polls this table.
+CREATE TABLE IF NOT EXISTS events_schema.outbox_events (
+    id           UUID PRIMARY KEY,
+    aggregate_type VARCHAR(255) NOT NULL,
+    aggregate_id   VARCHAR(255) NOT NULL,
+    event_type     VARCHAR(255) NOT NULL,
+    payload        TEXT NOT NULL,
+    created_at     TIMESTAMP NOT NULL,
+    status         VARCHAR(255) NOT NULL DEFAULT 'PENDING',
+    retry_count    INT NOT NULL DEFAULT 0
+);
+
+-- Processed events table: provides idempotency guard in SpringTransactionEventListener.
+-- The PRIMARY KEY constraint on 'id' already enforces uniqueness; the explicit
+-- UNIQUE constraint makes the intent clear and survives schema round-trips.
+CREATE TABLE IF NOT EXISTS events_schema.processed_events (
+    id           UUID PRIMARY KEY,
+    processed_at TIMESTAMP NOT NULL,
+    CONSTRAINT uq_processed_event_id UNIQUE (id)
+);
+
 -- Create transaction_records table if it doesn't exist (primarily for tests / H2 database setup)
 CREATE TABLE IF NOT EXISTS transaction_records (
     id UUID PRIMARY KEY,

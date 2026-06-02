@@ -7,6 +7,7 @@ import com.example.demo.infrastructure.adapter.out.persistence.repository.Spring
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,16 +26,18 @@ public class SpringTransactionEventListener {
     public void onTransactionPending(TransactionPendingEvent event) {
         log.info("Received transaction pending event: {} for transaction: {}", event.eventId(), event.transactionId());
 
-        // 1. Deduplication (Idempotency) check
-        if (processedEventRepository.existsById(event.eventId())) {
-            log.warn("Event {} has already been processed. Ignoring.", event.eventId());
+        // Idempotency: attempt to insert a processed_events row first.
+        // If the row already exists, the UNIQUE constraint on 'id' raises a
+        // DataIntegrityViolationException — we catch it and skip processing.
+        // This is atomic (no TOCTOU race between check and insert).
+        try {
+            processedEventRepository.saveAndFlush(
+                    new ProcessedEventJpaEntity(event.eventId(), LocalDateTime.now()));
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Event {} has already been processed. Ignoring duplicate.", event.eventId());
             return;
         }
 
-        // 2. Mark event as processed
-        processedEventRepository.save(new ProcessedEventJpaEntity(event.eventId(), LocalDateTime.now()));
-
-        // 3. Process transaction
         processTransactionUseCase.process(event);
     }
 }

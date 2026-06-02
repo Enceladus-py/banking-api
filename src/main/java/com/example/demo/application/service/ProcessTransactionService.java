@@ -3,14 +3,14 @@ package com.example.demo.application.service;
 import com.example.demo.application.port.in.ProcessTransactionUseCase;
 import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.application.port.out.TransactionRecordRepository;
-import com.example.demo.domain.event.TransactionEvent;
 import com.example.demo.domain.event.TransactionPendingEvent;
 import com.example.demo.domain.model.Account;
 import com.example.demo.domain.model.TransactionRecord;
 import com.example.demo.domain.model.TransactionRecord.TransactionStatus;
+import com.example.demo.domain.model.TransactionRecord.TransactionType;
 import com.example.demo.domain.exception.EntityNotFoundException;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 @Transactional
@@ -39,52 +39,52 @@ public class ProcessTransactionService implements ProcessTransactionUseCase {
         }
 
         try {
-            if (event.type() == TransactionEvent.TransactionType.DEPOSIT) {
+            if (event.type() == TransactionType.DEPOSIT) {
                 // Fetch with write lock for safety during state mutation
-                Account target = accountRepository.findByAccountNumberForWrite(event.targetAccountNumber())
+                Account target = accountRepository.lockAndLoad(event.targetAccountNumber())
                         .orElseThrow(() -> new EntityNotFoundException("Target account not found"));
-                
+
                 target.deposit(event.amount());
                 accountRepository.save(target);
 
-            } else if (event.type() == TransactionEvent.TransactionType.WITHDRAWAL) {
+            } else if (event.type() == TransactionType.WITHDRAWAL) {
                 // Fetch with write lock for safety during state mutation
-                Account source = accountRepository.findByAccountNumberForWrite(event.sourceAccountNumber())
+                Account source = accountRepository.lockAndLoad(event.sourceAccountNumber())
                         .orElseThrow(() -> new EntityNotFoundException("Source account not found"));
-                
+
                 source.withdraw(event.amount());
                 accountRepository.save(source);
+
+            } else if (event.type() == TransactionType.TRANSFER) {
+                // Lock both accounts in a consistent alphabetical order to prevent deadlocks
+                boolean sourceFirst = event.sourceAccountNumber().compareTo(event.targetAccountNumber()) <= 0;
+                final String firstKey  = sourceFirst ? event.sourceAccountNumber() : event.targetAccountNumber();
+                final String secondKey = sourceFirst ? event.targetAccountNumber() : event.sourceAccountNumber();
+
+                Account a = accountRepository.lockAndLoad(firstKey)
+                        .orElseThrow(() -> new EntityNotFoundException("Account not found: " + firstKey));
+                Account b = accountRepository.lockAndLoad(secondKey)
+                        .orElseThrow(() -> new EntityNotFoundException("Account not found: " + secondKey));
+
+                // Re-assign source/target after ordering
+                Account source = a.getAccountNumber().equals(event.sourceAccountNumber()) ? a : b;
+                Account target = a.getAccountNumber().equals(event.targetAccountNumber()) ? a : b;
+
+                source.withdraw(event.amount());
+                target.deposit(event.amount());
+                accountRepository.save(source);
+                accountRepository.save(target);
             }
 
-            // Update Transaction state to COMPLETED
-            TransactionRecord completedTx = new TransactionRecord(
-                    tx.getId(),
-                    tx.getSourceAccountNumber(),
-                    tx.getTargetAccountNumber(),
-                    tx.getAmount(),
-                    tx.getType(),
-                    tx.getTimestamp(),
-                    TransactionStatus.COMPLETED,
-                    null
-            );
-            transactionRecordRepository.save(completedTx);
+            // Transition domain object to COMPLETED — no manual reconstruction needed
+            transactionRecordRepository.save(tx.complete());
             log.info("Transaction {} successfully completed", tx.getId());
 
         } catch (Exception e) {
             log.error("Transaction {} failed to process: {}", tx.getId(), e.getMessage());
-            
-            // Update Transaction state to FAILED
-            TransactionRecord failedTx = new TransactionRecord(
-                    tx.getId(),
-                    tx.getSourceAccountNumber(),
-                    tx.getTargetAccountNumber(),
-                    tx.getAmount(),
-                    tx.getType(),
-                    tx.getTimestamp(),
-                    TransactionStatus.FAILED,
-                    e.getMessage()
-            );
-            transactionRecordRepository.save(failedTx);
+
+            // Transition domain object to FAILED with reason
+            transactionRecordRepository.save(tx.fail(e.getMessage()));
         }
     }
 }

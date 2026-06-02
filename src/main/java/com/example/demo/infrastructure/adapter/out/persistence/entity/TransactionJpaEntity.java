@@ -47,8 +47,25 @@ public class TransactionJpaEntity implements Persistable<UUID> {
     @Column(name = "failure_reason")
     private String failureReason;
 
+    /**
+     * Tracks whether this entity instance has been persisted yet.
+     * Starts as {@code true} for newly-constructed instances (INSERT path).
+     * Flipped to {@code false} by {@link #onPersist()} and {@link #onLoad()}
+     * so that subsequent {@code save()} calls take the UPDATE path without
+     * issuing an extra SELECT.
+     */
+    @Transient
+    @Builder.Default
+    private boolean isNew = true;
+
+    @PostPersist
+    @PostLoad
+    void onPersist() {
+        this.isNew = false;
+    }
+
     @Override
     public boolean isNew() {
-        return true;
+        return isNew;
     }
 }

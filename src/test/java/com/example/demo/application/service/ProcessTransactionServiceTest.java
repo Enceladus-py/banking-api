@@ -2,7 +2,6 @@ package com.example.demo.application.service;
 
 import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.application.port.out.TransactionRecordRepository;
-import com.example.demo.domain.event.TransactionEvent;
 import com.example.demo.domain.event.TransactionPendingEvent;
 import com.example.demo.domain.model.Account;
 import com.example.demo.domain.model.TransactionRecord;
@@ -55,12 +54,12 @@ class ProcessTransactionServiceTest {
         );
         TransactionPendingEvent event = new TransactionPendingEvent(
                 UUID.randomUUID(), txId, Instant.now(), null, accountNumber,
-                new BigDecimal("100.00"), TransactionEvent.TransactionType.DEPOSIT, "USER-123"
+                new BigDecimal("100.00"), TransactionType.DEPOSIT, "USER-123"
         );
         Account targetAccount = new Account("uuid-123", "USER-123", accountNumber, BigDecimal.ZERO, 1L);
 
         when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
-        when(accountRepository.findByAccountNumberForWrite(accountNumber)).thenReturn(Optional.of(targetAccount));
+        when(accountRepository.lockAndLoad(accountNumber)).thenReturn(Optional.of(targetAccount));
 
         processTransactionService.process(event);
 
@@ -84,12 +83,12 @@ class ProcessTransactionServiceTest {
         );
         TransactionPendingEvent event = new TransactionPendingEvent(
                 UUID.randomUUID(), txId, Instant.now(), accountNumber, null,
-                new BigDecimal("50.00"), TransactionEvent.TransactionType.WITHDRAWAL, "USER-123"
+                new BigDecimal("50.00"), TransactionType.WITHDRAWAL, "USER-123"
         );
         Account sourceAccount = new Account("uuid-123", "USER-123", accountNumber, new BigDecimal("100.00"), 1L);
 
         when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
-        when(accountRepository.findByAccountNumberForWrite(accountNumber)).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.lockAndLoad(accountNumber)).thenReturn(Optional.of(sourceAccount));
 
         processTransactionService.process(event);
 
@@ -112,12 +111,12 @@ class ProcessTransactionServiceTest {
         );
         TransactionPendingEvent event = new TransactionPendingEvent(
                 UUID.randomUUID(), txId, Instant.now(), accountNumber, null,
-                new BigDecimal("150.00"), TransactionEvent.TransactionType.WITHDRAWAL, "USER-123"
+                new BigDecimal("150.00"), TransactionType.WITHDRAWAL, "USER-123"
         );
         Account sourceAccount = new Account("uuid-123", "USER-123", accountNumber, new BigDecimal("100.00"), 1L);
 
         when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
-        when(accountRepository.findByAccountNumberForWrite(accountNumber)).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.lockAndLoad(accountNumber)).thenReturn(Optional.of(sourceAccount));
 
         processTransactionService.process(event);
 
@@ -135,13 +134,13 @@ class ProcessTransactionServiceTest {
         String txId = "NON-EXISTENT";
         TransactionPendingEvent event = new TransactionPendingEvent(
                 UUID.randomUUID(), txId, Instant.now(), null, "ACC123",
-                new BigDecimal("100.00"), TransactionEvent.TransactionType.DEPOSIT, "USER-123"
+                new BigDecimal("100.00"), TransactionType.DEPOSIT, "USER-123"
         );
 
         when(transactionRecordRepository.findById(txId)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> processTransactionService.process(event));
-        verify(accountRepository, never()).findByAccountNumberForWrite(anyString());
+        verify(accountRepository, never()).lockAndLoad(anyString());
     }
 
     @Test
@@ -154,11 +153,11 @@ class ProcessTransactionServiceTest {
         );
         TransactionPendingEvent event = new TransactionPendingEvent(
                 UUID.randomUUID(), txId, Instant.now(), null, accountNumber,
-                new BigDecimal("100.00"), TransactionEvent.TransactionType.DEPOSIT, "USER-123"
+                new BigDecimal("100.00"), TransactionType.DEPOSIT, "USER-123"
         );
 
         when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
-        when(accountRepository.findByAccountNumberForWrite(accountNumber)).thenReturn(Optional.empty());
+        when(accountRepository.lockAndLoad(accountNumber)).thenReturn(Optional.empty());
 
         processTransactionService.process(event);
 
@@ -179,11 +178,11 @@ class ProcessTransactionServiceTest {
         );
         TransactionPendingEvent event = new TransactionPendingEvent(
                 UUID.randomUUID(), txId, Instant.now(), accountNumber, null,
-                new BigDecimal("50.00"), TransactionEvent.TransactionType.WITHDRAWAL, "USER-123"
+                new BigDecimal("50.00"), TransactionType.WITHDRAWAL, "USER-123"
         );
 
         when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
-        when(accountRepository.findByAccountNumberForWrite(accountNumber)).thenReturn(Optional.empty());
+        when(accountRepository.lockAndLoad(accountNumber)).thenReturn(Optional.empty());
 
         processTransactionService.process(event);
 
@@ -203,14 +202,14 @@ class ProcessTransactionServiceTest {
         );
         TransactionPendingEvent event = new TransactionPendingEvent(
                 UUID.randomUUID(), txId, Instant.now(), null, "ACC123",
-                new BigDecimal("100.00"), TransactionEvent.TransactionType.DEPOSIT, "USER-123"
+                new BigDecimal("100.00"), TransactionType.DEPOSIT, "USER-123"
         );
 
         when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(completedTx));
 
         processTransactionService.process(event);
 
-        verify(accountRepository, never()).findByAccountNumberForWrite(anyString());
+        verify(accountRepository, never()).lockAndLoad(anyString());
         verify(transactionRecordRepository, never()).save(any());
     }
 }

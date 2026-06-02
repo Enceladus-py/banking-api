@@ -1,5 +1,7 @@
 package com.example.demo.domain.event;
 
+import com.example.demo.domain.model.TransactionRecord.TransactionType;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -11,6 +13,6 @@ public record TransactionPendingEvent(
         String sourceAccountNumber,
         String targetAccountNumber,
         BigDecimal amount,
-        TransactionEvent.TransactionType type,
+        TransactionType type,
         String requesterId
 ) implements TransactionEvent {}

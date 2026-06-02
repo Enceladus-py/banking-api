@@ -51,8 +51,9 @@ public class BeanConfig {
     @Bean
     public TransferService transferService(
             AccountRepository accountRepository,
-            TransactionRecordRepository transactionRecordRepository) {
-        return new TransferService(accountRepository, transactionRecordRepository);
+            TransactionRecordRepository transactionRecordRepository,
+            EventPublisher eventPublisher) {
+        return new TransferService(accountRepository, transactionRecordRepository, eventPublisher);
     }
 
     @Bean

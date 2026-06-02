@@ -8,7 +8,6 @@ import java.util.UUID;
 @Entity
 @Table(name = "outbox_events", schema = "events_schema")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -34,5 +33,10 @@ public class OutboxEventJpaEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Setter // Only status is mutable after creation
     private OutboxStatus status;
+
+    @Column(name = "retry_count", nullable = false)
+    @Setter // Incremented by the scheduler on each failed attempt
+    private int retryCount;
 }

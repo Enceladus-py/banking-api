@@ -2,16 +2,19 @@ package com.example.demo.application.service;
 
 import com.example.demo.application.port.in.TransferMoneyUseCase.TransferCommand;
 import com.example.demo.application.port.out.AccountRepository;
+import com.example.demo.application.port.out.EventPublisher;
 import com.example.demo.application.port.out.TransactionRecordRepository;
+import com.example.demo.domain.event.TransactionPendingEvent;
 import com.example.demo.domain.model.Account;
 import com.example.demo.domain.model.TransactionRecord;
+import com.example.demo.domain.model.TransactionRecord.TransactionStatus;
+import com.example.demo.domain.model.TransactionRecord.TransactionType;
+import com.example.demo.domain.exception.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import com.example.demo.domain.exception.EntityNotFoundException;
-import com.example.demo.domain.exception.InsufficientFundsException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -22,6 +25,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for {@link TransferService}.
+ *
+ * <p>TransferService now follows the outbox pattern: it validates accounts,
+ * creates a PENDING ledger entry, and publishes a {@link TransactionPendingEvent}.
+ * The actual balance mutation is done asynchronously by
+ * {@link ProcessTransactionService} when the outbox scheduler fires.
+ */
 @ExtendWith(MockitoExtension.class)
 class TransferServiceTest {
 
@@ -31,46 +42,65 @@ class TransferServiceTest {
     @Mock
     private TransactionRecordRepository transactionRecordRepository;
 
-    @InjectMocks
+    @Mock
+    private EventPublisher eventPublisher;
+
     private TransferService transferService;
 
     @Captor
     private ArgumentCaptor<TransactionRecord> transactionCaptor;
 
+    @Captor
+    private ArgumentCaptor<TransactionPendingEvent> eventCaptor;
+
+    @BeforeEach
+    void setUp() {
+        transferService = new TransferService(accountRepository, transactionRecordRepository, eventPublisher);
+    }
+
     @Test
-    void shouldTransferMoneySuccessfullyAndSaveLedger() {
+    void shouldCreatePendingLedgerEntryAndPublishEventOnSuccessfulTransfer() {
         // Arrange
-        String sourceId = "SRC1234567";
-        String targetId = "TGT1234567";
+        String sourceId   = "SRC1234567";
+        String targetId   = "TGT1234567";
         String requesterId = "USER-1";
-        BigDecimal amount = new BigDecimal("150.00");
+        BigDecimal amount  = new BigDecimal("150.00");
 
         Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("500.00"), 1L);
         Account targetAccount = new Account("uuid-2", "USER-2", targetId, new BigDecimal("100.00"), 1L);
 
-        TransferCommand command = new TransferCommand(sourceId, targetId, amount, requesterId);
-
-        when(accountRepository.findByAccountNumberForWrite(sourceId)).thenReturn(Optional.of(sourceAccount));
-        when(accountRepository.findByAccountNumberForWrite(targetId)).thenReturn(Optional.of(targetAccount));
+        when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.findByAccountNumber(targetId)).thenReturn(Optional.of(targetAccount));
 
         // Act
-        transferService.transfer(command);
+        transferService.transfer(new TransferCommand(sourceId, targetId, amount, requesterId));
 
-        // Assert Account States
-        assertEquals(new BigDecimal("350.00"), sourceAccount.getBalance());
-        assertEquals(new BigDecimal("250.00"), targetAccount.getBalance());
+        // Assert: balances are NOT mutated by the initiating service
+        assertEquals(new BigDecimal("500.00"), sourceAccount.getBalance(),
+                "Source balance must not change during initiation — outbox handles it");
+        assertEquals(new BigDecimal("100.00"), targetAccount.getBalance(),
+                "Target balance must not change during initiation — outbox handles it");
 
-        // Verify saves
-        verify(accountRepository).save(sourceAccount);
-        verify(accountRepository).save(targetAccount);
+        // Assert: no account saves during initiation
+        verify(accountRepository, never()).save(any());
 
-        // Verify Ledger
+        // Assert: PENDING ledger entry is saved
         verify(transactionRecordRepository).save(transactionCaptor.capture());
-        TransactionRecord savedLedger = transactionCaptor.getValue();
-        assertEquals(sourceId, savedLedger.getSourceAccountNumber());
-        assertEquals(targetId, savedLedger.getTargetAccountNumber());
-        assertEquals(amount, savedLedger.getAmount());
-        assertEquals(TransactionRecord.TransactionType.TRANSFER, savedLedger.getType());
+        TransactionRecord pendingTx = transactionCaptor.getValue();
+        assertEquals(sourceId, pendingTx.getSourceAccountNumber());
+        assertEquals(targetId, pendingTx.getTargetAccountNumber());
+        assertEquals(amount, pendingTx.getAmount());
+        assertEquals(TransactionType.TRANSFER, pendingTx.getType());
+        assertEquals(TransactionStatus.PENDING, pendingTx.getStatus());
+
+        // Assert: TransactionPendingEvent is published to outbox
+        verify(eventPublisher).publish(eventCaptor.capture());
+        TransactionPendingEvent event = eventCaptor.getValue();
+        assertEquals(pendingTx.getId(), event.transactionId());
+        assertEquals(TransactionType.TRANSFER, event.type());
+        assertEquals(sourceId, event.sourceAccountNumber());
+        assertEquals(targetId, event.targetAccountNumber());
+        assertEquals(amount, event.amount());
     }
 
     @Test
@@ -80,68 +110,35 @@ class TransferServiceTest {
         String targetId = "TGT1234567";
         Account sourceAccount = new Account("uuid-1", "USER-1", sourceId, new BigDecimal("500.00"), 1L);
 
-        TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("100.00"), "HACKER-ID");
-
-        when(accountRepository.findByAccountNumberForWrite(sourceId)).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
 
         // Act & Assert
-        SecurityException exception = assertThrows(SecurityException.class, () -> {
-            transferService.transfer(command);
-        });
+        SecurityException ex = assertThrows(SecurityException.class, () ->
+                transferService.transfer(new TransferCommand(sourceId, targetId, new BigDecimal("100.00"), "HACKER-ID")));
 
-        assertEquals("You are not authorized to transfer money from this account", exception.getMessage());
-
-        verify(accountRepository, never()).save(any());
+        assertEquals("You are not authorized to transfer money from this account", ex.getMessage());
         verify(transactionRecordRepository, never()).save(any());
-    }
-
-    @Test
-    void shouldAbortWhenSourceAccountHasInsufficientFunds() {
-        // Arrange
-        String sourceId = "SRC1234567";
-        String targetId = "TGT1234567";
-        String requesterId = "USER-1";
-        Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("50.00"), 1L);
-        Account targetAccount = new Account("uuid-2", "USER-2", targetId, new BigDecimal("100.00"), 1L);
-
-        TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("1000.00"), requesterId);
-
-        when(accountRepository.findByAccountNumberForWrite(sourceId)).thenReturn(Optional.of(sourceAccount));
-        when(accountRepository.findByAccountNumberForWrite(targetId)).thenReturn(Optional.of(targetAccount));
-
-        // Act & Assert
-        InsufficientFundsException exception = assertThrows(InsufficientFundsException.class, () -> {
-            transferService.transfer(command);
-        });
-
-        assertEquals("Insufficient funds", exception.getMessage());
-
-        verify(accountRepository, never()).save(any());
-        verify(transactionRecordRepository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
     }
 
     @Test
     void shouldAbortWhenTargetAccountNotFound() {
         // Arrange
-        String sourceId = "SRC1234567";
-        String targetId = "TGT1234567";
+        String sourceId    = "SRC1234567";
+        String targetId    = "TGT1234567";
         String requesterId = "USER-1";
         Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("500.00"), 1L);
 
-        TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("100.00"), requesterId);
-
-        when(accountRepository.findByAccountNumberForWrite(sourceId)).thenReturn(Optional.of(sourceAccount));
-        when(accountRepository.findByAccountNumberForWrite(targetId)).thenReturn(Optional.empty());
+        when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.findByAccountNumber(targetId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-            transferService.transfer(command);
-        });
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () ->
+                transferService.transfer(new TransferCommand(sourceId, targetId, new BigDecimal("100.00"), requesterId)));
 
-        assertEquals("Target account not found", exception.getMessage());
-
-        verify(accountRepository, never()).save(any());
+        assertEquals("Target account not found", ex.getMessage());
         verify(transactionRecordRepository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
     }
 
     @Test
@@ -149,20 +146,15 @@ class TransferServiceTest {
         // Arrange
         String sourceId = "SRC1234567";
         String targetId = "TGT1234567";
-        String requesterId = "USER-1";
 
-        TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("100.00"), requesterId);
-
-        when(accountRepository.findByAccountNumberForWrite(sourceId)).thenReturn(Optional.empty());
+        when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-            transferService.transfer(command);
-        });
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () ->
+                transferService.transfer(new TransferCommand(sourceId, targetId, new BigDecimal("100.00"), "USER-1")));
 
-        assertEquals("Source account not found", exception.getMessage());
-
-        verify(accountRepository, never()).save(any());
+        assertEquals("Source account not found", ex.getMessage());
         verify(transactionRecordRepository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
     }
 }

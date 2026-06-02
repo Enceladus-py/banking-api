@@ -1,8 +1,16 @@
 package com.example.demo.domain.event;
 
+import com.example.demo.domain.model.TransactionRecord.TransactionType;
+
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Sealed hierarchy of domain events emitted during a transaction lifecycle.
+ * <p>
+ * {@link TransactionType} is imported from the domain model so there is a
+ * single canonical definition shared by both events and records.
+ */
 public sealed interface TransactionEvent permits
         TransactionPendingEvent,
         TransactionCompletedEvent,
@@ -11,10 +19,4 @@ public sealed interface TransactionEvent permits
     UUID eventId();
     String transactionId();
     Instant timestamp();
-
-    enum TransactionType {
-        DEPOSIT,
-        WITHDRAWAL,
-        TRANSFER
-    }
 }

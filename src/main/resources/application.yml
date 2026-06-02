@@ -4,8 +4,9 @@ spring:
       mode: always
   jpa:
     hibernate:
-      # 'update' automatically creates the 'account' table based on AccountJpaEntity
-      ddl-auto: update 
+      # 'validate' checks that the schema matches entity mappings but never alters it.
+      # Use Flyway/Liquibase or schema.sql for schema changes.
+      ddl-auto: validate
     # Show the generated SQL in your terminal so you can see it working
     show-sql: true
     properties:

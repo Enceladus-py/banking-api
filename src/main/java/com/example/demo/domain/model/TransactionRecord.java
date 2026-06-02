@@ -50,6 +50,34 @@ public class TransactionRecord {
         this.failureReason = failureReason;
     }
 
+    /**
+     * Returns a new {@link TransactionRecord} representing this transaction in
+     * the {@link TransactionStatus#COMPLETED} state. The original record is
+     * not mutated (immutable wither pattern).
+     */
+    public TransactionRecord complete() {
+        if (this.status != TransactionStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Only PENDING transactions can be completed, but current status is " + this.status);
+        }
+        return new TransactionRecord(id, sourceAccountNumber, targetAccountNumber,
+                amount, type, timestamp, TransactionStatus.COMPLETED, null);
+    }
+
+    /**
+     * Returns a new {@link TransactionRecord} representing this transaction in
+     * the {@link TransactionStatus#FAILED} state with a human-readable reason.
+     * The original record is not mutated.
+     */
+    public TransactionRecord fail(String reason) {
+        if (this.status != TransactionStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Only PENDING transactions can be failed, but current status is " + this.status);
+        }
+        return new TransactionRecord(id, sourceAccountNumber, targetAccountNumber,
+                amount, type, timestamp, TransactionStatus.FAILED, reason);
+    }
+
     private static void validate(String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
             TransactionType type) {
         // 1. Amount validations

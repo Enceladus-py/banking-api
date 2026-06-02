@@ -4,7 +4,6 @@ import com.example.demo.application.port.in.WithdrawMoneyUseCase;
 import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.application.port.out.TransactionRecordRepository;
 import com.example.demo.application.port.out.EventPublisher;
-import com.example.demo.domain.event.TransactionEvent;
 import com.example.demo.domain.event.TransactionPendingEvent;
 import com.example.demo.domain.model.Account;
 import com.example.demo.domain.model.TransactionRecord;
@@ -13,7 +12,7 @@ import com.example.demo.domain.exception.EntityNotFoundException;
 
 import java.time.Instant;
 import java.util.UUID;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
 public class WithdrawMoneyService implements WithdrawMoneyUseCase {
@@ -57,7 +56,7 @@ public class WithdrawMoneyService implements WithdrawMoneyUseCase {
                 account.getAccountNumber(),
                 null,
                 command.amount(),
-                TransactionEvent.TransactionType.WITHDRAWAL,
+                TransactionType.WITHDRAWAL,
                 command.requesterId()
         ));
 

@@ -1,9 +1,12 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb
+    url: "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;INIT=CREATE SCHEMA IF NOT EXISTS events_schema"
     driver-class-name: org.h2.Driver
     username: sa
     password:
+  sql:
+    init:
+      mode: never  # Hibernate create-drop handles schema; schema.sql is for PostgreSQL only
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:

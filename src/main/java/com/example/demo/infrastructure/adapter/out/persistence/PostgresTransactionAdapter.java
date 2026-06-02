@@ -24,12 +24,10 @@ public class PostgresTransactionAdapter implements TransactionRecordRepository {
 
     @Override
     public void save(TransactionRecord transaction) {
-        TransactionJpaEntity jpaEntity = toJpaEntity(transaction);
-        if (repository.existsById(jpaEntity.getId())) {
-            repository.updateStatus(jpaEntity.getId(), jpaEntity.getStatus(), jpaEntity.getFailureReason());
-        } else {
-            repository.saveAndFlush(jpaEntity);
-        }
+        // isNew() on TransactionJpaEntity is driven by a @Transient flag:
+        // new instances → INSERT; instances loaded from DB → UPDATE.
+        // No extra SELECT (existsById) needed.
+        repository.saveAndFlush(toJpaEntity(transaction));
     }
 
     @Override
@@ -66,6 +64,7 @@ public class PostgresTransactionAdapter implements TransactionRecordRepository {
     }
 
     private TransactionJpaEntity toJpaEntity(TransactionRecord domain) {
+        boolean isNewEntity = domain.getStatus() == TransactionRecord.TransactionStatus.PENDING;
         return TransactionJpaEntity.builder()
                 .id(UUID.fromString(domain.getId()))
                 .sourceAccountNumber(domain.getSourceAccountNumber())
@@ -75,6 +74,7 @@ public class PostgresTransactionAdapter implements TransactionRecordRepository {
                 .timestamp(domain.getTimestamp())
                 .status(domain.getStatus())
                 .failureReason(domain.getFailureReason())
+                .isNew(isNewEntity)
                 .build();
     }
 

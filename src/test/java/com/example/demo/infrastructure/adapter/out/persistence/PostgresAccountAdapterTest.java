@@ -82,7 +82,7 @@ class PostgresAccountAdapterTest {
         adapter.save(baseAccount);
 
         // Act
-        Optional<Account> fetchedOpt = adapter.findByAccountNumberForWrite(accountNumber);
+        Optional<Account> fetchedOpt = adapter.lockAndLoad(accountNumber);
 
         // Assert
         assertTrue(fetchedOpt.isPresent());

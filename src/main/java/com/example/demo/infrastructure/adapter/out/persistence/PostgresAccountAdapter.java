@@ -49,7 +49,7 @@ public class PostgresAccountAdapter implements AccountRepository {
     }
 
     @Override
-    public Optional<Account> findByAccountNumberForWrite(String accountNumber) {
+    public Optional<Account> lockAndLoad(String accountNumber) {
         return repository.findByAccountNumberForWrite(accountNumber).map(this::toDomainModel);
     }
 }

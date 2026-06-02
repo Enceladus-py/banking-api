@@ -4,11 +4,11 @@ import com.example.demo.application.port.in.DepositMoneyUseCase.DepositCommand;
 import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.application.port.out.TransactionRecordRepository;
 import com.example.demo.application.port.out.EventPublisher;
-import com.example.demo.domain.event.TransactionEvent;
 import com.example.demo.domain.event.TransactionPendingEvent;
 import com.example.demo.domain.model.Account;
 import com.example.demo.domain.model.TransactionRecord;
 import com.example.demo.domain.model.TransactionRecord.TransactionStatus;
+import com.example.demo.domain.model.TransactionRecord.TransactionType;
 import com.example.demo.domain.exception.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,7 +72,7 @@ class DepositMoneyServiceTest {
         verify(eventPublisher, times(1)).publish(eventCaptor.capture());
         TransactionPendingEvent event = eventCaptor.getValue();
         assertEquals(pendingTx.getId(), event.transactionId());
-        assertEquals(TransactionEvent.TransactionType.DEPOSIT, event.type());
+        assertEquals(TransactionType.DEPOSIT, event.type());
     }
 
     @Test
