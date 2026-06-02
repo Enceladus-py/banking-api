@@ -1,10 +1,11 @@
 package com.example.demo.application.port.in;
 
+import com.example.demo.domain.model.TransactionRecord;
 import java.math.BigDecimal;
 
 public interface TransferMoneyUseCase {
 
-    void transfer(TransferCommand command);
+    TransactionRecord transfer(TransferCommand command);
 
     record TransferCommand(String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
             String requesterId) {

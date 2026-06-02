@@ -41,7 +41,7 @@ public class TransferService implements TransferMoneyUseCase {
     }
 
     @Override
-    public void transfer(TransferCommand command) {
+    public TransactionRecord transfer(TransferCommand command) {
         // Validate source account existence and ownership (no write lock needed yet)
         Account sourceAccount = accountRepository.findByAccountNumber(command.sourceAccountNumber())
                 .orElseThrow(() -> new EntityNotFoundException("Source account not found"));
@@ -73,5 +73,7 @@ public class TransferService implements TransferMoneyUseCase {
                 TransactionType.TRANSFER,
                 command.requesterId()
         ));
+        
+        return pendingTx;
     }
 }

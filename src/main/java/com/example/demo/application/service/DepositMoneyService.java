@@ -28,7 +28,7 @@ public class DepositMoneyService implements DepositMoneyUseCase {
     }
 
     @Override
-    public Account deposit(DepositCommand command) {
+    public TransactionRecord deposit(DepositCommand command) {
         // Fetch the account (No lock needed for initiating the pending state)
         Account account = accountRepository.findByAccountNumber(command.accountId())
                 .orElseThrow(() -> new EntityNotFoundException("Account not found"));
@@ -58,6 +58,6 @@ public class DepositMoneyService implements DepositMoneyUseCase {
                 command.requesterId()
         ));
 
-        return account;
+        return pendingTx;
     }
 }

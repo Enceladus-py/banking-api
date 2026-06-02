@@ -59,10 +59,10 @@ class WithdrawMoneyServiceTest {
 
         when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
 
-        Account result = withdrawMoneyService.withdraw(command);
+        TransactionRecord result = withdrawMoneyService.withdraw(command);
 
         assertNotNull(result);
-        assertEquals(new BigDecimal("500.00"), result.getBalance());
+        assertEquals(TransactionStatus.PENDING, result.getStatus());
 
         verify(transactionRecordRepository, times(1)).save(transactionCaptor.capture());
         TransactionRecord pendingTx = transactionCaptor.getValue();

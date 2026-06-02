@@ -1,6 +1,7 @@
 package com.example.demo.infrastructure.adapter.in.web;
 
 import com.example.demo.application.port.in.GetAccountTransactionsUseCase;
+import com.example.demo.application.port.in.GetTransactionUseCase;
 import com.example.demo.application.port.in.dto.PageRequest;
 import com.example.demo.application.port.in.dto.PageResult;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,9 @@ class TransactionControllerTest {
 
     @MockitoBean
     private GetAccountTransactionsUseCase getAccountTransactionsUseCase;
+
+    @MockitoBean
+    private GetTransactionUseCase getTransactionUseCase;
 
     @Test
     void shouldReturnPaginatedTransactionsWithCustomParams() throws Exception {
@@ -73,5 +77,24 @@ class TransactionControllerTest {
         // Verify the Controller used the default values defined in @RequestParam AND
         // extracted the user ID
         verify(getAccountTransactionsUseCase).getTransactions(accountNumber, new PageRequest(0, 10), requesterId);
+    }
+
+    @Test
+    void shouldReturn200AndTransactionResponseWhenGettingById() throws Exception {
+        String txId = "tx-12345";
+        String requesterId = "USER-123";
+        com.example.demo.domain.model.TransactionRecord tx = new com.example.demo.domain.model.TransactionRecord(txId, "ACC-SRC", "ACC-TGT", new java.math.BigDecimal("50.00"), com.example.demo.domain.model.TransactionRecord.TransactionType.TRANSFER, java.time.LocalDateTime.now(), com.example.demo.domain.model.TransactionRecord.TransactionStatus.COMPLETED, null);
+
+        when(getTransactionUseCase.getTransaction(eq(txId), eq(requesterId))).thenReturn(tx);
+
+        mockMvc.perform(get("/api/transactions/id/{transactionId}", txId)
+                .header("X-User-Id", requesterId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(txId))
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.amount").value(50.00));
+
+        verify(getTransactionUseCase).getTransaction(txId, requesterId);
     }
 }

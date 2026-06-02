@@ -28,7 +28,7 @@ public class WithdrawMoneyService implements WithdrawMoneyUseCase {
     }
 
     @Override
-    public Account withdraw(WithdrawCommand command) {
+    public TransactionRecord withdraw(WithdrawCommand command) {
         // Fetch the account (No lock needed for initiating the pending state)
         Account account = accountRepository.findByAccountNumber(command.accountId())
                 .orElseThrow(() -> new EntityNotFoundException("Account not found"));
@@ -58,6 +58,6 @@ public class WithdrawMoneyService implements WithdrawMoneyUseCase {
                 command.requesterId()
         ));
 
-        return account;
+        return pendingTx;
     }
 }

@@ -2,6 +2,7 @@ package com.example.demo.infrastructure.adapter.in.web;
 
 import com.example.demo.application.port.in.TransferMoneyUseCase;
 import org.junit.jupiter.api.Test;
+import com.example.demo.domain.model.TransactionRecord;
 import com.example.demo.domain.exception.EntityNotFoundException;
 import com.example.demo.domain.exception.InsufficientFundsException;
 import org.mockito.ArgumentCaptor;
@@ -11,6 +12,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -37,13 +39,14 @@ class TransferControllerTest {
                 """;
         String requesterId = "USER-123";
 
-        doNothing().when(transferMoneyUseCase).transfer(any(TransferMoneyUseCase.TransferCommand.class));
+        TransactionRecord expectedTx = new TransactionRecord("tx-id", "1111111111", "2222222222", new BigDecimal("100.50"), TransactionRecord.TransactionType.TRANSFER, java.time.LocalDateTime.now(), TransactionRecord.TransactionStatus.PENDING, null);
+        when(transferMoneyUseCase.transfer(any(TransferMoneyUseCase.TransferCommand.class))).thenReturn(expectedTx);
 
         mockMvc.perform(post("/api/transfers")
                 .header("X-User-Id", requesterId) // Added Security Header
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(validPayload))
-                .andExpect(status().isOk());
+                .andExpect(status().isAccepted());
 
         // Capture and verify the command mapping
         ArgumentCaptor<TransferMoneyUseCase.TransferCommand> commandCaptor = ArgumentCaptor
@@ -84,8 +87,8 @@ class TransferControllerTest {
                 }
                 """;
 
-        doThrow(new SecurityException("You are not authorized to transfer money from this account"))
-                .when(transferMoneyUseCase).transfer(any(TransferMoneyUseCase.TransferCommand.class));
+        when(transferMoneyUseCase.transfer(any(TransferMoneyUseCase.TransferCommand.class)))
+                .thenThrow(new SecurityException("You are not authorized to transfer money from this account"));
 
         mockMvc.perform(post("/api/transfers")
                 .header("X-User-Id", "HACKER-ID")
@@ -105,8 +108,8 @@ class TransferControllerTest {
                 }
                 """;
 
-        doThrow(new InsufficientFundsException("Insufficient funds"))
-                .when(transferMoneyUseCase).transfer(any(TransferMoneyUseCase.TransferCommand.class));
+        when(transferMoneyUseCase.transfer(any(TransferMoneyUseCase.TransferCommand.class)))
+                .thenThrow(new InsufficientFundsException("Insufficient funds"));
 
         mockMvc.perform(post("/api/transfers")
                 .header("X-User-Id", "USER-123")
@@ -127,8 +130,8 @@ class TransferControllerTest {
                 """;
 
         // The domain/service layer throws EntityNotFoundException
-        doThrow(new EntityNotFoundException("Target account not found"))
-                .when(transferMoneyUseCase).transfer(any(TransferMoneyUseCase.TransferCommand.class));
+        when(transferMoneyUseCase.transfer(any(TransferMoneyUseCase.TransferCommand.class)))
+                .thenThrow(new EntityNotFoundException("Target account not found"));
 
         mockMvc.perform(post("/api/transfers")
                 .header("X-User-Id", "USER-123")

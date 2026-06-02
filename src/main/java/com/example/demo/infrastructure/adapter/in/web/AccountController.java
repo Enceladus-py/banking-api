@@ -2,10 +2,12 @@ package com.example.demo.infrastructure.adapter.in.web;
 
 import com.example.demo.application.port.in.CreateAccountUseCase;
 import com.example.demo.application.port.in.DepositMoneyUseCase;
+import com.example.demo.application.port.in.GetAccountUseCase;
 import com.example.demo.application.port.in.WithdrawMoneyUseCase;
 import com.example.demo.domain.model.Account;
 import com.example.demo.infrastructure.adapter.in.web.dto.AccountResponse;
 import com.example.demo.infrastructure.adapter.in.web.dto.TransactionRequest;
+import com.example.demo.infrastructure.adapter.in.web.dto.TransactionResponse;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,7 @@ public class AccountController {
     private final CreateAccountUseCase createAccountUseCase;
     private final DepositMoneyUseCase depositMoneyUseCase;
     private final WithdrawMoneyUseCase withdrawMoneyUseCase;
+    private final GetAccountUseCase getAccountUseCase;
 
     @PostMapping
     public ResponseEntity<AccountResponse> createAccount(@RequestHeader("X-User-Id") String requesterId) {
@@ -32,24 +35,33 @@ public class AccountController {
     }
 
     @PostMapping("/deposit")
-    public ResponseEntity<AccountResponse> depositMoney(
+    public ResponseEntity<TransactionResponse> depositMoney(
             @Valid @RequestBody TransactionRequest request,
             @RequestHeader("X-User-Id") String requesterId) {
 
         var command = new DepositMoneyUseCase.DepositCommand(request.accountNumber(), request.amount(),
                 requesterId);
-        Account account = depositMoneyUseCase.deposit(command);
-        return ResponseEntity.ok(toResponse(account));
+        var tx = depositMoneyUseCase.deposit(command);
+        return ResponseEntity.accepted().body(TransactionResponse.from(tx));
     }
 
     @PostMapping("/withdraw")
-    public ResponseEntity<AccountResponse> withdrawMoney(
+    public ResponseEntity<TransactionResponse> withdrawMoney(
             @Valid @RequestBody TransactionRequest request,
             @RequestHeader("X-User-Id") String requesterId) {
 
         var command = new WithdrawMoneyUseCase.WithdrawCommand(request.accountNumber(), request.amount(),
                 requesterId);
-        Account account = withdrawMoneyUseCase.withdraw(command);
+        var tx = withdrawMoneyUseCase.withdraw(command);
+        return ResponseEntity.accepted().body(TransactionResponse.from(tx));
+    }
+
+    @GetMapping("/{accountNumber}")
+    public ResponseEntity<AccountResponse> getAccount(
+            @PathVariable String accountNumber,
+            @RequestHeader("X-User-Id") String requesterId) {
+        
+        Account account = getAccountUseCase.getAccount(accountNumber, requesterId);
         return ResponseEntity.ok(toResponse(account));
     }
 

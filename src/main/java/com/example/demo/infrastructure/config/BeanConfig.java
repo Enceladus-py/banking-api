@@ -4,6 +4,7 @@ import com.example.demo.application.port.out.AccountRepository;
 import com.example.demo.application.port.out.TransactionRecordRepository;
 import com.example.demo.application.port.out.UserRepository;
 import com.example.demo.application.port.out.EventPublisher;
+import com.example.demo.application.service.AccountQueryService;
 import com.example.demo.application.service.CreateAccountService;
 import com.example.demo.application.service.DepositMoneyService;
 import com.example.demo.application.service.WithdrawMoneyService;
@@ -19,6 +20,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.example.demo.application.port.in.CreateAccountUseCase;
 import com.example.demo.application.port.in.DepositMoneyUseCase;
 import com.example.demo.application.port.in.GetAccountTransactionsUseCase;
+import com.example.demo.application.port.in.GetAccountUseCase;
+import com.example.demo.application.port.in.GetTransactionUseCase;
 import com.example.demo.application.port.in.GetUserUseCase;
 import com.example.demo.application.port.in.ProcessTransactionUseCase;
 import com.example.demo.application.port.in.RegisterUserUseCase;
@@ -73,7 +76,7 @@ public class BeanConfig {
             EventPublisher eventPublisher,
             TransactionTemplate txTemplate) {
         TransferService service = new TransferService(accountRepository, transactionRecordRepository, eventPublisher);
-        return command -> txTemplate.executeWithoutResult(status -> service.transfer(command));
+        return command -> txTemplate.execute(status -> service.transfer(command));
     }
 
     @Bean
@@ -81,6 +84,17 @@ public class BeanConfig {
             TransactionRecordRepository transactionRecordRepository, AccountRepository accountRepository) {
         // Reads often don't need explicit programmatic transactions in simple cases
         return new TransactionQueryService(transactionRecordRepository, accountRepository);
+    }
+
+    @Bean
+    public GetTransactionUseCase getTransactionUseCase(
+            TransactionRecordRepository transactionRecordRepository, AccountRepository accountRepository) {
+        return new TransactionQueryService(transactionRecordRepository, accountRepository);
+    }
+
+    @Bean
+    public GetAccountUseCase getAccountUseCase(AccountRepository accountRepository) {
+        return new AccountQueryService(accountRepository);
     }
 
     @Bean

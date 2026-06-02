@@ -5,7 +5,9 @@ import com.example.demo.application.port.in.CreateAccountUseCase.CreateAccountCo
 import com.example.demo.application.port.in.DepositMoneyUseCase;
 import com.example.demo.application.port.in.WithdrawMoneyUseCase;
 import com.example.demo.application.port.in.DepositMoneyUseCase.DepositCommand;
+import com.example.demo.application.port.in.GetAccountUseCase;
 import com.example.demo.domain.model.Account;
+import com.example.demo.domain.model.TransactionRecord;
 import org.junit.jupiter.api.Test;
 import com.example.demo.domain.exception.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,9 @@ class AccountControllerTest {
 
     @MockitoBean
     private WithdrawMoneyUseCase withdrawMoneyUseCase;
+
+    @MockitoBean
+    private GetAccountUseCase getAccountUseCase;
 
     @Test
     void shouldReturn200WhenAccountIsCreated() throws Exception {
@@ -73,9 +78,9 @@ class AccountControllerTest {
         // Arrange
         String accountNumber = "A1B2C3D4E5";
         String requesterId = "USER-123";
-        Account updatedAccount = new Account("uuid-123", requesterId, accountNumber, new BigDecimal("100.00"), 1L);
+        TransactionRecord updatedTx = new TransactionRecord("tx-id", null, accountNumber, new BigDecimal("100.00"), TransactionRecord.TransactionType.DEPOSIT, java.time.LocalDateTime.now(), TransactionRecord.TransactionStatus.PENDING, null);
 
-        when(depositMoneyUseCase.deposit(any(DepositCommand.class))).thenReturn(updatedAccount);
+        when(depositMoneyUseCase.deposit(any(DepositCommand.class))).thenReturn(updatedTx);
 
         String jsonPayload = """
                 {
@@ -89,9 +94,10 @@ class AccountControllerTest {
                 .header("X-User-Id", requesterId) // Added Security Header
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accountNumber").value(accountNumber))
-                .andExpect(jsonPath("$.balance").value(100.00));
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.targetAccountNumber").value(accountNumber))
+                .andExpect(jsonPath("$.amount").value(100.00))
+                .andExpect(jsonPath("$.status").value("PENDING"));
 
         verify(depositMoneyUseCase, times(1)).deposit(any(DepositCommand.class));
     }
@@ -188,10 +194,10 @@ class AccountControllerTest {
         // Arrange
         String accountNumber = "1122334455";
         String requesterId = "USER-123";
-        Account expectedAccount = new Account("uuid-999", requesterId, accountNumber, new BigDecimal("350.00"), 1L);
+        TransactionRecord expectedTx = new TransactionRecord("tx-id", accountNumber, null, new BigDecimal("150.00"), TransactionRecord.TransactionType.WITHDRAWAL, java.time.LocalDateTime.now(), TransactionRecord.TransactionStatus.PENDING, null);
 
         when(withdrawMoneyUseCase.withdraw(any(WithdrawMoneyUseCase.WithdrawCommand.class)))
-                .thenReturn(expectedAccount);
+                .thenReturn(expectedTx);
 
         String validPayload = """
                 {
@@ -205,9 +211,10 @@ class AccountControllerTest {
                 .header("X-User-Id", requesterId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(validPayload))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accountNumber").value(accountNumber))
-                .andExpect(jsonPath("$.balance").value(350.00));
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.sourceAccountNumber").value(accountNumber))
+                .andExpect(jsonPath("$.amount").value(150.00))
+                .andExpect(jsonPath("$.status").value("PENDING"));
     }
 
     @Test
@@ -251,5 +258,24 @@ class AccountControllerTest {
 
         // Ensure the core business logic was never touched
         verify(withdrawMoneyUseCase, never()).withdraw(any(WithdrawMoneyUseCase.WithdrawCommand.class));
+    }
+
+    @Test
+    void shouldReturn200AndAccountDetailsWhenGettingAccount() throws Exception {
+        String accountNumber = "1234567890";
+        String requesterId = "USER-123";
+        Account mockAccount = new Account("uuid-1", requesterId, accountNumber, new BigDecimal("250.00"), 1L);
+
+        when(getAccountUseCase.getAccount(accountNumber, requesterId)).thenReturn(mockAccount);
+
+        mockMvc.perform(get("/api/accounts/{accountNumber}", accountNumber)
+                .header("X-User-Id", requesterId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("uuid-1"))
+                .andExpect(jsonPath("$.ownerId").value("USER-123"))
+                .andExpect(jsonPath("$.accountNumber").value("1234567890"))
+                .andExpect(jsonPath("$.balance").value(250.00));
+
+        verify(getAccountUseCase).getAccount(accountNumber, requesterId);
     }
 }

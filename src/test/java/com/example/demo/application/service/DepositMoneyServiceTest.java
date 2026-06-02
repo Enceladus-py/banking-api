@@ -59,10 +59,10 @@ class DepositMoneyServiceTest {
 
         when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
 
-        Account result = depositMoneyService.deposit(command);
+        TransactionRecord result = depositMoneyService.deposit(command);
 
         assertNotNull(result);
-        assertEquals(BigDecimal.ZERO, result.getBalance());
+        assertEquals(TransactionStatus.PENDING, result.getStatus());
 
         verify(transactionRecordRepository, times(1)).save(transactionCaptor.capture());
         TransactionRecord pendingTx = transactionCaptor.getValue();

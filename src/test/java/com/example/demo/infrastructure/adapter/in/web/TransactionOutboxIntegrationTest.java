@@ -98,7 +98,7 @@ class TransactionOutboxIntegrationTest {
                 .header("X-User-Id", userId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
-                .andExpect(status().isOk());
+                .andExpect(status().isAccepted());
 
         // 2. Assert Immediately: Balance is NOT updated yet (it's pending/asynchronous)
         var accountBefore = accountRepository.findByAccountNumber(accountNumber);
