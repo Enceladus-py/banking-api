@@ -15,6 +15,8 @@ public class TransactionRecord {
     private final BigDecimal amount;
     private final TransactionType type;
     private final LocalDateTime timestamp;
+    private final TransactionStatus status;
+    private final String failureReason;
 
     public enum TransactionType {
         DEPOSIT,
@@ -22,22 +24,30 @@ public class TransactionRecord {
         TRANSFER
     }
 
-    // Constructor for creating a BRAND NEW transaction (Business Layer)
+    public enum TransactionStatus {
+        PENDING,
+        COMPLETED,
+        FAILED
+    }
+
+    // Constructor for creating a BRAND NEW transaction (Business Layer) - default to PENDING
     public TransactionRecord(String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
             TransactionType type) {
-        this(UUID.randomUUID().toString(), sourceAccountNumber, targetAccountNumber, amount, type, LocalDateTime.now());
+        this(UUID.randomUUID().toString(), sourceAccountNumber, targetAccountNumber, amount, type, LocalDateTime.now(), TransactionStatus.PENDING, null);
         validate(sourceAccountNumber, targetAccountNumber, amount, type);
     }
 
     // Lenient Constructor for database re-hydration and mapping
     public TransactionRecord(String id, String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
-            TransactionType type, LocalDateTime timestamp) {
+            TransactionType type, LocalDateTime timestamp, TransactionStatus status, String failureReason) {
         this.id = id;
         this.sourceAccountNumber = sourceAccountNumber;
         this.targetAccountNumber = targetAccountNumber;
         this.amount = amount;
         this.type = type;
         this.timestamp = timestamp;
+        this.status = status;
+        this.failureReason = failureReason;
     }
 
     private static void validate(String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,

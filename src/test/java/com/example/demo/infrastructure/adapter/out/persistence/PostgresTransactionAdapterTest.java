@@ -4,6 +4,7 @@ import com.example.demo.application.port.in.dto.PageRequest;
 import com.example.demo.application.port.in.dto.PageResult;
 import com.example.demo.domain.model.TransactionRecord;
 import com.example.demo.domain.model.TransactionRecord.TransactionType;
+import com.example.demo.domain.model.TransactionRecord.TransactionStatus;
 import com.example.demo.infrastructure.adapter.out.persistence.entity.TransactionJpaEntity;
 import com.example.demo.infrastructure.adapter.out.persistence.repository.SpringDataTransactionRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -37,13 +38,15 @@ class PostgresTransactionAdapterTest {
         LocalDateTime baseTime = LocalDateTime.now().minusDays(1);
 
         List<TransactionJpaEntity> entities = IntStream.range(0, 5)
-                .mapToObj(i -> new TransactionJpaEntity(
-                        UUID.randomUUID(),
-                        null,
-                        targetAccount,
-                        new BigDecimal("10.00"),
-                        TransactionType.DEPOSIT,
-                        baseTime.plusMinutes(i)))
+                .mapToObj(i -> TransactionJpaEntity.builder()
+                        .id(UUID.randomUUID())
+                        .sourceAccountNumber(null)
+                        .targetAccountNumber(targetAccount)
+                        .amount(new BigDecimal("10.00"))
+                        .type(TransactionType.DEPOSIT)
+                        .timestamp(baseTime.plusMinutes(i))
+                        .status(TransactionStatus.PENDING)
+                        .build())
                 .toList();
 
         // FIX: Force Hibernate to write the INSERTS to the database immediately
@@ -89,33 +92,37 @@ class PostgresTransactionAdapterTest {
         LocalDateTime now = LocalDateTime.now();
 
         // 1. Older deposit (Target = myAccount)
-        TransactionJpaEntity tx1 = new TransactionJpaEntity(
-                UUID.randomUUID(),
-                null,
-                myAccount,
-                new BigDecimal("50.00"),
-                TransactionType.DEPOSIT,
-                now.minusDays(2) // 2 days ago
-        );
+        TransactionJpaEntity tx1 = TransactionJpaEntity.builder()
+                .id(UUID.randomUUID())
+                .sourceAccountNumber(null)
+                .targetAccountNumber(myAccount)
+                .amount(new BigDecimal("50.00"))
+                .type(TransactionType.DEPOSIT)
+                .timestamp(now.minusDays(2))
+                .status(TransactionStatus.COMPLETED)
+                .build();
 
         // 2. Newer withdrawal (Source = myAccount)
-        TransactionJpaEntity tx2 = new TransactionJpaEntity(
-                UUID.randomUUID(),
-                myAccount,
-                null,
-                new BigDecimal("20.00"),
-                TransactionType.WITHDRAWAL,
-                now.minusDays(1) // 1 day ago
-        );
+        TransactionJpaEntity tx2 = TransactionJpaEntity.builder()
+                .id(UUID.randomUUID())
+                .sourceAccountNumber(myAccount)
+                .targetAccountNumber(null)
+                .amount(new BigDecimal("20.00"))
+                .type(TransactionType.WITHDRAWAL)
+                .timestamp(now.minusDays(1))
+                .status(TransactionStatus.COMPLETED)
+                .build();
 
         // 3. Unrelated transaction
-        TransactionJpaEntity tx3 = new TransactionJpaEntity(
-                UUID.randomUUID(),
-                "OTHERACCT1",
-                "OTHERACCT2",
-                new BigDecimal("10.00"),
-                TransactionType.TRANSFER,
-                now);
+        TransactionJpaEntity tx3 = TransactionJpaEntity.builder()
+                .id(UUID.randomUUID())
+                .sourceAccountNumber("OTHERACCT1")
+                .targetAccountNumber("OTHERACCT2")
+                .amount(new BigDecimal("10.00"))
+                .type(TransactionType.TRANSFER)
+                .timestamp(now)
+                .status(TransactionStatus.COMPLETED)
+                .build();
 
         // Save raw entities directly to bypass domain timestamp logic for testing
         springDataRepository.saveAll(List.of(tx1, tx2, tx3));

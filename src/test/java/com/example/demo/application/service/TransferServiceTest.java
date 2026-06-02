@@ -143,4 +143,26 @@ class TransferServiceTest {
         verify(accountRepository, never()).save(any());
         verify(transactionRecordRepository, never()).save(any());
     }
+
+    @Test
+    void shouldAbortWhenSourceAccountNotFound() {
+        // Arrange
+        String sourceId = "SRC1234567";
+        String targetId = "TGT1234567";
+        String requesterId = "USER-1";
+
+        TransferCommand command = new TransferCommand(sourceId, targetId, new BigDecimal("100.00"), requesterId);
+
+        when(accountRepository.findByAccountNumberForWrite(sourceId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
+            transferService.transfer(command);
+        });
+
+        assertEquals("Source account not found", exception.getMessage());
+
+        verify(accountRepository, never()).save(any());
+        verify(transactionRecordRepository, never()).save(any());
+    }
 }

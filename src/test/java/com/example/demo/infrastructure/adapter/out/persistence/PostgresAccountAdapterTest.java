@@ -72,4 +72,22 @@ class PostgresAccountAdapterTest {
         assertEquals(baseAccount.getId(), updatedAccount.getId());
         assertEquals(0, new BigDecimal("250.50").compareTo(updatedAccount.getBalance()));
     }
+
+    @Test
+    void shouldFindByAccountNumberForWriteSuccessfully() {
+        // Arrange
+        String ownerId = "USER-11111";
+        String accountNumber = "1111111111";
+        Account baseAccount = Account.createNew(ownerId, accountNumber);
+        adapter.save(baseAccount);
+
+        // Act
+        Optional<Account> fetchedOpt = adapter.findByAccountNumberForWrite(accountNumber);
+
+        // Assert
+        assertTrue(fetchedOpt.isPresent());
+        assertEquals(baseAccount.getId(), fetchedOpt.get().getId());
+        assertEquals(ownerId, fetchedOpt.get().getOwnerId());
+        assertEquals(0, BigDecimal.ZERO.compareTo(fetchedOpt.get().getBalance()));
+    }
 }

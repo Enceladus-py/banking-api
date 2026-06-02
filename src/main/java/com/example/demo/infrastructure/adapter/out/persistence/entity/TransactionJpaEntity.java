@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.example.demo.domain.model.TransactionRecord.TransactionType;
+import com.example.demo.domain.model.TransactionRecord.TransactionStatus;
 
 import org.springframework.data.domain.Persistable;
 
@@ -38,6 +39,13 @@ public class TransactionJpaEntity implements Persistable<UUID> {
 
     @Column(nullable = false)
     private LocalDateTime timestamp;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionStatus status;
+
+    @Column(name = "failure_reason")
+    private String failureReason;
 
     @Override
     public boolean isNew() {

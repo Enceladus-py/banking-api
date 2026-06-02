@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.demo.domain.exception.EntityNotFoundException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,5 +46,12 @@ class UserServiceTest {
         User result = userService.getUserById("USER-1");
 
         assertEquals(existingUser, result);
+    }
+
+    @Test
+    void shouldThrowEntityNotFoundExceptionWhenUserNotFound() {
+        when(userRepository.findById("NON-EXISTENT")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> userService.getUserById("NON-EXISTENT"));
     }
 }

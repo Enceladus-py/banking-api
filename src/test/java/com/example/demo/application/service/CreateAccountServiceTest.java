@@ -1,0 +1,65 @@
+package com.example.demo.application.service;
+
+import com.example.demo.application.port.in.CreateAccountUseCase.CreateAccountCommand;
+import com.example.demo.application.port.out.AccountRepository;
+import com.example.demo.application.port.out.UserRepository;
+import com.example.demo.domain.model.Account;
+import com.example.demo.domain.model.User;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.example.demo.domain.exception.EntityNotFoundException;
+import java.math.BigDecimal;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class CreateAccountServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private AccountRepository accountRepository;
+
+    private CreateAccountService createAccountService;
+
+    @BeforeEach
+    void setUp() {
+        createAccountService = new CreateAccountService(accountRepository, userRepository);
+    }
+
+    @Test
+    void shouldCreateAccountAndSaveToRepository() {
+        String requesterId = "USER-123";
+        CreateAccountCommand command = new CreateAccountCommand(requesterId);
+
+        when(userRepository.findById(requesterId)).thenReturn(Optional.of(new User(requesterId, "Berat", "Dalsuna", 1L)));
+
+        Account mockSavedAccount = new Account("uuid-123", requesterId, "A1B2C3D4E5", BigDecimal.ZERO, 1L);
+        when(accountRepository.save(any(Account.class))).thenReturn(mockSavedAccount);
+
+        Account result = createAccountService.createAccount(command);
+
+        assertNotNull(result);
+        assertEquals("A1B2C3D4E5", result.getAccountNumber());
+        verify(accountRepository, times(1)).save(any(Account.class));
+    }
+
+    @Test
+    void shouldThrowEntityNotFoundExceptionWhenUserNotFound() {
+        String requesterId = "NON-EXISTENT";
+        CreateAccountCommand command = new CreateAccountCommand(requesterId);
+
+        when(userRepository.findById(requesterId)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> createAccountService.createAccount(command));
+        verify(accountRepository, never()).save(any(Account.class));
+    }
+}

@@ -1,4 +1,7 @@
 spring:
+  sql:
+    init:
+      mode: always
   jpa:
     hibernate:
       # 'update' automatically creates the 'account' table based on AccountJpaEntity

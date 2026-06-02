@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -24,7 +25,17 @@ public class PostgresTransactionAdapter implements TransactionRecordRepository {
     @Override
     public void save(TransactionRecord transaction) {
         TransactionJpaEntity jpaEntity = toJpaEntity(transaction);
-        repository.saveAndFlush(jpaEntity);
+        if (repository.existsById(jpaEntity.getId())) {
+            repository.updateStatus(jpaEntity.getId(), jpaEntity.getStatus(), jpaEntity.getFailureReason());
+        } else {
+            repository.saveAndFlush(jpaEntity);
+        }
+    }
+
+    @Override
+    public Optional<TransactionRecord> findById(String id) {
+        return repository.findById(UUID.fromString(id))
+                .map(this::toDomainModel);
     }
 
     @Override
@@ -62,6 +73,8 @@ public class PostgresTransactionAdapter implements TransactionRecordRepository {
                 .amount(domain.getAmount())
                 .type(domain.getType())
                 .timestamp(domain.getTimestamp())
+                .status(domain.getStatus())
+                .failureReason(domain.getFailureReason())
                 .build();
     }
 
@@ -72,6 +85,8 @@ public class PostgresTransactionAdapter implements TransactionRecordRepository {
                 entity.getTargetAccountNumber(),
                 entity.getAmount(),
                 entity.getType(),
-                entity.getTimestamp());
+                entity.getTimestamp(),
+                entity.getStatus(),
+                entity.getFailureReason());
     }
 }
