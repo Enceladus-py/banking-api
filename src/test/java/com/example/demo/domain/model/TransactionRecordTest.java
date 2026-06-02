@@ -105,23 +105,6 @@ class TransactionRecordTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenDepositMissingTargetAccount() {
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
-            // source and target cannot BOTH be null, so set source to something to bypass rule 3
-            // but for a deposit, source must be null and target must not be null.
-            new TransactionRecord(
-                    "SOURCE1234",
-                    null,
-                    new BigDecimal("100.00"),
-                    TransactionRecord.TransactionType.DEPOSIT);
-        });
-        // Wait, if source is not null, it will fail with "Deposits cannot have a source account" first
-        // If we want to test "Deposits must specify a target account" without hitting rule 3:
-        // Actually, if both are null, it hits rule 3.
-        // Let's test Withdrawals missing source account
-    }
-
-    @Test
     void shouldThrowExceptionWhenWithdrawalMissingSourceAccount() {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
             new TransactionRecord(
