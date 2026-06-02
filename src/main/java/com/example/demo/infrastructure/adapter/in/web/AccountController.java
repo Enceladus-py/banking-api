@@ -31,7 +31,7 @@ public class AccountController {
         return ResponseEntity.ok(toResponse(account));
     }
 
-    @PutMapping("/deposit")
+    @PostMapping("/deposit")
     public ResponseEntity<AccountResponse> depositMoney(
             @Valid @RequestBody TransactionRequest request,
             @RequestHeader("X-User-Id") String requesterId) {
@@ -42,7 +42,7 @@ public class AccountController {
         return ResponseEntity.ok(toResponse(account));
     }
 
-    @PutMapping("/withdraw")
+    @PostMapping("/withdraw")
     public ResponseEntity<AccountResponse> withdrawMoney(
             @Valid @RequestBody TransactionRequest request,
             @RequestHeader("X-User-Id") String requesterId) {

@@ -85,7 +85,7 @@ class AccountControllerTest {
                 """;
 
         // Act & Assert
-        mockMvc.perform(put("/api/accounts/deposit")
+        mockMvc.perform(post("/api/accounts/deposit")
                 .header("X-User-Id", requesterId) // Added Security Header
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
@@ -107,7 +107,7 @@ class AccountControllerTest {
                 """;
 
         // Act & Assert
-        mockMvc.perform(put("/api/accounts/deposit")
+        mockMvc.perform(post("/api/accounts/deposit")
                 .header("X-User-Id", "USER-123")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
@@ -128,7 +128,7 @@ class AccountControllerTest {
                 """;
 
         // Act & Assert
-        mockMvc.perform(put("/api/accounts/deposit")
+        mockMvc.perform(post("/api/accounts/deposit")
                 .header("X-User-Id", "USER-123")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
@@ -152,7 +152,7 @@ class AccountControllerTest {
                 """;
 
         // Act & Assert
-        mockMvc.perform(put("/api/accounts/deposit")
+        mockMvc.perform(post("/api/accounts/deposit")
                 .header("X-User-Id", "HACKER-ID")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
@@ -176,7 +176,7 @@ class AccountControllerTest {
                 """;
 
         // Act & Assert
-        mockMvc.perform(put("/api/accounts/deposit")
+        mockMvc.perform(post("/api/accounts/deposit")
                 .header("X-User-Id", "USER-123")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
@@ -201,7 +201,7 @@ class AccountControllerTest {
                 """;
 
         // Act & Assert
-        mockMvc.perform(put("/api/accounts/withdraw")
+        mockMvc.perform(post("/api/accounts/withdraw")
                 .header("X-User-Id", requesterId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(validPayload))
@@ -224,7 +224,7 @@ class AccountControllerTest {
                 """;
 
         // Act & Assert: GlobalExceptionHandler should map this to HTTP 400
-        mockMvc.perform(put("/api/accounts/withdraw")
+        mockMvc.perform(post("/api/accounts/withdraw")
                 .header("X-User-Id", "USER-123")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(overDraftPayload))
@@ -243,7 +243,7 @@ class AccountControllerTest {
                 """;
 
         // Act & Assert
-        mockMvc.perform(put("/api/accounts/withdraw")
+        mockMvc.perform(post("/api/accounts/withdraw")
                 .header("X-User-Id", "USER-123")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidPayload))

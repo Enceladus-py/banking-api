@@ -70,8 +70,8 @@ make local
 | Method | Endpoint | Description | Required Header |
 | --- | --- | --- | --- |
 | POST | /api/accounts | Create a new bank account | X-User-Id |
-| PUT | /api/accounts/deposit | Deposit money | X-User-Id |
-| PUT | /api/accounts/withdraw | Withdraw money | X-User-Id |
+| POST | /api/accounts/deposit | Deposit money | X-User-Id |
+| POST | /api/accounts/withdraw | Withdraw money | X-User-Id |
 | POST | /api/transfers | Transfer between accounts | X-User-Id |
 | GET | /api/transactions/{acc} | Get transaction ledger | X-User-Id |
 
