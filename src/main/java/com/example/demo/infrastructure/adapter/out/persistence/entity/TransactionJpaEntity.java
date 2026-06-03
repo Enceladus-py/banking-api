@@ -1,16 +1,16 @@
 package com.example.demo.infrastructure.adapter.out.persistence.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.example.demo.domain.model.TransactionRecord.TransactionType;
-import com.example.demo.domain.model.TransactionRecord.TransactionStatus;
-
 import org.springframework.data.domain.Persistable;
+
+import com.example.demo.domain.model.TransactionRecord.TransactionStatus;
+import com.example.demo.domain.model.TransactionRecord.TransactionType;
+
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "transaction_records")
@@ -21,51 +21,51 @@ import org.springframework.data.domain.Persistable;
 @AllArgsConstructor
 public class TransactionJpaEntity implements Persistable<UUID> {
 
-    @Id
-    private UUID id;
+	@Id
+	private UUID id;
 
-    @Column(name = "source_account_number")
-    private String sourceAccountNumber;
+	@Column(name = "source_account_number")
+	private String sourceAccountNumber;
 
-    @Column(name = "target_account_number")
-    private String targetAccountNumber;
+	@Column(name = "target_account_number")
+	private String targetAccountNumber;
 
-    @Column(nullable = false)
-    private BigDecimal amount;
+	@Column(nullable = false)
+	private BigDecimal amount;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TransactionType type;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private TransactionType type;
 
-    @Column(nullable = false)
-    private LocalDateTime timestamp;
+	@Column(nullable = false)
+	private LocalDateTime timestamp;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TransactionStatus status;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private TransactionStatus status;
 
-    @Column(name = "failure_reason")
-    private String failureReason;
+	@Column(name = "failure_reason")
+	private String failureReason;
 
-    /**
-     * Tracks whether this entity instance has been persisted yet.
-     * Starts as {@code true} for newly-constructed instances (INSERT path).
-     * Flipped to {@code false} by {@link #onPersist()} and {@link #onLoad()}
-     * so that subsequent {@code save()} calls take the UPDATE path without
-     * issuing an extra SELECT.
-     */
-    @Transient
-    @Builder.Default
-    private boolean isNew = true;
+	/**
+	 * Tracks whether this entity instance has been persisted yet. Starts as
+	 * {@code true} for newly-constructed instances (INSERT path). Flipped to
+	 * {@code false} by {@link #onPersist()} and {@link #onLoad()} so that
+	 * subsequent {@code save()} calls take the UPDATE path without issuing an extra
+	 * SELECT.
+	 */
+	@Transient
+	@Builder.Default
+	private boolean isNew = true;
 
-    @PostPersist
-    @PostLoad
-    void onPersist() {
-        this.isNew = false;
-    }
+	@PostPersist
+	@PostLoad
+	void onPersist() {
+		this.isNew = false;
+	}
 
-    @Override
-    public boolean isNew() {
-        return isNew;
-    }
+	@Override
+	public boolean isNew() {
+		return isNew;
+	}
 }

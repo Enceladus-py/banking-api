@@ -14,17 +14,15 @@ import org.springframework.transaction.interceptor.TransactionInterceptor;
 @Configuration
 public class TransactionAopConfig {
 
-    @Bean
-    public Advisor useCaseTransactionAdvisor(TransactionManager transactionManager) {
-        AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
-        // Applies to any method inside a class annotated with @TransactionalUseCase
-        pointcut.setExpression("@within(com.example.demo.application.annotation.TransactionalUseCase)");
+	@Bean
+	public Advisor useCaseTransactionAdvisor(TransactionManager transactionManager) {
+		AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
+		// Applies to any method inside a class annotated with @TransactionalUseCase
+		pointcut.setExpression("@within(com.example.demo.application.annotation.TransactionalUseCase)");
 
-        TransactionInterceptor interceptor = new TransactionInterceptor(
-            transactionManager, 
-            new MatchAlwaysTransactionAttributeSource()
-        );
+		TransactionInterceptor interceptor = new TransactionInterceptor(transactionManager,
+				new MatchAlwaysTransactionAttributeSource());
 
-        return new DefaultPointcutAdvisor(pointcut, interceptor);
-    }
+		return new DefaultPointcutAdvisor(pointcut, interceptor);
+	}
 }

@@ -38,6 +38,7 @@ The outer shell. It adapts external technologies to the core application's ports
 ## 🚀 Getting Started
 
 The project includes a Makefile to simplify local development and deployment.
+Make sure that `mvn spotless:apply` is executed before compiling since there is a check.
 
 ### Prerequisites
 

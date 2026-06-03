@@ -12,7 +12,7 @@ class DemoApplicationTests {
 
 	@Test
 	void mainTest() {
-		DemoApplication.main(new String[] {});
+		DemoApplication.main(new String[]{});
 	}
 
 }
