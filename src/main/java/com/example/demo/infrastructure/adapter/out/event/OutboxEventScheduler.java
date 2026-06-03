@@ -2,7 +2,7 @@ package com.example.demo.infrastructure.adapter.out.event;
 
 import java.util.List;
 
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +21,7 @@ import tools.jackson.databind.ObjectMapper;
 
 /**
  * Polls the outbox table for PENDING events and dispatches them to the local
- * Spring {@link ApplicationEventPublisher}.
+ * Polls the outbox table for PENDING events and dispatches them to Kafka.
  *
  * <p>
  * <strong>Retry policy</strong>: each event is retried up to
@@ -46,7 +46,7 @@ public class OutboxEventScheduler {
 
 	private final SpringDataOutboxEventRepository outboxRepository;
 	private final ObjectMapper objectMapper;
-	private final ApplicationEventPublisher localEventPublisher;
+	private final KafkaTemplate<String, String> kafkaTemplate;
 
 	@Scheduled(fixedDelayString = "${outbox.scheduler.delay:100}") // Poll every 100 milliseconds (overridable)
 	@Transactional
@@ -68,7 +68,7 @@ public class OutboxEventScheduler {
 		for (OutboxEventJpaEntity entity : batch) {
 			try {
 				TransactionEvent event = deserialize(entity);
-				localEventPublisher.publishEvent(event);
+				kafkaTemplate.send("transaction-events", event.transactionId(), entity.getPayload()).get();
 
 				// Mark as PUBLISHED so it is not processed again
 				entity.setStatus(OutboxStatus.PUBLISHED);
