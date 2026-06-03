@@ -15,7 +15,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.demo.account.application.port.out.AccountRepository;
+import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.transaction.application.port.in.WithdrawMoneyUseCase.WithdrawCommand;
@@ -30,7 +30,7 @@ import com.example.demo.transaction.domain.model.TransactionRecord.TransactionTy
 class WithdrawMoneyServiceTest {
 
 	@Mock
-	private AccountRepository accountRepository;
+	private AccountOperationsPort accountOperationsPort;
 
 	@Mock
 	private TransactionRecordRepository transactionRecordRepository;
@@ -48,7 +48,8 @@ class WithdrawMoneyServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		withdrawMoneyService = new WithdrawMoneyService(accountRepository, transactionRecordRepository, eventPublisher);
+		withdrawMoneyService = new WithdrawMoneyService(accountOperationsPort, transactionRecordRepository,
+				eventPublisher);
 	}
 
 	@Test
@@ -58,7 +59,7 @@ class WithdrawMoneyServiceTest {
 		Account existingAccount = new Account("uuid-1", requesterId, accountNumber, new BigDecimal("500.00"), 1L);
 		WithdrawCommand command = new WithdrawCommand(accountNumber, new BigDecimal("150.00"), requesterId);
 
-		when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
+		when(accountOperationsPort.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
 
 		TransactionRecord result = withdrawMoneyService.withdraw(command);
 
@@ -82,7 +83,7 @@ class WithdrawMoneyServiceTest {
 		Account existingAccount = new Account("uuid-1", "REAL-OWNER", accountNumber, new BigDecimal("500.00"), 1L);
 		WithdrawCommand command = new WithdrawCommand(accountNumber, new BigDecimal("150.00"), "HACKER");
 
-		when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
+		when(accountOperationsPort.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
 
 		assertThrows(SecurityException.class, () -> {
 			withdrawMoneyService.withdraw(command);
@@ -97,7 +98,7 @@ class WithdrawMoneyServiceTest {
 		String accountNumber = "0000000000";
 		WithdrawCommand command = new WithdrawCommand(accountNumber, new BigDecimal("100.00"), "USER-1");
 
-		when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.empty());
+		when(accountOperationsPort.findByAccountNumber(accountNumber)).thenReturn(Optional.empty());
 
 		assertThrows(EntityNotFoundException.class, () -> {
 			withdrawMoneyService.withdraw(command);

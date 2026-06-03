@@ -1,6 +1,6 @@
 package com.example.demo.transaction.application.service;
 
-import com.example.demo.account.application.port.out.AccountRepository;
+import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.application.annotation.TransactionalUseCase;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
@@ -17,12 +17,12 @@ import lombok.extern.slf4j.Slf4j;
 @TransactionalUseCase
 public class ProcessTransactionService implements ProcessTransactionUseCase {
 
-	private final AccountRepository accountRepository;
+	private final AccountOperationsPort accountOperationsPort;
 	private final TransactionRecordRepository transactionRecordRepository;
 
-	public ProcessTransactionService(AccountRepository accountRepository,
+	public ProcessTransactionService(AccountOperationsPort accountOperationsPort,
 			TransactionRecordRepository transactionRecordRepository) {
-		this.accountRepository = accountRepository;
+		this.accountOperationsPort = accountOperationsPort;
 		this.transactionRecordRepository = transactionRecordRepository;
 	}
 
@@ -41,19 +41,19 @@ public class ProcessTransactionService implements ProcessTransactionUseCase {
 		try {
 			if (event.type() == TransactionType.DEPOSIT) {
 				// Fetch with write lock for safety during state mutation
-				Account target = accountRepository.lockAndLoad(event.targetAccountNumber())
+				Account target = accountOperationsPort.lockAndLoad(event.targetAccountNumber())
 						.orElseThrow(() -> new EntityNotFoundException("Target account not found"));
 
 				target.deposit(event.amount());
-				accountRepository.save(target);
+				accountOperationsPort.save(target);
 
 			} else if (event.type() == TransactionType.WITHDRAWAL) {
 				// Fetch with write lock for safety during state mutation
-				Account source = accountRepository.lockAndLoad(event.sourceAccountNumber())
+				Account source = accountOperationsPort.lockAndLoad(event.sourceAccountNumber())
 						.orElseThrow(() -> new EntityNotFoundException("Source account not found"));
 
 				source.withdraw(event.amount());
-				accountRepository.save(source);
+				accountOperationsPort.save(source);
 
 			} else {
 				// TRANSFER
@@ -62,9 +62,9 @@ public class ProcessTransactionService implements ProcessTransactionUseCase {
 				final String firstKey = sourceFirst ? event.sourceAccountNumber() : event.targetAccountNumber();
 				final String secondKey = sourceFirst ? event.targetAccountNumber() : event.sourceAccountNumber();
 
-				Account a = accountRepository.lockAndLoad(firstKey)
+				Account a = accountOperationsPort.lockAndLoad(firstKey)
 						.orElseThrow(() -> new EntityNotFoundException("Account not found: " + firstKey));
-				Account b = accountRepository.lockAndLoad(secondKey)
+				Account b = accountOperationsPort.lockAndLoad(secondKey)
 						.orElseThrow(() -> new EntityNotFoundException("Account not found: " + secondKey));
 
 				// Re-assign source/target after ordering
@@ -73,8 +73,8 @@ public class ProcessTransactionService implements ProcessTransactionUseCase {
 
 				source.withdraw(event.amount());
 				target.deposit(event.amount());
-				accountRepository.save(source);
-				accountRepository.save(target);
+				accountOperationsPort.save(source);
+				accountOperationsPort.save(target);
 			}
 
 			// Transition domain object to COMPLETED — no manual reconstruction needed

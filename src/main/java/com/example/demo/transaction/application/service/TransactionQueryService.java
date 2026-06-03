@@ -1,6 +1,6 @@
 package com.example.demo.transaction.application.service;
 
-import com.example.demo.account.application.port.out.AccountRepository;
+import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.application.annotation.UseCase;
 import com.example.demo.common.application.port.in.dto.PageRequest;
@@ -15,18 +15,18 @@ import com.example.demo.transaction.domain.model.TransactionRecord;
 public class TransactionQueryService implements GetAccountTransactionsUseCase, GetTransactionUseCase {
 
 	private final TransactionRecordRepository transactionRecordRepository;
-	private final AccountRepository accountRepository;
+	private final AccountOperationsPort accountOperationsPort;
 
 	public TransactionQueryService(TransactionRecordRepository transactionRecordRepository,
-			AccountRepository accountRepository) {
+			AccountOperationsPort accountOperationsPort) {
 		this.transactionRecordRepository = transactionRecordRepository;
-		this.accountRepository = accountRepository;
+		this.accountOperationsPort = accountOperationsPort;
 	}
 
 	@Override
 	public PageResult<TransactionRecord> getTransactions(String accountNumber, PageRequest pageRequest,
 			String requesterId) {
-		Account account = accountRepository.findByAccountNumber(accountNumber)
+		Account account = accountOperationsPort.findByAccountNumber(accountNumber)
 				.orElseThrow(() -> new EntityNotFoundException("Account not found"));
 
 		if (!account.isOwnedBy(requesterId)) {
@@ -45,14 +45,14 @@ public class TransactionQueryService implements GetAccountTransactionsUseCase, G
 		boolean ownsTarget = false;
 
 		if (tx.getSourceAccountNumber() != null) {
-			Account source = accountRepository.findByAccountNumber(tx.getSourceAccountNumber()).orElse(null);
+			Account source = accountOperationsPort.findByAccountNumber(tx.getSourceAccountNumber()).orElse(null);
 			if (source != null && source.isOwnedBy(requesterId)) {
 				ownsSource = true;
 			}
 		}
 
 		if (tx.getTargetAccountNumber() != null) {
-			Account target = accountRepository.findByAccountNumber(tx.getTargetAccountNumber()).orElse(null);
+			Account target = accountOperationsPort.findByAccountNumber(tx.getTargetAccountNumber()).orElse(null);
 			if (target != null && target.isOwnedBy(requesterId)) {
 				ownsTarget = true;
 			}

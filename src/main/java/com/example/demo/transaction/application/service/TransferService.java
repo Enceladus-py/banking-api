@@ -3,7 +3,7 @@ package com.example.demo.transaction.application.service;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.example.demo.account.application.port.out.AccountRepository;
+import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.application.annotation.TransactionalUseCase;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
@@ -33,13 +33,13 @@ import com.example.demo.transaction.domain.model.TransactionRecord.TransactionTy
 @TransactionalUseCase
 public class TransferService implements TransferMoneyUseCase {
 
-	private final AccountRepository accountRepository;
+	private final AccountOperationsPort accountOperationsPort;
 	private final TransactionRecordRepository transactionRecordRepository;
 	private final EventPublisher eventPublisher;
 
-	public TransferService(AccountRepository accountRepository, TransactionRecordRepository transactionRecordRepository,
-			EventPublisher eventPublisher) {
-		this.accountRepository = accountRepository;
+	public TransferService(AccountOperationsPort accountOperationsPort,
+			TransactionRecordRepository transactionRecordRepository, EventPublisher eventPublisher) {
+		this.accountOperationsPort = accountOperationsPort;
 		this.transactionRecordRepository = transactionRecordRepository;
 		this.eventPublisher = eventPublisher;
 	}
@@ -47,7 +47,7 @@ public class TransferService implements TransferMoneyUseCase {
 	@Override
 	public TransactionRecord transfer(TransferCommand command) {
 		// Validate source account existence and ownership (no write lock needed yet)
-		Account sourceAccount = accountRepository.findByAccountNumber(command.sourceAccountNumber())
+		Account sourceAccount = accountOperationsPort.findByAccountNumber(command.sourceAccountNumber())
 				.orElseThrow(() -> new EntityNotFoundException("Source account not found"));
 
 		if (!sourceAccount.isOwnedBy(command.requesterId())) {
@@ -55,7 +55,7 @@ public class TransferService implements TransferMoneyUseCase {
 		}
 
 		// Validate target account existence
-		accountRepository.findByAccountNumber(command.targetAccountNumber())
+		accountOperationsPort.findByAccountNumber(command.targetAccountNumber())
 				.orElseThrow(() -> new EntityNotFoundException("Target account not found"));
 
 		// Create PENDING ledger entry — the outbox scheduler will settle it

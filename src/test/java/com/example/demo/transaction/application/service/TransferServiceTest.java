@@ -15,7 +15,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.demo.account.application.port.out.AccountRepository;
+import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.transaction.application.port.in.TransferMoneyUseCase.TransferCommand;
@@ -40,7 +40,7 @@ import com.example.demo.transaction.domain.model.TransactionRecord.TransactionTy
 class TransferServiceTest {
 
 	@Mock
-	private AccountRepository accountRepository;
+	private AccountOperationsPort accountOperationsPort;
 
 	@Mock
 	private TransactionRecordRepository transactionRecordRepository;
@@ -58,7 +58,7 @@ class TransferServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		transferService = new TransferService(accountRepository, transactionRecordRepository, eventPublisher);
+		transferService = new TransferService(accountOperationsPort, transactionRecordRepository, eventPublisher);
 	}
 
 	@Test
@@ -72,8 +72,8 @@ class TransferServiceTest {
 		Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("500.00"), 1L);
 		Account targetAccount = new Account("uuid-2", "USER-2", targetId, new BigDecimal("100.00"), 1L);
 
-		when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
-		when(accountRepository.findByAccountNumber(targetId)).thenReturn(Optional.of(targetAccount));
+		when(accountOperationsPort.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
+		when(accountOperationsPort.findByAccountNumber(targetId)).thenReturn(Optional.of(targetAccount));
 
 		// Act
 		transferService.transfer(new TransferCommand(sourceId, targetId, amount, requesterId));
@@ -85,7 +85,7 @@ class TransferServiceTest {
 				"Target balance must not change during initiation — outbox handles it");
 
 		// Assert: no account saves during initiation
-		verify(accountRepository, never()).save(any());
+		verify(accountOperationsPort, never()).save(any());
 
 		// Assert: PENDING ledger entry is saved
 		verify(transactionRecordRepository).save(transactionCaptor.capture());
@@ -113,7 +113,7 @@ class TransferServiceTest {
 		String targetId = "TGT1234567";
 		Account sourceAccount = new Account("uuid-1", "USER-1", sourceId, new BigDecimal("500.00"), 1L);
 
-		when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
+		when(accountOperationsPort.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
 
 		// Act & Assert
 		SecurityException ex = assertThrows(SecurityException.class, () -> transferService
@@ -132,8 +132,8 @@ class TransferServiceTest {
 		String requesterId = "USER-1";
 		Account sourceAccount = new Account("uuid-1", requesterId, sourceId, new BigDecimal("500.00"), 1L);
 
-		when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
-		when(accountRepository.findByAccountNumber(targetId)).thenReturn(Optional.empty());
+		when(accountOperationsPort.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
+		when(accountOperationsPort.findByAccountNumber(targetId)).thenReturn(Optional.empty());
 
 		// Act & Assert
 		EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> transferService
@@ -150,7 +150,7 @@ class TransferServiceTest {
 		String sourceId = "SRC1234567";
 		String targetId = "TGT1234567";
 
-		when(accountRepository.findByAccountNumber(sourceId)).thenReturn(Optional.empty());
+		when(accountOperationsPort.findByAccountNumber(sourceId)).thenReturn(Optional.empty());
 
 		// Act & Assert
 		EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> transferService

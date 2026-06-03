@@ -17,7 +17,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.demo.account.application.port.out.AccountRepository;
+import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.transaction.application.port.out.TransactionRecordRepository;
@@ -30,7 +30,7 @@ import com.example.demo.transaction.domain.model.TransactionRecord.TransactionTy
 class ProcessTransactionServiceTest {
 
 	@Mock
-	private AccountRepository accountRepository;
+	private AccountOperationsPort accountOperationsPort;
 
 	@Mock
 	private TransactionRecordRepository transactionRecordRepository;
@@ -42,7 +42,7 @@ class ProcessTransactionServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		processTransactionService = new ProcessTransactionService(accountRepository, transactionRecordRepository);
+		processTransactionService = new ProcessTransactionService(accountOperationsPort, transactionRecordRepository);
 	}
 
 	@Test
@@ -56,12 +56,12 @@ class ProcessTransactionServiceTest {
 		Account targetAccount = new Account("uuid-123", "USER-123", accountNumber, BigDecimal.ZERO, 1L);
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
-		when(accountRepository.lockAndLoad(accountNumber)).thenReturn(Optional.of(targetAccount));
+		when(accountOperationsPort.lockAndLoad(accountNumber)).thenReturn(Optional.of(targetAccount));
 
 		processTransactionService.process(event);
 
 		assertEquals(new BigDecimal("100.00"), targetAccount.getBalance());
-		verify(accountRepository, times(1)).save(targetAccount);
+		verify(accountOperationsPort, times(1)).save(targetAccount);
 
 		verify(transactionRecordRepository, times(1)).save(transactionCaptor.capture());
 		TransactionRecord finalTx = transactionCaptor.getValue();
@@ -81,12 +81,12 @@ class ProcessTransactionServiceTest {
 		Account sourceAccount = new Account("uuid-123", "USER-123", accountNumber, new BigDecimal("100.00"), 1L);
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
-		when(accountRepository.lockAndLoad(accountNumber)).thenReturn(Optional.of(sourceAccount));
+		when(accountOperationsPort.lockAndLoad(accountNumber)).thenReturn(Optional.of(sourceAccount));
 
 		processTransactionService.process(event);
 
 		assertEquals(new BigDecimal("50.00"), sourceAccount.getBalance());
-		verify(accountRepository, times(1)).save(sourceAccount);
+		verify(accountOperationsPort, times(1)).save(sourceAccount);
 
 		verify(transactionRecordRepository, times(1)).save(transactionCaptor.capture());
 		TransactionRecord finalTx = transactionCaptor.getValue();
@@ -105,11 +105,11 @@ class ProcessTransactionServiceTest {
 		Account sourceAccount = new Account("uuid-123", "USER-123", accountNumber, new BigDecimal("100.00"), 1L);
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
-		when(accountRepository.lockAndLoad(accountNumber)).thenReturn(Optional.of(sourceAccount));
+		when(accountOperationsPort.lockAndLoad(accountNumber)).thenReturn(Optional.of(sourceAccount));
 
 		processTransactionService.process(event);
 
-		verify(accountRepository, never()).save(sourceAccount);
+		verify(accountOperationsPort, never()).save(sourceAccount);
 
 		verify(transactionRecordRepository, times(1)).save(transactionCaptor.capture());
 		TransactionRecord finalTx = transactionCaptor.getValue();
@@ -127,7 +127,7 @@ class ProcessTransactionServiceTest {
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.empty());
 
 		assertThrows(EntityNotFoundException.class, () -> processTransactionService.process(event));
-		verify(accountRepository, never()).lockAndLoad(anyString());
+		verify(accountOperationsPort, never()).lockAndLoad(anyString());
 	}
 
 	@Test
@@ -140,7 +140,7 @@ class ProcessTransactionServiceTest {
 				accountNumber, new BigDecimal("100.00"), TransactionType.DEPOSIT, "USER-123");
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
-		when(accountRepository.lockAndLoad(accountNumber)).thenReturn(Optional.empty());
+		when(accountOperationsPort.lockAndLoad(accountNumber)).thenReturn(Optional.empty());
 
 		processTransactionService.process(event);
 
@@ -161,7 +161,7 @@ class ProcessTransactionServiceTest {
 				accountNumber, null, new BigDecimal("50.00"), TransactionType.WITHDRAWAL, "USER-123");
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
-		when(accountRepository.lockAndLoad(accountNumber)).thenReturn(Optional.empty());
+		when(accountOperationsPort.lockAndLoad(accountNumber)).thenReturn(Optional.empty());
 
 		processTransactionService.process(event);
 
@@ -187,15 +187,15 @@ class ProcessTransactionServiceTest {
 		Account targetAccount = new Account("uuid-2", "USER-456", targetAccountNumber, new BigDecimal("20.00"), 1L);
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
-		when(accountRepository.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.of(sourceAccount));
-		when(accountRepository.lockAndLoad(targetAccountNumber)).thenReturn(Optional.of(targetAccount));
+		when(accountOperationsPort.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.of(sourceAccount));
+		when(accountOperationsPort.lockAndLoad(targetAccountNumber)).thenReturn(Optional.of(targetAccount));
 
 		processTransactionService.process(event);
 
 		assertEquals(new BigDecimal("50.00"), sourceAccount.getBalance());
 		assertEquals(new BigDecimal("70.00"), targetAccount.getBalance());
-		verify(accountRepository, times(1)).save(sourceAccount);
-		verify(accountRepository, times(1)).save(targetAccount);
+		verify(accountOperationsPort, times(1)).save(sourceAccount);
+		verify(accountOperationsPort, times(1)).save(targetAccount);
 
 		verify(transactionRecordRepository, times(1)).save(transactionCaptor.capture());
 		TransactionRecord finalTx = transactionCaptor.getValue();
@@ -218,15 +218,15 @@ class ProcessTransactionServiceTest {
 		Account targetAccount = new Account("uuid-2", "USER-456", targetAccountNumber, new BigDecimal("20.00"), 1L);
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
-		when(accountRepository.lockAndLoad(targetAccountNumber)).thenReturn(Optional.of(targetAccount));
-		when(accountRepository.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.of(sourceAccount));
+		when(accountOperationsPort.lockAndLoad(targetAccountNumber)).thenReturn(Optional.of(targetAccount));
+		when(accountOperationsPort.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.of(sourceAccount));
 
 		processTransactionService.process(event);
 
 		assertEquals(new BigDecimal("50.00"), sourceAccount.getBalance());
 		assertEquals(new BigDecimal("70.00"), targetAccount.getBalance());
-		verify(accountRepository, times(1)).save(sourceAccount);
-		verify(accountRepository, times(1)).save(targetAccount);
+		verify(accountOperationsPort, times(1)).save(sourceAccount);
+		verify(accountOperationsPort, times(1)).save(targetAccount);
 
 		verify(transactionRecordRepository, times(1)).save(transactionCaptor.capture());
 		TransactionRecord finalTx = transactionCaptor.getValue();
@@ -247,7 +247,8 @@ class ProcessTransactionServiceTest {
 				"USER-123");
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
-		when(accountRepository.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.empty()); // first alphabetically
+		when(accountOperationsPort.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.empty()); // first
+																									// alphabetically
 
 		processTransactionService.process(event);
 
@@ -272,9 +273,10 @@ class ProcessTransactionServiceTest {
 		Account sourceAccount = new Account("uuid-1", "USER-123", sourceAccountNumber, new BigDecimal("100.00"), 1L);
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
-		when(accountRepository.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.of(sourceAccount)); // first
-																											// alphabetically
-		when(accountRepository.lockAndLoad(targetAccountNumber)).thenReturn(Optional.empty()); // second alphabetically
+		when(accountOperationsPort.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.of(sourceAccount)); // first
+																												// alphabetically
+		when(accountOperationsPort.lockAndLoad(targetAccountNumber)).thenReturn(Optional.empty()); // second
+																									// alphabetically
 
 		processTransactionService.process(event);
 
@@ -297,7 +299,7 @@ class ProcessTransactionServiceTest {
 
 		processTransactionService.process(event);
 
-		verify(accountRepository, never()).lockAndLoad(anyString());
+		verify(accountOperationsPort, never()).lockAndLoad(anyString());
 		verify(transactionRecordRepository, never()).save(any());
 	}
 }

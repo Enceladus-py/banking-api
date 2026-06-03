@@ -6,23 +6,23 @@ import com.example.demo.account.application.port.in.CreateAccountUseCase;
 import com.example.demo.account.application.port.out.AccountRepository;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.application.annotation.TransactionalUseCase;
-import com.example.demo.common.domain.exception.EntityNotFoundException;
-import com.example.demo.user.application.port.out.UserRepository;
+import com.example.demo.user.application.port.in.GetUserUseCase;
 
 @TransactionalUseCase
 public class CreateAccountService implements CreateAccountUseCase {
 
 	private final AccountRepository accountRepository;
-	private final UserRepository userRepository;
+	private final GetUserUseCase getUserUseCase;
 
-	public CreateAccountService(AccountRepository accountRepository, UserRepository userRepository) {
+	public CreateAccountService(AccountRepository accountRepository, GetUserUseCase getUserUseCase) {
 		this.accountRepository = accountRepository;
-		this.userRepository = userRepository;
+		this.getUserUseCase = getUserUseCase;
 	}
 
 	@Override
 	public Account createAccount(CreateAccountCommand command) {
-		userRepository.findById(command.requesterId()).orElseThrow(() -> new EntityNotFoundException("User not found"));
+		// Verifies the user exists; throws EntityNotFoundException if not found
+		getUserUseCase.getUserById(command.requesterId());
 		String uniqueAccountNumber = generateUniqueAccountNumber();
 		Account account = Account.createNew(command.requesterId(), uniqueAccountNumber);
 		return accountRepository.save(account);

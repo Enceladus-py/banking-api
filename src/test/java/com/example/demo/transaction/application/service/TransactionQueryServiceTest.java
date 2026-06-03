@@ -13,7 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.demo.account.application.port.out.AccountRepository;
+import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.application.port.in.dto.PageRequest;
 import com.example.demo.common.application.port.in.dto.PageResult;
@@ -26,7 +26,7 @@ class TransactionQueryServiceTest {
 	@Mock
 	private TransactionRecordRepository transactionRecordRepository;
 	@Mock
-	private AccountRepository accountRepository;
+	private AccountOperationsPort accountOperationsPort;
 
 	@InjectMocks
 	private TransactionQueryService service;
@@ -36,7 +36,7 @@ class TransactionQueryServiceTest {
 		Account account = Account.createNew("USER-1", "ACC-123456");
 		PageRequest pageRequest = new PageRequest(0, 10);
 
-		when(accountRepository.findByAccountNumber("ACC-123456")).thenReturn(Optional.of(account));
+		when(accountOperationsPort.findByAccountNumber("ACC-123456")).thenReturn(Optional.of(account));
 		when(transactionRecordRepository.findByAccountNumber("ACC-123456", pageRequest))
 				.thenReturn(new PageResult<>(Collections.emptyList(), 0, 10, 0, 0));
 
@@ -50,7 +50,7 @@ class TransactionQueryServiceTest {
 		Account account = Account.createNew("USER-1", "ACC-123456");
 		PageRequest pageRequest = new PageRequest(0, 10);
 
-		when(accountRepository.findByAccountNumber("ACC-123456")).thenReturn(Optional.of(account));
+		when(accountOperationsPort.findByAccountNumber("ACC-123456")).thenReturn(Optional.of(account));
 
 		assertThrows(SecurityException.class, () -> service.getTransactions("ACC-123456", pageRequest, "HACKER"));
 
@@ -66,8 +66,8 @@ class TransactionQueryServiceTest {
 		Account targetAccount = Account.createNew("USER-2", "0987654321");
 
 		when(transactionRecordRepository.findById("tx-123")).thenReturn(Optional.of(tx));
-		when(accountRepository.findByAccountNumber("1234567890")).thenReturn(Optional.of(sourceAccount));
-		when(accountRepository.findByAccountNumber("0987654321")).thenReturn(Optional.of(targetAccount));
+		when(accountOperationsPort.findByAccountNumber("1234567890")).thenReturn(Optional.of(sourceAccount));
+		when(accountOperationsPort.findByAccountNumber("0987654321")).thenReturn(Optional.of(targetAccount));
 
 		TransactionRecord result = service.getTransaction("tx-123", "USER-1");
 
@@ -83,8 +83,8 @@ class TransactionQueryServiceTest {
 		Account targetAccount = Account.createNew("USER-2", "0987654321");
 
 		when(transactionRecordRepository.findById("tx-123")).thenReturn(Optional.of(tx));
-		when(accountRepository.findByAccountNumber("1234567890")).thenReturn(Optional.of(sourceAccount));
-		when(accountRepository.findByAccountNumber("0987654321")).thenReturn(Optional.of(targetAccount));
+		when(accountOperationsPort.findByAccountNumber("1234567890")).thenReturn(Optional.of(sourceAccount));
+		when(accountOperationsPort.findByAccountNumber("0987654321")).thenReturn(Optional.of(targetAccount));
 
 		TransactionRecord result = service.getTransaction("tx-123", "USER-2");
 
@@ -100,8 +100,8 @@ class TransactionQueryServiceTest {
 		Account targetAccount = Account.createNew("USER-2", "0987654321");
 
 		when(transactionRecordRepository.findById("tx-123")).thenReturn(Optional.of(tx));
-		when(accountRepository.findByAccountNumber("1234567890")).thenReturn(Optional.of(sourceAccount));
-		when(accountRepository.findByAccountNumber("0987654321")).thenReturn(Optional.of(targetAccount));
+		when(accountOperationsPort.findByAccountNumber("1234567890")).thenReturn(Optional.of(sourceAccount));
+		when(accountOperationsPort.findByAccountNumber("0987654321")).thenReturn(Optional.of(targetAccount));
 
 		assertThrows(SecurityException.class, () -> service.getTransaction("tx-123", "HACKER"));
 	}
@@ -113,8 +113,8 @@ class TransactionQueryServiceTest {
 				TransactionRecord.TransactionStatus.PENDING, null);
 
 		when(transactionRecordRepository.findById("tx-123")).thenReturn(Optional.of(tx));
-		when(accountRepository.findByAccountNumber("1234567890")).thenReturn(Optional.empty());
-		when(accountRepository.findByAccountNumber("0987654321")).thenReturn(Optional.empty());
+		when(accountOperationsPort.findByAccountNumber("1234567890")).thenReturn(Optional.empty());
+		when(accountOperationsPort.findByAccountNumber("0987654321")).thenReturn(Optional.empty());
 
 		assertThrows(SecurityException.class, () -> service.getTransaction("tx-123", "USER-1"));
 	}
@@ -122,7 +122,7 @@ class TransactionQueryServiceTest {
 	@Test
 	void shouldThrowEntityNotFoundWhenAccountNotFoundForGetTransactions() {
 		PageRequest pageRequest = new PageRequest(0, 10);
-		when(accountRepository.findByAccountNumber("ACC-MISSING")).thenReturn(Optional.empty());
+		when(accountOperationsPort.findByAccountNumber("ACC-MISSING")).thenReturn(Optional.empty());
 
 		assertThrows(com.example.demo.common.domain.exception.EntityNotFoundException.class,
 				() -> service.getTransactions("ACC-MISSING", pageRequest, "USER-1"));
@@ -144,7 +144,7 @@ class TransactionQueryServiceTest {
 		Account targetAccount = Account.createNew("USER-2", "0987654321");
 
 		when(transactionRecordRepository.findById("tx-123")).thenReturn(Optional.of(tx));
-		when(accountRepository.findByAccountNumber("0987654321")).thenReturn(Optional.of(targetAccount));
+		when(accountOperationsPort.findByAccountNumber("0987654321")).thenReturn(Optional.of(targetAccount));
 
 		TransactionRecord result = service.getTransaction("tx-123", "USER-2");
 
@@ -159,7 +159,7 @@ class TransactionQueryServiceTest {
 		Account sourceAccount = Account.createNew("USER-1", "1234567890");
 
 		when(transactionRecordRepository.findById("tx-123")).thenReturn(Optional.of(tx));
-		when(accountRepository.findByAccountNumber("1234567890")).thenReturn(Optional.of(sourceAccount));
+		when(accountOperationsPort.findByAccountNumber("1234567890")).thenReturn(Optional.of(sourceAccount));
 
 		TransactionRecord result = service.getTransaction("tx-123", "USER-1");
 

@@ -3,7 +3,7 @@ package com.example.demo.transaction.application.service;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.example.demo.account.application.port.out.AccountRepository;
+import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.application.annotation.TransactionalUseCase;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
@@ -17,13 +17,13 @@ import com.example.demo.transaction.domain.model.TransactionRecord.TransactionTy
 @TransactionalUseCase
 public class DepositMoneyService implements DepositMoneyUseCase {
 
-	private final AccountRepository accountRepository;
+	private final AccountOperationsPort accountOperationsPort;
 	private final TransactionRecordRepository transactionRecordRepository;
 	private final EventPublisher eventPublisher;
 
-	public DepositMoneyService(AccountRepository accountRepository,
+	public DepositMoneyService(AccountOperationsPort accountOperationsPort,
 			TransactionRecordRepository transactionRecordRepository, EventPublisher eventPublisher) {
-		this.accountRepository = accountRepository;
+		this.accountOperationsPort = accountOperationsPort;
 		this.transactionRecordRepository = transactionRecordRepository;
 		this.eventPublisher = eventPublisher;
 	}
@@ -31,7 +31,7 @@ public class DepositMoneyService implements DepositMoneyUseCase {
 	@Override
 	public TransactionRecord deposit(DepositCommand command) {
 		// Fetch the account (No lock needed for initiating the pending state)
-		Account account = accountRepository.findByAccountNumber(command.accountId())
+		Account account = accountOperationsPort.findByAccountNumber(command.accountId())
 				.orElseThrow(() -> new EntityNotFoundException("Account not found"));
 
 		// Enforce ownership

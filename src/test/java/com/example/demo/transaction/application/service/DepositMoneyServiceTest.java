@@ -15,7 +15,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.demo.account.application.port.out.AccountRepository;
+import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.transaction.application.port.in.DepositMoneyUseCase.DepositCommand;
@@ -30,7 +30,7 @@ import com.example.demo.transaction.domain.model.TransactionRecord.TransactionTy
 class DepositMoneyServiceTest {
 
 	@Mock
-	private AccountRepository accountRepository;
+	private AccountOperationsPort accountOperationsPort;
 
 	@Mock
 	private TransactionRecordRepository transactionRecordRepository;
@@ -48,7 +48,8 @@ class DepositMoneyServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		depositMoneyService = new DepositMoneyService(accountRepository, transactionRecordRepository, eventPublisher);
+		depositMoneyService = new DepositMoneyService(accountOperationsPort, transactionRecordRepository,
+				eventPublisher);
 	}
 
 	@Test
@@ -58,7 +59,7 @@ class DepositMoneyServiceTest {
 		DepositCommand command = new DepositCommand(accountNumber, new BigDecimal("250.00"), requesterId);
 		Account existingAccount = new Account("uuid-123", requesterId, accountNumber, BigDecimal.ZERO, 1L);
 
-		when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
+		when(accountOperationsPort.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
 
 		TransactionRecord result = depositMoneyService.deposit(command);
 
@@ -82,7 +83,7 @@ class DepositMoneyServiceTest {
 		Account existingAccount = new Account("uuid-123", "REAL-OWNER", accountNumber, BigDecimal.ZERO, 1L);
 		DepositCommand command = new DepositCommand(accountNumber, new BigDecimal("100.00"), "HACKER");
 
-		when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
+		when(accountOperationsPort.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
 
 		assertThrows(SecurityException.class, () -> {
 			depositMoneyService.deposit(command);
@@ -97,7 +98,7 @@ class DepositMoneyServiceTest {
 		String nonExistentAccountNumber = "NOTFOUND12";
 		DepositCommand command = new DepositCommand(nonExistentAccountNumber, new BigDecimal("100.00"), "USER-1");
 
-		when(accountRepository.findByAccountNumber(nonExistentAccountNumber)).thenReturn(Optional.empty());
+		when(accountOperationsPort.findByAccountNumber(nonExistentAccountNumber)).thenReturn(Optional.empty());
 
 		assertThrows(EntityNotFoundException.class, () -> {
 			depositMoneyService.deposit(command);

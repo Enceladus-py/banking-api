@@ -17,14 +17,14 @@ import com.example.demo.account.application.port.in.CreateAccountUseCase.CreateA
 import com.example.demo.account.application.port.out.AccountRepository;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
-import com.example.demo.user.application.port.out.UserRepository;
+import com.example.demo.user.application.port.in.GetUserUseCase;
 import com.example.demo.user.domain.model.User;
 
 @ExtendWith(MockitoExtension.class)
 class CreateAccountServiceTest {
 
 	@Mock
-	private UserRepository userRepository;
+	private GetUserUseCase getUserUseCase;
 
 	@Mock
 	private AccountRepository accountRepository;
@@ -33,7 +33,7 @@ class CreateAccountServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		createAccountService = new CreateAccountService(accountRepository, userRepository);
+		createAccountService = new CreateAccountService(accountRepository, getUserUseCase);
 	}
 
 	@Test
@@ -41,8 +41,7 @@ class CreateAccountServiceTest {
 		String requesterId = "USER-123";
 		CreateAccountCommand command = new CreateAccountCommand(requesterId);
 
-		when(userRepository.findById(requesterId))
-				.thenReturn(Optional.of(new User(requesterId, "Berat", "Dalsuna", 1L)));
+		when(getUserUseCase.getUserById(requesterId)).thenReturn(new User(requesterId, "Berat", "Dalsuna", 1L));
 
 		Account mockSavedAccount = new Account("uuid-123", requesterId, "A1B2C3D4E5", BigDecimal.ZERO, 1L);
 		when(accountRepository.save(any(Account.class))).thenReturn(mockSavedAccount);
@@ -59,7 +58,8 @@ class CreateAccountServiceTest {
 		String requesterId = "NON-EXISTENT";
 		CreateAccountCommand command = new CreateAccountCommand(requesterId);
 
-		when(userRepository.findById(requesterId)).thenReturn(Optional.empty());
+		when(getUserUseCase.getUserById(requesterId))
+				.thenThrow(new com.example.demo.common.domain.exception.EntityNotFoundException("User not found"));
 
 		assertThrows(EntityNotFoundException.class, () -> createAccountService.createAccount(command));
 		verify(accountRepository, never()).save(any(Account.class));
@@ -70,8 +70,7 @@ class CreateAccountServiceTest {
 		String requesterId = "USER-123";
 		CreateAccountCommand command = new CreateAccountCommand(requesterId);
 
-		when(userRepository.findById(requesterId))
-				.thenReturn(Optional.of(new User(requesterId, "Berat", "Dalsuna", 1L)));
+		when(getUserUseCase.getUserById(requesterId)).thenReturn(new User(requesterId, "Berat", "Dalsuna", 1L));
 
 		// Simulate a collision on the first generated account number, then success on
 		// the second
