@@ -20,8 +20,10 @@ import com.example.demo.domain.model.TransactionRecord;
 import com.example.demo.infrastructure.adapter.out.persistence.entity.ProcessedEventJpaEntity;
 import com.example.demo.infrastructure.adapter.out.persistence.repository.SpringDataProcessedEventRepository;
 
+import tools.jackson.databind.ObjectMapper;
+
 @ExtendWith(MockitoExtension.class)
-class SpringTransactionEventListenerTest {
+class KafkaTransactionEventListenerTest {
 
 	@Mock
 	private ProcessTransactionUseCase processTransactionUseCase;
@@ -29,41 +31,60 @@ class SpringTransactionEventListenerTest {
 	@Mock
 	private SpringDataProcessedEventRepository processedEventRepository;
 
+	@Mock
+	private ObjectMapper objectMapper;
+
 	@InjectMocks
-	private SpringTransactionEventListener listener;
+	private KafkaTransactionEventListener listener;
 
 	@Test
-	void shouldProcessEventSuccessfully() {
+	void shouldProcessEventSuccessfully() throws Exception {
 		UUID eventId = UUID.randomUUID();
 		TransactionPendingEvent event = new TransactionPendingEvent(eventId, UUID.randomUUID().toString(),
 				Instant.now(), "SRC123", "TGT456", new BigDecimal("100.00"), TransactionRecord.TransactionType.TRANSFER,
 				"user1");
+		String payload = "{}";
+
+		when(objectMapper.readValue(payload, TransactionPendingEvent.class)).thenReturn(event);
 
 		// When saving the processed event succeeds
 		when(processedEventRepository.saveAndFlush(any(ProcessedEventJpaEntity.class)))
 				.thenReturn(new ProcessedEventJpaEntity(eventId, java.time.LocalDateTime.now()));
 
-		listener.onTransactionPending(event);
+		listener.onTransactionEvent(payload, "TransactionPendingEvent");
 
 		verify(processedEventRepository, times(1)).saveAndFlush(any(ProcessedEventJpaEntity.class));
-		verify(processTransactionUseCase, times(1)).process(event);
+		verify(processTransactionUseCase, times(1)).process(any(TransactionPendingEvent.class));
 	}
 
 	@Test
-	void shouldIgnoreDuplicateEventWhenDataIntegrityViolationExceptionIsThrown() {
+	void shouldIgnoreDuplicateEventWhenDataIntegrityViolationExceptionIsThrown() throws Exception {
 		UUID eventId = UUID.randomUUID();
 		TransactionPendingEvent event = new TransactionPendingEvent(eventId, UUID.randomUUID().toString(),
 				Instant.now(), "SRC123", "TGT456", new BigDecimal("100.00"), TransactionRecord.TransactionType.TRANSFER,
 				"user1");
+		String payload = "{}";
+
+		when(objectMapper.readValue(payload, TransactionPendingEvent.class)).thenReturn(event);
 
 		// When saving throws DataIntegrityViolationException (duplicate event)
 		when(processedEventRepository.saveAndFlush(any(ProcessedEventJpaEntity.class)))
 				.thenThrow(new DataIntegrityViolationException("Duplicate key violation"));
 
-		listener.onTransactionPending(event);
+		listener.onTransactionEvent(payload, "TransactionPendingEvent");
 
 		verify(processedEventRepository, times(1)).saveAndFlush(any(ProcessedEventJpaEntity.class));
 		// processTransactionUseCase.process should never be called
+		verify(processTransactionUseCase, never()).process(any());
+	}
+
+	@Test
+	void shouldIgnoreNonPendingEvents() throws Exception {
+		String payload = "{}";
+
+		listener.onTransactionEvent(payload, "TransactionCompletedEvent");
+
+		verify(processedEventRepository, never()).saveAndFlush(any(ProcessedEventJpaEntity.class));
 		verify(processTransactionUseCase, never()).process(any());
 	}
 }

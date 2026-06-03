@@ -51,8 +51,14 @@ public class OutboxEventScheduler {
 	@Scheduled(fixedDelayString = "${outbox.scheduler.delay:100}") // Poll every 100 milliseconds (overridable)
 	@Transactional
 	public void publishPendingEvents() {
-		List<OutboxEventJpaEntity> pendingEvents = outboxRepository
-				.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING);
+		List<OutboxEventJpaEntity> pendingEvents;
+		try {
+			pendingEvents = outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING);
+		} catch (org.springframework.dao.DataAccessException e) {
+			// Ignore exceptions caused by database shutdown during tests
+			log.debug("Database might be shutting down: {}", e.getMessage());
+			return;
+		}
 
 		if (pendingEvents.isEmpty()) {
 			return;

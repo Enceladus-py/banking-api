@@ -11,18 +11,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.messaging.Message;
 
 import com.example.demo.domain.event.TransactionCompletedEvent;
 import com.example.demo.domain.event.TransactionFailedEvent;
 import com.example.demo.domain.event.TransactionPendingEvent;
-import com.example.demo.domain.model.TransactionRecord.TransactionType;
+import com.example.demo.domain.model.TransactionRecord;
 import com.example.demo.infrastructure.adapter.out.persistence.entity.OutboxEventJpaEntity;
 import com.example.demo.infrastructure.adapter.out.persistence.entity.OutboxStatus;
 import com.example.demo.infrastructure.adapter.out.persistence.repository.SpringDataOutboxEventRepository;
@@ -36,17 +38,13 @@ class OutboxEventSchedulerTest {
 	private SpringDataOutboxEventRepository outboxRepository;
 
 	@Mock
-	private ObjectMapper objectMapper;
+	private KafkaTemplate<String, String> kafkaTemplate;
 
 	@Mock
-	private ApplicationEventPublisher localEventPublisher;
+	private ObjectMapper objectMapper;
 
+	@InjectMocks
 	private OutboxEventScheduler scheduler;
-
-	@BeforeEach
-	void setUp() {
-		scheduler = new OutboxEventScheduler(outboxRepository, objectMapper, localEventPublisher);
-	}
 
 	@Test
 	void shouldDoNothingWhenNoPendingEvents() {
@@ -55,25 +53,28 @@ class OutboxEventSchedulerTest {
 
 		scheduler.publishPendingEvents();
 
-		verify(localEventPublisher, never()).publishEvent(any());
+		verify(kafkaTemplate, never()).send(any(Message.class));
 		verify(outboxRepository, never()).save(any());
 	}
 
 	@Test
-	void shouldPublishPendingEventAndMarkAsPublished() throws Exception {
-		OutboxEventJpaEntity entity = OutboxEventJpaEntity.builder().id(UUID.randomUUID()).aggregateType("Transaction")
-				.aggregateId("tx1").eventType("TransactionPendingEvent").payload("{}").createdAt(LocalDateTime.now())
-				.status(OutboxStatus.PENDING).retryCount(0).build();
+	void shouldPublishPendingEvents() throws Exception {
+		UUID eventId = UUID.randomUUID();
+		String transactionId = UUID.randomUUID().toString();
+		TransactionPendingEvent event = new TransactionPendingEvent(eventId, transactionId, Instant.now(), "SRC123",
+				"TGT456", new BigDecimal("100.00"), TransactionRecord.TransactionType.TRANSFER, "user1");
+
+		when(objectMapper.readValue("{}", TransactionPendingEvent.class)).thenReturn(event);
+
+		OutboxEventJpaEntity entity = new OutboxEventJpaEntity(eventId, "TRANSACTION", transactionId,
+				"TransactionPendingEvent", "{}", LocalDateTime.now(), OutboxStatus.PENDING, 0);
 
 		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING)).thenReturn(List.of(entity));
-
-		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), "tx1", Instant.now(), null,
-				"acc1", BigDecimal.TEN, TransactionType.DEPOSIT, "u1");
-		when(objectMapper.readValue("{}", TransactionPendingEvent.class)).thenReturn(event);
+		when(kafkaTemplate.send(any(Message.class))).thenReturn(CompletableFuture.completedFuture(null));
 
 		scheduler.publishPendingEvents();
 
-		verify(localEventPublisher).publishEvent(event);
+		verify(kafkaTemplate, times(1)).send(any(Message.class));
 		assertEquals(OutboxStatus.PUBLISHED, entity.getStatus());
 		verify(outboxRepository).save(entity);
 	}
@@ -89,9 +90,11 @@ class OutboxEventSchedulerTest {
 		TransactionCompletedEvent event = new TransactionCompletedEvent(UUID.randomUUID(), "tx1", Instant.now());
 		when(objectMapper.readValue("{}", TransactionCompletedEvent.class)).thenReturn(event);
 
+		when(kafkaTemplate.send(any(Message.class))).thenReturn(CompletableFuture.completedFuture(null));
+
 		scheduler.publishPendingEvents();
 
-		verify(localEventPublisher).publishEvent(event);
+		verify(kafkaTemplate, times(1)).send(any(Message.class));
 		assertEquals(OutboxStatus.PUBLISHED, entity.getStatus());
 		verify(outboxRepository).save(entity);
 	}
@@ -107,9 +110,11 @@ class OutboxEventSchedulerTest {
 		TransactionFailedEvent event = new TransactionFailedEvent(UUID.randomUUID(), "tx1", Instant.now(), "err");
 		when(objectMapper.readValue("{}", TransactionFailedEvent.class)).thenReturn(event);
 
+		when(kafkaTemplate.send(any(Message.class))).thenReturn(CompletableFuture.completedFuture(null));
+
 		scheduler.publishPendingEvents();
 
-		verify(localEventPublisher).publishEvent(event);
+		verify(kafkaTemplate, times(1)).send(any(Message.class));
 		assertEquals(OutboxStatus.PUBLISHED, entity.getStatus());
 		verify(outboxRepository).save(entity);
 	}
@@ -126,7 +131,7 @@ class OutboxEventSchedulerTest {
 
 		scheduler.publishPendingEvents();
 
-		verify(localEventPublisher, never()).publishEvent(any());
+		verify(kafkaTemplate, never()).send(any(Message.class));
 		assertEquals(OutboxStatus.PENDING, entity.getStatus());
 		assertEquals(2, entity.getRetryCount());
 		verify(outboxRepository).save(entity);

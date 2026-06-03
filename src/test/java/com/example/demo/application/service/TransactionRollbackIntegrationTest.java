@@ -24,7 +24,9 @@ import com.example.demo.infrastructure.adapter.out.persistence.repository.Spring
 import com.example.demo.infrastructure.adapter.out.persistence.repository.SpringDataTransactionRepository;
 import com.example.demo.infrastructure.adapter.out.persistence.repository.SpringDataUserRepository;
 
-@SpringBootTest
+@SpringBootTest(properties = {"outbox.scheduler.delay=9999999"})
+@org.springframework.kafka.test.context.EmbeddedKafka(partitions = 1)
+@org.springframework.test.context.TestPropertySource(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 class TransactionRollbackIntegrationTest {
 
 	@Autowired

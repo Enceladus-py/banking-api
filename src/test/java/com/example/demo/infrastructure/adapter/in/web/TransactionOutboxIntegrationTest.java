@@ -28,8 +28,10 @@ import com.example.demo.infrastructure.adapter.out.persistence.repository.Spring
 import com.example.demo.infrastructure.adapter.out.persistence.repository.SpringDataTransactionRepository;
 import com.example.demo.infrastructure.adapter.out.persistence.repository.SpringDataUserRepository;
 
-@SpringBootTest(properties = "outbox.scheduler.delay=9999999")
+@SpringBootTest(properties = {"outbox.scheduler.delay=9999999"})
 @AutoConfigureMockMvc
+@org.springframework.kafka.test.context.EmbeddedKafka(partitions = 1)
+@org.springframework.test.context.TestPropertySource(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 class TransactionOutboxIntegrationTest {
 
 	@Autowired
@@ -114,12 +116,14 @@ class TransactionOutboxIntegrationTest {
 		// complete the update deterministically
 		outboxEventScheduler.publishPendingEvents();
 
-		var accountAfter = accountRepository.findByAccountNumber(accountNumber);
-		assertTrue(accountAfter.isPresent());
-		// Balance must be updated to 250.00
-		assertEquals(0, new BigDecimal("250.00").compareTo(accountAfter.get().getBalance()),
-				"Balance should be updated to 250.00 after manual outbox trigger");
-
+		// Wait for Kafka consumer to process the event asynchronously (max 5 seconds)
+		org.awaitility.Awaitility.await().atMost(5, java.util.concurrent.TimeUnit.SECONDS).untilAsserted(() -> {
+			var accountAfter = accountRepository.findByAccountNumber(accountNumber);
+			assertTrue(accountAfter.isPresent());
+			// Balance must be updated to 250.00
+			assertEquals(0, new BigDecimal("250.00").compareTo(accountAfter.get().getBalance()),
+					"Balance should be updated to 250.00 after manual outbox trigger");
+		});
 		// 5. Assert final state in Database
 		// Outbox event status should be PUBLISHED
 		Optional<OutboxEventJpaEntity> outboxEventAfter = outboxRepository.findById(pendingEvent.getId());

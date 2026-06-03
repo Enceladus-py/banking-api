@@ -11,3 +11,13 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
+
+logging:
+  level:
+    kafka: OFF
+    org.apache.kafka: OFF
+    state.change.logger: OFF
+    kafka.log.LogManager: OFF
+    kafka.server.ReplicaManager: OFF
+    kafka.server.ReplicaFetcherManager: OFF
+    kafka.server.ReplicaAlterLogDirsManager: OFF
