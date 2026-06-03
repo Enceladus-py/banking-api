@@ -81,11 +81,21 @@ public class ProcessTransactionService implements ProcessTransactionUseCase {
 			transactionRecordRepository.save(tx.complete());
 			log.info("Transaction {} successfully completed", tx.getId());
 
-		} catch (Exception e) {
-			log.error("Transaction {} failed to process: {}", tx.getId(), e.getMessage());
-
-			// Transition domain object to FAILED with reason
+		} catch (com.example.demo.domain.exception.DomainException e) {
+			// Business rule violations (Insufficient Funds, Account Not Found).
+			// These are terminal. We mark the transaction as FAILED permanently.
+			log.error("Transaction {} failed due to business rule: {}", tx.getId(), e.getMessage());
 			transactionRecordRepository.save(tx.fail(e.getMessage()));
+
+			// Note: We do NOT rethrow. By returning normally, the Outbox Scheduler
+			// will mark the event as PUBLISHED, preventing useless retries.
+		} catch (Exception e) {
+			// Technical errors (Database lock timeouts, connection drops).
+			// We MUST rethrow these so the @Transactional rolls back, and the
+			// OutboxEventScheduler catches it to increment the retry count!
+			log.error("Transaction {} failed due to technical error. Will retry. Error: {}", tx.getId(),
+					e.getMessage());
+			throw e;
 		}
 	}
 }
