@@ -21,9 +21,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.Message;
 
+import com.example.demo.transaction.domain.event.EventType;
 import com.example.demo.transaction.domain.event.TransactionCompletedEvent;
 import com.example.demo.transaction.domain.event.TransactionFailedEvent;
 import com.example.demo.transaction.domain.event.TransactionPendingEvent;
+import com.example.demo.transaction.domain.model.AggregateType;
 import com.example.demo.transaction.domain.model.TransactionRecord;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.entity.OutboxEventJpaEntity;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.entity.OutboxStatus;
@@ -66,8 +68,8 @@ class OutboxEventSchedulerTest {
 
 		when(objectMapper.readValue("{}", TransactionPendingEvent.class)).thenReturn(event);
 
-		OutboxEventJpaEntity entity = new OutboxEventJpaEntity(eventId, "TRANSACTION", transactionId,
-				"TransactionPendingEvent", "{}", LocalDateTime.now(), OutboxStatus.PENDING, 0);
+		OutboxEventJpaEntity entity = new OutboxEventJpaEntity(eventId, AggregateType.TRANSACTION, transactionId,
+				EventType.TRANSACTION_PENDING, "{}", LocalDateTime.now(), OutboxStatus.PENDING, 0);
 
 		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING)).thenReturn(List.of(entity));
 		when(kafkaTemplate.send(any(Message.class))).thenReturn(CompletableFuture.completedFuture(null));
@@ -81,9 +83,9 @@ class OutboxEventSchedulerTest {
 
 	@Test
 	void shouldPublishCompletedEventAndMarkAsPublished() throws Exception {
-		OutboxEventJpaEntity entity = OutboxEventJpaEntity.builder().id(UUID.randomUUID()).aggregateType("Transaction")
-				.aggregateId("tx1").eventType("TransactionCompletedEvent").payload("{}").createdAt(LocalDateTime.now())
-				.status(OutboxStatus.PENDING).retryCount(0).build();
+		OutboxEventJpaEntity entity = OutboxEventJpaEntity.builder().id(UUID.randomUUID())
+				.aggregateType(AggregateType.TRANSACTION).aggregateId("tx1").eventType(EventType.TRANSACTION_COMPLETED)
+				.payload("{}").createdAt(LocalDateTime.now()).status(OutboxStatus.PENDING).retryCount(0).build();
 
 		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING)).thenReturn(List.of(entity));
 
@@ -101,9 +103,9 @@ class OutboxEventSchedulerTest {
 
 	@Test
 	void shouldPublishFailedEventAndMarkAsPublished() throws Exception {
-		OutboxEventJpaEntity entity = OutboxEventJpaEntity.builder().id(UUID.randomUUID()).aggregateType("Transaction")
-				.aggregateId("tx1").eventType("TransactionFailedEvent").payload("{}").createdAt(LocalDateTime.now())
-				.status(OutboxStatus.PENDING).retryCount(0).build();
+		OutboxEventJpaEntity entity = OutboxEventJpaEntity.builder().id(UUID.randomUUID())
+				.aggregateType(AggregateType.TRANSACTION).aggregateId("tx1").eventType(EventType.TRANSACTION_FAILED)
+				.payload("{}").createdAt(LocalDateTime.now()).status(OutboxStatus.PENDING).retryCount(0).build();
 
 		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING)).thenReturn(List.of(entity));
 
@@ -121,9 +123,9 @@ class OutboxEventSchedulerTest {
 
 	@Test
 	void shouldIncrementRetryCountOnFailure() throws Exception {
-		OutboxEventJpaEntity entity = OutboxEventJpaEntity.builder().id(UUID.randomUUID()).aggregateType("Transaction")
-				.aggregateId("tx1").eventType("TransactionPendingEvent").payload("{}").createdAt(LocalDateTime.now())
-				.status(OutboxStatus.PENDING).retryCount(1).build();
+		OutboxEventJpaEntity entity = OutboxEventJpaEntity.builder().id(UUID.randomUUID())
+				.aggregateType(AggregateType.TRANSACTION).aggregateId("tx1").eventType(EventType.TRANSACTION_PENDING)
+				.payload("{}").createdAt(LocalDateTime.now()).status(OutboxStatus.PENDING).retryCount(1).build();
 
 		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING)).thenReturn(List.of(entity));
 		when(objectMapper.readValue("{}", TransactionPendingEvent.class))
@@ -139,9 +141,10 @@ class OutboxEventSchedulerTest {
 
 	@Test
 	void shouldMarkAsFailedWhenMaxRetriesReached() throws Exception {
-		OutboxEventJpaEntity entity = OutboxEventJpaEntity.builder().id(UUID.randomUUID()).aggregateType("Transaction")
-				.aggregateId("tx1").eventType("UnknownEvent").payload("{}").createdAt(LocalDateTime.now())
-				.status(OutboxStatus.PENDING).retryCount(OutboxEventScheduler.MAX_RETRIES - 1).build();
+		OutboxEventJpaEntity entity = OutboxEventJpaEntity.builder().id(UUID.randomUUID())
+				.aggregateType(AggregateType.TRANSACTION).aggregateId("tx1").eventType(EventType.TRANSACTION_PENDING)
+				.payload("{}").createdAt(LocalDateTime.now()).status(OutboxStatus.PENDING)
+				.retryCount(OutboxEventScheduler.MAX_RETRIES - 1).build();
 
 		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING)).thenReturn(List.of(entity));
 
@@ -156,8 +159,9 @@ class OutboxEventSchedulerTest {
 	void shouldProcessOnlyBatchSizeEvents() {
 		List<OutboxEventJpaEntity> pendingEvents = new ArrayList<>();
 		for (int i = 0; i < OutboxEventScheduler.BATCH_SIZE + 10; i++) {
-			OutboxEventJpaEntity e = OutboxEventJpaEntity.builder().id(UUID.randomUUID()).aggregateType("Transaction")
-					.aggregateId("tx" + i).eventType("UnknownEvent").payload("{}").createdAt(LocalDateTime.now())
+			OutboxEventJpaEntity e = OutboxEventJpaEntity.builder().id(UUID.randomUUID())
+					.aggregateType(AggregateType.TRANSACTION).aggregateId("tx" + i)
+					.eventType(EventType.TRANSACTION_PENDING).payload("{}").createdAt(LocalDateTime.now())
 					.status(OutboxStatus.PENDING).retryCount(0).build();
 			pendingEvents.add(e);
 		}

@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.transaction.domain.event.EventType;
 import com.example.demo.transaction.domain.event.TransactionCompletedEvent;
 import com.example.demo.transaction.domain.event.TransactionEvent;
 import com.example.demo.transaction.domain.event.TransactionFailedEvent;
@@ -78,7 +79,7 @@ public class OutboxEventScheduler {
 						.withPayload(entity.getPayload())
 						.setHeader(org.springframework.kafka.support.KafkaHeaders.TOPIC, "transaction-events")
 						.setHeader(org.springframework.kafka.support.KafkaHeaders.KEY, event.transactionId())
-						.setHeader("eventType", entity.getEventType()).build();
+						.setHeader("eventType", entity.getEventType().name()).build();
 				kafkaTemplate.send(message).get();
 
 				// Mark as PUBLISHED so it is not processed again
@@ -105,14 +106,13 @@ public class OutboxEventScheduler {
 	}
 
 	private TransactionEvent deserialize(OutboxEventJpaEntity entity) throws Exception {
-		String eventType = entity.getEventType();
+		EventType eventType = entity.getEventType();
 		String payload = entity.getPayload();
 
 		return switch (eventType) {
-			case "TransactionPendingEvent" -> objectMapper.readValue(payload, TransactionPendingEvent.class);
-			case "TransactionCompletedEvent" -> objectMapper.readValue(payload, TransactionCompletedEvent.class);
-			case "TransactionFailedEvent" -> objectMapper.readValue(payload, TransactionFailedEvent.class);
-			default -> throw new IllegalArgumentException("Unknown event type: " + eventType);
+			case TRANSACTION_PENDING -> objectMapper.readValue(payload, TransactionPendingEvent.class);
+			case TRANSACTION_COMPLETED -> objectMapper.readValue(payload, TransactionCompletedEvent.class);
+			case TRANSACTION_FAILED -> objectMapper.readValue(payload, TransactionFailedEvent.class);
 		};
 	}
 }

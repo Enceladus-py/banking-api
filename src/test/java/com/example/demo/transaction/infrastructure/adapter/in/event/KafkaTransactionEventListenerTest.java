@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import com.example.demo.transaction.application.port.in.ProcessTransactionUseCase;
+import com.example.demo.transaction.domain.event.EventType;
 import com.example.demo.transaction.domain.event.TransactionPendingEvent;
 import com.example.demo.transaction.domain.model.TransactionRecord;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.entity.ProcessedEventJpaEntity;
@@ -51,7 +52,7 @@ class KafkaTransactionEventListenerTest {
 		when(processedEventRepository.saveAndFlush(any(ProcessedEventJpaEntity.class)))
 				.thenReturn(new ProcessedEventJpaEntity(eventId, java.time.LocalDateTime.now()));
 
-		listener.onTransactionEvent(payload, "TransactionPendingEvent");
+		listener.onTransactionEvent(payload, EventType.TRANSACTION_PENDING.name());
 
 		verify(processedEventRepository, times(1)).saveAndFlush(any(ProcessedEventJpaEntity.class));
 		verify(processTransactionUseCase, times(1)).process(any(TransactionPendingEvent.class));
@@ -71,7 +72,7 @@ class KafkaTransactionEventListenerTest {
 		when(processedEventRepository.saveAndFlush(any(ProcessedEventJpaEntity.class)))
 				.thenThrow(new DataIntegrityViolationException("Duplicate key violation"));
 
-		listener.onTransactionEvent(payload, "TransactionPendingEvent");
+		listener.onTransactionEvent(payload, EventType.TRANSACTION_PENDING.name());
 
 		verify(processedEventRepository, times(1)).saveAndFlush(any(ProcessedEventJpaEntity.class));
 		// processTransactionUseCase.process should never be called
@@ -82,7 +83,7 @@ class KafkaTransactionEventListenerTest {
 	void shouldIgnoreNonPendingEvents() throws Exception {
 		String payload = "{}";
 
-		listener.onTransactionEvent(payload, "TransactionCompletedEvent");
+		listener.onTransactionEvent(payload, EventType.TRANSACTION_COMPLETED.name());
 
 		verify(processedEventRepository, never()).saveAndFlush(any(ProcessedEventJpaEntity.class));
 		verify(processTransactionUseCase, never()).process(any());
@@ -96,7 +97,7 @@ class KafkaTransactionEventListenerTest {
 				.thenThrow(new RuntimeException("JSON parse error"));
 
 		RuntimeException exception = org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class,
-				() -> listener.onTransactionEvent(payload, "TransactionPendingEvent"));
+				() -> listener.onTransactionEvent(payload, EventType.TRANSACTION_PENDING.name()));
 
 		org.junit.jupiter.api.Assertions.assertEquals("Kafka message processing failed", exception.getMessage());
 		org.junit.jupiter.api.Assertions.assertEquals("JSON parse error", exception.getCause().getMessage());

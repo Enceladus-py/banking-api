@@ -3,6 +3,9 @@ package com.example.demo.transaction.infrastructure.adapter.out.persistence.enti
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.example.demo.transaction.domain.event.EventType;
+import com.example.demo.transaction.domain.model.AggregateType;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,14 +20,16 @@ public class OutboxEventJpaEntity {
 	@Id
 	private UUID id;
 
+	@Enumerated(EnumType.STRING)
 	@Column(name = "aggregate_type", nullable = false)
-	private String aggregateType;
+	private AggregateType aggregateType;
 
 	@Column(name = "aggregate_id", nullable = false)
 	private String aggregateId;
 
+	@Enumerated(EnumType.STRING)
 	@Column(name = "event_type", nullable = false)
-	private String eventType;
+	private EventType eventType;
 
 	@Column(nullable = false, columnDefinition = "TEXT")
 	private String payload;

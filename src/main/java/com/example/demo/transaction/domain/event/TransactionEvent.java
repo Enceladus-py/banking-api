@@ -17,4 +17,5 @@ public sealed interface TransactionEvent
 	UUID eventId();
 	String transactionId();
 	Instant timestamp();
+	EventType eventType();
 }

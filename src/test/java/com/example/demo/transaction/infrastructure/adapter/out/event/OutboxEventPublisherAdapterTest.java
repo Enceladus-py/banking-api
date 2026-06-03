@@ -15,7 +15,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.demo.transaction.domain.event.EventType;
 import com.example.demo.transaction.domain.event.TransactionPendingEvent;
+import com.example.demo.transaction.domain.model.AggregateType;
 import com.example.demo.transaction.domain.model.TransactionRecord;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.entity.OutboxEventJpaEntity;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.repository.SpringDataOutboxEventRepository;
@@ -51,9 +53,9 @@ class OutboxEventPublisherAdapterTest {
 
 		OutboxEventJpaEntity savedEntity = captor.getValue();
 		assertEquals(eventId, savedEntity.getId());
-		assertEquals("TRANSACTION", savedEntity.getAggregateType());
+		assertEquals(AggregateType.TRANSACTION, savedEntity.getAggregateType());
 		assertEquals(transactionId, savedEntity.getAggregateId());
-		assertEquals("TransactionPendingEvent", savedEntity.getEventType());
+		assertEquals(EventType.TRANSACTION_PENDING, savedEntity.getEventType());
 		assertEquals("{\"eventId\":\"" + eventId + "\"}", savedEntity.getPayload());
 		assertEquals(com.example.demo.transaction.infrastructure.adapter.out.persistence.entity.OutboxStatus.PENDING,
 				savedEntity.getStatus());

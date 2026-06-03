@@ -19,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.demo.account.infrastructure.adapter.out.persistence.repository.SpringDataAccountRepository;
+import com.example.demo.transaction.domain.event.EventType;
 import com.example.demo.transaction.infrastructure.adapter.out.event.OutboxEventScheduler;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.entity.OutboxEventJpaEntity;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.entity.OutboxStatus;
@@ -110,7 +111,7 @@ class TransactionOutboxIntegrationTest {
 				.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING);
 		assertFalse(pendingOutbox.isEmpty(), "Outbox event should be created in PENDING state");
 		OutboxEventJpaEntity pendingEvent = pendingOutbox.get(0);
-		assertEquals("TransactionPendingEvent", pendingEvent.getEventType());
+		assertEquals(EventType.TRANSACTION_PENDING, pendingEvent.getEventType());
 
 		// 4. Act: Manually trigger the asynchronous outbox processor to run and
 		// complete the update deterministically

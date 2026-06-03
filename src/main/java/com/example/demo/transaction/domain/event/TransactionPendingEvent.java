@@ -9,4 +9,9 @@ import com.example.demo.transaction.domain.model.TransactionRecord.TransactionTy
 public record TransactionPendingEvent(UUID eventId, String transactionId, Instant timestamp, String sourceAccountNumber,
 		String targetAccountNumber, BigDecimal amount, TransactionType type,
 		String requesterId) implements TransactionEvent {
+
+	@Override
+	public EventType eventType() {
+		return EventType.TRANSACTION_PENDING;
+	}
 }

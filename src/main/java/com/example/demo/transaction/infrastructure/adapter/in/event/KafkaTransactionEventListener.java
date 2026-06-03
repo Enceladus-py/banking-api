@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.transaction.application.port.in.ProcessTransactionUseCase;
+import com.example.demo.transaction.domain.event.EventType;
 import com.example.demo.transaction.domain.event.TransactionPendingEvent;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.entity.ProcessedEventJpaEntity;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.repository.SpringDataProcessedEventRepository;
@@ -30,7 +31,7 @@ public class KafkaTransactionEventListener {
 	public void onTransactionEvent(@org.springframework.messaging.handler.annotation.Payload String payload,
 			@org.springframework.messaging.handler.annotation.Header("eventType") String eventType) {
 		try {
-			if (!"TransactionPendingEvent".equals(eventType)) {
+			if (!EventType.TRANSACTION_PENDING.name().equals(eventType)) {
 				log.debug("Ignoring non-pending transaction event type: {}", eventType);
 				return;
 			}
