@@ -68,7 +68,12 @@ public class OutboxEventScheduler {
 		for (OutboxEventJpaEntity entity : batch) {
 			try {
 				TransactionEvent event = deserialize(entity);
-				kafkaTemplate.send("transaction-events", event.transactionId(), entity.getPayload()).get();
+				org.springframework.messaging.Message<String> message = org.springframework.messaging.support.MessageBuilder
+						.withPayload(entity.getPayload())
+						.setHeader(org.springframework.kafka.support.KafkaHeaders.TOPIC, "transaction-events")
+						.setHeader(org.springframework.kafka.support.KafkaHeaders.KEY, event.transactionId())
+						.setHeader("eventType", entity.getEventType()).build();
+				kafkaTemplate.send(message).get();
 
 				// Mark as PUBLISHED so it is not processed again
 				entity.setStatus(OutboxStatus.PUBLISHED);
