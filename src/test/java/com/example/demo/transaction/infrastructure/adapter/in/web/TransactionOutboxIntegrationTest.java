@@ -32,7 +32,9 @@ import com.example.demo.user.infrastructure.adapter.out.persistence.repository.S
 @SpringBootTest(properties = {"outbox.scheduler.delay=9999999"})
 @AutoConfigureMockMvc
 @org.springframework.kafka.test.context.EmbeddedKafka(partitions = 1)
-@org.springframework.test.context.TestPropertySource(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
+@org.springframework.test.context.TestPropertySource(properties = {
+		"spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
+		"spring.kafka.consumer.auto-offset-reset=earliest"})
 class TransactionOutboxIntegrationTest {
 
 	@Autowired
