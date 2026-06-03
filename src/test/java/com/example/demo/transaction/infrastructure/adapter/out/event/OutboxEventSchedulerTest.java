@@ -168,4 +168,14 @@ class OutboxEventSchedulerTest {
 
 		verify(outboxRepository, times(OutboxEventScheduler.BATCH_SIZE)).save(any());
 	}
+	@Test
+	void shouldIgnoreDatabaseShutdownExceptions() {
+		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING))
+				.thenThrow(new org.springframework.dao.DataAccessResourceFailureException("DB is closing"));
+
+		scheduler.publishPendingEvents();
+
+		verify(kafkaTemplate, never()).send(any(Message.class));
+		verify(outboxRepository, never()).save(any());
+	}
 }

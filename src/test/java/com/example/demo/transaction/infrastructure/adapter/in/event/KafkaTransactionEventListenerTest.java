@@ -87,4 +87,21 @@ class KafkaTransactionEventListenerTest {
 		verify(processedEventRepository, never()).saveAndFlush(any(ProcessedEventJpaEntity.class));
 		verify(processTransactionUseCase, never()).process(any());
 	}
+
+	@Test
+	void shouldThrowRuntimeExceptionOnProcessingFailure() throws Exception {
+		String payload = "invalid-json";
+
+		when(objectMapper.readValue(payload, TransactionPendingEvent.class))
+				.thenThrow(new RuntimeException("JSON parse error"));
+
+		RuntimeException exception = org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class,
+				() -> listener.onTransactionEvent(payload, "TransactionPendingEvent"));
+
+		org.junit.jupiter.api.Assertions.assertEquals("Kafka message processing failed", exception.getMessage());
+		org.junit.jupiter.api.Assertions.assertEquals("JSON parse error", exception.getCause().getMessage());
+
+		verify(processedEventRepository, never()).saveAndFlush(any());
+		verify(processTransactionUseCase, never()).process(any());
+	}
 }

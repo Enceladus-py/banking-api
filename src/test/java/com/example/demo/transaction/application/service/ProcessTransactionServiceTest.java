@@ -302,4 +302,23 @@ class ProcessTransactionServiceTest {
 		verify(accountOperationsPort, never()).lockAndLoad(anyString());
 		verify(transactionRecordRepository, never()).save(any());
 	}
+
+	@Test
+	void shouldRethrowTechnicalErrors() {
+		String txId = "tx-123";
+		String accountNumber = "A1B2C3D4E5";
+		TransactionRecord pendingTx = new TransactionRecord(txId, null, accountNumber, new BigDecimal("100.00"),
+				TransactionType.DEPOSIT, LocalDateTime.now(), TransactionStatus.PENDING, null);
+		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(), null,
+				accountNumber, new BigDecimal("100.00"), TransactionType.DEPOSIT, "USER-123");
+
+		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
+		when(accountOperationsPort.lockAndLoad(accountNumber)).thenThrow(new RuntimeException("Database lock timeout"));
+
+		RuntimeException exception = assertThrows(RuntimeException.class,
+				() -> processTransactionService.process(event));
+		assertEquals("Database lock timeout", exception.getMessage());
+
+		verify(transactionRecordRepository, never()).save(any());
+	}
 }
