@@ -18,6 +18,12 @@ public class AccountOperationsService implements AccountOperationsPort {
 
 	private final AccountRepository accountRepository;
 
+	/**
+	 * Constructs a new AccountOperationsService with the specified repository.
+	 *
+	 * @param accountRepository
+	 *            the account repository outbound port
+	 */
 	public AccountOperationsService(AccountRepository accountRepository) {
 		this.accountRepository = accountRepository;
 	}

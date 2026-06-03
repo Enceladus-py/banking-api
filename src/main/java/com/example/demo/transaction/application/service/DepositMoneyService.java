@@ -14,6 +14,9 @@ import com.example.demo.transaction.domain.event.TransactionPendingEvent;
 import com.example.demo.transaction.domain.model.TransactionRecord;
 import com.example.demo.transaction.domain.model.TransactionRecord.TransactionType;
 
+/**
+ * Service class implementing the deposit money use case.
+ */
 @TransactionalUseCase
 public class DepositMoneyService implements DepositMoneyUseCase {
 
@@ -21,6 +24,16 @@ public class DepositMoneyService implements DepositMoneyUseCase {
 	private final TransactionRecordRepository transactionRecordRepository;
 	private final EventPublisher eventPublisher;
 
+	/**
+	 * Constructs a new DepositMoneyService with the required ports.
+	 *
+	 * @param accountOperationsPort
+	 *            the port for account queries and operations
+	 * @param transactionRecordRepository
+	 *            the repository for storing transaction ledger records
+	 * @param eventPublisher
+	 *            the publisher for transaction events
+	 */
 	public DepositMoneyService(AccountOperationsPort accountOperationsPort,
 			TransactionRecordRepository transactionRecordRepository, EventPublisher eventPublisher) {
 		this.accountOperationsPort = accountOperationsPort;

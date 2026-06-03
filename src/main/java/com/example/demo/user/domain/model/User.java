@@ -4,6 +4,9 @@ import java.util.UUID;
 
 import lombok.Getter;
 
+/**
+ * Domain model representing a user (customer) in the system.
+ */
 @Getter
 public class User {
 	private String id;
@@ -11,10 +14,30 @@ public class User {
 	private String surname;
 	private final Long version;
 
+	/**
+	 * Constructor for creating a brand new User.
+	 *
+	 * @param name
+	 *            the user's first name
+	 * @param surname
+	 *            the user's last name
+	 */
 	public User(String name, String surname) {
 		this(UUID.randomUUID().toString(), name, surname, null);
 	}
 
+	/**
+	 * Constructor for database re-hydration and mapping.
+	 *
+	 * @param id
+	 *            the user ID
+	 * @param name
+	 *            the user's first name
+	 * @param surname
+	 *            the user's last name
+	 * @param version
+	 *            the database version
+	 */
 	public User(String id, String name, String surname, Long version) {
 		if (name == null || name.isBlank()) {
 			throw new IllegalArgumentException("Name cannot be null or empty");

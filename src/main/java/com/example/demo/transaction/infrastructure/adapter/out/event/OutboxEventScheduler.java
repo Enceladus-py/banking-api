@@ -16,7 +16,6 @@ import com.example.demo.transaction.infrastructure.adapter.out.persistence.entit
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.entity.OutboxStatus;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.repository.SpringDataOutboxEventRepository;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.ObjectMapper;
 
@@ -35,7 +34,6 @@ import tools.jackson.databind.ObjectMapper;
  * per tick to bound the work done per scheduler invocation.
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class OutboxEventScheduler {
 
@@ -49,6 +47,26 @@ public class OutboxEventScheduler {
 	private final ObjectMapper objectMapper;
 	private final KafkaTemplate<String, String> kafkaTemplate;
 
+	/**
+	 * Constructs a new OutboxEventScheduler with the required dependencies.
+	 *
+	 * @param outboxRepository
+	 *            the Spring Data outbox repository
+	 * @param objectMapper
+	 *            the mapper for serialization
+	 * @param kafkaTemplate
+	 *            the Kafka producer template
+	 */
+	public OutboxEventScheduler(SpringDataOutboxEventRepository outboxRepository, ObjectMapper objectMapper,
+			KafkaTemplate<String, String> kafkaTemplate) {
+		this.outboxRepository = outboxRepository;
+		this.objectMapper = objectMapper;
+		this.kafkaTemplate = kafkaTemplate;
+	}
+
+	/**
+	 * Scheduled task to poll and publish pending outbox events.
+	 */
 	@Scheduled(fixedDelayString = "${outbox.scheduler.delay:100}") // Poll every 100 milliseconds (overridable)
 	@Transactional
 	public void publishPendingEvents() {

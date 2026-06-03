@@ -37,6 +37,16 @@ public class TransferService implements TransferMoneyUseCase {
 	private final TransactionRecordRepository transactionRecordRepository;
 	private final EventPublisher eventPublisher;
 
+	/**
+	 * Constructs a new TransferService with the required ports.
+	 *
+	 * @param accountOperationsPort
+	 *            the port for account queries and operations
+	 * @param transactionRecordRepository
+	 *            the repository for storing transaction ledger records
+	 * @param eventPublisher
+	 *            the publisher for transaction events
+	 */
 	public TransferService(AccountOperationsPort accountOperationsPort,
 			TransactionRecordRepository transactionRecordRepository, EventPublisher eventPublisher) {
 		this.accountOperationsPort = accountOperationsPort;

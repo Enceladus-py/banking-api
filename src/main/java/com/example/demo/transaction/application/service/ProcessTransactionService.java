@@ -13,6 +13,9 @@ import com.example.demo.transaction.domain.model.TransactionRecord.TransactionTy
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Service class that implements transaction processing logic.
+ */
 @Slf4j
 @TransactionalUseCase
 public class ProcessTransactionService implements ProcessTransactionUseCase {
@@ -20,6 +23,14 @@ public class ProcessTransactionService implements ProcessTransactionUseCase {
 	private final AccountOperationsPort accountOperationsPort;
 	private final TransactionRecordRepository transactionRecordRepository;
 
+	/**
+	 * Constructs a new ProcessTransactionService with the specified ports.
+	 *
+	 * @param accountOperationsPort
+	 *            the port for account queries and operations
+	 * @param transactionRecordRepository
+	 *            the repository for transaction ledger records
+	 */
 	public ProcessTransactionService(AccountOperationsPort accountOperationsPort,
 			TransactionRecordRepository transactionRecordRepository) {
 		this.accountOperationsPort = accountOperationsPort;

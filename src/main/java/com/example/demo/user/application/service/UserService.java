@@ -7,11 +7,20 @@ import com.example.demo.user.application.port.in.RegisterUserUseCase;
 import com.example.demo.user.application.port.out.UserRepository;
 import com.example.demo.user.domain.model.User;
 
+/**
+ * Service class implementing use cases for user registration and retrieval.
+ */
 @TransactionalUseCase
 public class UserService implements RegisterUserUseCase, GetUserUseCase {
 
 	private final UserRepository userRepository;
 
+	/**
+	 * Constructs a new UserService with the specified user repository.
+	 *
+	 * @param userRepository
+	 *            the user repository outbound port
+	 */
 	public UserService(UserRepository userRepository) {
 		this.userRepository = userRepository;
 	}

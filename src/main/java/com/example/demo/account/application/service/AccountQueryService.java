@@ -6,11 +6,20 @@ import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.application.annotation.UseCase;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 
+/**
+ * Service class that implements the use case for retrieving account details.
+ */
 @UseCase
 public class AccountQueryService implements GetAccountUseCase {
 
 	private final AccountRepository accountRepository;
 
+	/**
+	 * Constructs a new AccountQueryService with the specified repository.
+	 *
+	 * @param accountRepository
+	 *            the account repository outbound port
+	 */
 	public AccountQueryService(AccountRepository accountRepository) {
 		this.accountRepository = accountRepository;
 	}

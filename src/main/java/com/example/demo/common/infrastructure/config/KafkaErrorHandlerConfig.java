@@ -7,9 +7,33 @@ import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.ExponentialBackOff;
 
+/**
+ * Configuration class for Kafka error handling and retry policies.
+ */
 @Configuration
 public class KafkaErrorHandlerConfig {
 
+	/**
+	 * Default constructor.
+	 */
+	public KafkaErrorHandlerConfig() {
+	}
+
+	/**
+	 * Configures a DefaultErrorHandler with exponential backoff and DLQ recovery.
+	 *
+	 * @param kafkaTemplate
+	 *            the template used to publish to DLQ
+	 * @param initialInterval
+	 *            the initial wait duration in milliseconds
+	 * @param multiplier
+	 *            the multiplication factor for subsequent retries
+	 * @param maxInterval
+	 *            the maximum interval duration in milliseconds
+	 * @param maxElapsedTime
+	 *            the maximum total elapsed retry time in milliseconds
+	 * @return the configured DefaultErrorHandler bean
+	 */
 	@Bean
 	public DefaultErrorHandler errorHandler(KafkaTemplate<String, String> kafkaTemplate,
 			@org.springframework.beans.factory.annotation.Value("${kafka.backoff.initialInterval:1000}") long initialInterval,

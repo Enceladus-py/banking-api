@@ -6,6 +6,9 @@ import com.example.demo.account.domain.exception.InsufficientFundsException;
 
 import lombok.Getter;
 
+/**
+ * Domain model representing a bank account.
+ */
 @Getter
 public class Account {
 	private String id;
@@ -14,7 +17,15 @@ public class Account {
 	private BigDecimal balance;
 	private final Long version;
 
-	// Creation Factory Method (contains all business validations)
+	/**
+	 * Factory method to create a new bank account with business validations.
+	 *
+	 * @param ownerId
+	 *            the user ID of the owner
+	 * @param accountNumber
+	 *            the unique 10-digit account number
+	 * @return the newly created Account
+	 */
 	public static Account createNew(String ownerId, String accountNumber) {
 		if (accountNumber == null || accountNumber.length() != 10) {
 			throw new IllegalArgumentException("Account number must be exactly 10 characters");
@@ -25,7 +36,20 @@ public class Account {
 		return new Account(java.util.UUID.randomUUID().toString(), ownerId, accountNumber, BigDecimal.ZERO, null);
 	}
 
-	// The Master Constructor: Used for DB Re-hydration AND guarded new creation
+	/**
+	 * Constructor for recreating an account (re-hydration) or new creation.
+	 *
+	 * @param id
+	 *            the unique account ID
+	 * @param ownerId
+	 *            the owner's user ID
+	 * @param accountNumber
+	 *            the 10-digit account number
+	 * @param balance
+	 *            the account balance
+	 * @param version
+	 *            the optimistic locking version
+	 */
 	public Account(String id, String ownerId, String accountNumber, BigDecimal balance, Long version) {
 		this.id = id;
 		this.ownerId = ownerId;
@@ -34,10 +58,23 @@ public class Account {
 		this.version = version;
 	}
 
+	/**
+	 * Checks if this account is owned by the specified user.
+	 *
+	 * @param userId
+	 *            the user ID to check
+	 * @return true if owned by the user, false otherwise
+	 */
 	public boolean isOwnedBy(String userId) {
 		return this.ownerId.equals(userId);
 	}
 
+	/**
+	 * Deposits an amount into the account.
+	 *
+	 * @param amount
+	 *            the deposit amount
+	 */
 	public void deposit(BigDecimal amount) {
 		if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
 			throw new IllegalArgumentException("Deposit amount must be greater than zero");
@@ -45,6 +82,12 @@ public class Account {
 		this.balance = this.balance.add(amount);
 	}
 
+	/**
+	 * Withdraws an amount from the account.
+	 *
+	 * @param amount
+	 *            the withdrawal amount
+	 */
 	public void withdraw(BigDecimal amount) {
 		if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
 			throw new IllegalArgumentException("Withdrawal amount must be greater than zero");

@@ -10,13 +10,24 @@ import com.example.demo.user.domain.model.User;
 import com.example.demo.user.infrastructure.adapter.out.persistence.entity.UserJpaEntity;
 import com.example.demo.user.infrastructure.adapter.out.persistence.repository.SpringDataUserRepository;
 
-import lombok.RequiredArgsConstructor;
-
+/**
+ * Persistence adapter implementing UserRepository for PostgreSQL database.
+ */
 @Component
-@RequiredArgsConstructor
 public class PostgresUserAdapter implements UserRepository {
 
 	private final SpringDataUserRepository repository;
+
+	/**
+	 * Constructs a new PostgresUserAdapter with the specified Spring Data
+	 * repository.
+	 *
+	 * @param repository
+	 *            the Spring Data JPA repository
+	 */
+	public PostgresUserAdapter(SpringDataUserRepository repository) {
+		this.repository = repository;
+	}
 
 	@Override
 	public User save(User user) {

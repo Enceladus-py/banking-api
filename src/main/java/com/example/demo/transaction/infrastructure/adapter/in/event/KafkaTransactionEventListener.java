@@ -13,12 +13,13 @@ import com.example.demo.transaction.domain.event.TransactionPendingEvent;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.entity.ProcessedEventJpaEntity;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.repository.SpringDataProcessedEventRepository;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.ObjectMapper;
 
+/**
+ * Kafka listener for processing transaction events.
+ */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class KafkaTransactionEventListener {
 
@@ -26,6 +27,32 @@ public class KafkaTransactionEventListener {
 	private final SpringDataProcessedEventRepository processedEventRepository;
 	private final ObjectMapper objectMapper;
 
+	/**
+	 * Constructs a new KafkaTransactionEventListener with the specified services.
+	 *
+	 * @param processTransactionUseCase
+	 *            the use case for processing transactions
+	 * @param processedEventRepository
+	 *            the repository for tracking processed events
+	 * @param objectMapper
+	 *            the mapper for deserializing payloads
+	 */
+	public KafkaTransactionEventListener(ProcessTransactionUseCase processTransactionUseCase,
+			SpringDataProcessedEventRepository processedEventRepository, ObjectMapper objectMapper) {
+		this.processTransactionUseCase = processTransactionUseCase;
+		this.processedEventRepository = processedEventRepository;
+		this.objectMapper = objectMapper;
+	}
+
+	/**
+	 * Kafka listener method triggered when a message is received on
+	 * "transaction-events" topic.
+	 *
+	 * @param payload
+	 *            the JSON string payload of the event
+	 * @param eventType
+	 *            the type of event sent in message header
+	 */
 	@KafkaListener(topics = "transaction-events", groupId = "transaction-group")
 	@Transactional
 	public void onTransactionEvent(@org.springframework.messaging.handler.annotation.Payload String payload,

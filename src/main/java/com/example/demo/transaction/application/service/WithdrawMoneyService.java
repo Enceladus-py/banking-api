@@ -14,6 +14,9 @@ import com.example.demo.transaction.domain.event.TransactionPendingEvent;
 import com.example.demo.transaction.domain.model.TransactionRecord;
 import com.example.demo.transaction.domain.model.TransactionRecord.TransactionType;
 
+/**
+ * Service class implementing the withdraw money use case.
+ */
 @TransactionalUseCase
 public class WithdrawMoneyService implements WithdrawMoneyUseCase {
 
@@ -21,6 +24,16 @@ public class WithdrawMoneyService implements WithdrawMoneyUseCase {
 	private final TransactionRecordRepository transactionRecordRepository;
 	private final EventPublisher eventPublisher;
 
+	/**
+	 * Constructs a new WithdrawMoneyService with the required ports.
+	 *
+	 * @param accountOperationsPort
+	 *            the port for account queries and operations
+	 * @param transactionRecordRepository
+	 *            the repository for storing transaction ledger records
+	 * @param eventPublisher
+	 *            the publisher for transaction events
+	 */
 	public WithdrawMoneyService(AccountOperationsPort accountOperationsPort,
 			TransactionRecordRepository transactionRecordRepository, EventPublisher eventPublisher) {
 		this.accountOperationsPort = accountOperationsPort;

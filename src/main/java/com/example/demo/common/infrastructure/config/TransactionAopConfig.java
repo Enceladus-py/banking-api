@@ -10,10 +10,29 @@ import org.springframework.transaction.TransactionManager;
 import org.springframework.transaction.interceptor.MatchAlwaysTransactionAttributeSource;
 import org.springframework.transaction.interceptor.TransactionInterceptor;
 
+/**
+ * AOP Configuration that dynamically applies declarative transaction management
+ * to any bean whose class is annotated with
+ * {@link com.example.demo.common.application.annotation.TransactionalUseCase}.
+ */
 @Aspect
 @Configuration
 public class TransactionAopConfig {
 
+	/**
+	 * Default constructor.
+	 */
+	public TransactionAopConfig() {
+	}
+
+	/**
+	 * Creates an Advisor bean that matches methods in classes annotated with
+	 * TransactionalUseCase and intercept them with a transaction interceptor.
+	 *
+	 * @param transactionManager
+	 *            the transaction manager
+	 * @return the transaction advisor
+	 */
 	@Bean
 	public Advisor useCaseTransactionAdvisor(TransactionManager transactionManager) {
 		AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();

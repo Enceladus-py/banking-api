@@ -6,6 +6,10 @@ import java.util.UUID;
 
 import lombok.Getter;
 
+/**
+ * Domain model representing a transaction record (deposit, withdrawal, or
+ * transfer).
+ */
 @Getter
 public class TransactionRecord {
 
@@ -18,16 +22,54 @@ public class TransactionRecord {
 	private final TransactionStatus status;
 	private final String failureReason;
 
+	/**
+	 * Enumeration of transaction types.
+	 */
 	public enum TransactionType {
-		DEPOSIT, WITHDRAWAL, TRANSFER
+		/**
+		 * Deposit transaction.
+		 */
+		DEPOSIT,
+		/**
+		 * Withdrawal transaction.
+		 */
+		WITHDRAWAL,
+		/**
+		 * Transfer transaction.
+		 */
+		TRANSFER
 	}
 
+	/**
+	 * Enumeration of transaction processing statuses.
+	 */
 	public enum TransactionStatus {
-		PENDING, COMPLETED, FAILED
+		/**
+		 * Transaction is pending processing.
+		 */
+		PENDING,
+		/**
+		 * Transaction completed successfully.
+		 */
+		COMPLETED,
+		/**
+		 * Transaction failed.
+		 */
+		FAILED
 	}
 
-	// Constructor for creating a BRAND NEW transaction (Business Layer) - default
-	// to PENDING
+	/**
+	 * Constructor for creating a new pending transaction with validations.
+	 *
+	 * @param sourceAccountNumber
+	 *            the source account number
+	 * @param targetAccountNumber
+	 *            the target account number
+	 * @param amount
+	 *            the transaction amount
+	 * @param type
+	 *            the transaction type
+	 */
 	public TransactionRecord(String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
 			TransactionType type) {
 		this(UUID.randomUUID().toString(), sourceAccountNumber, targetAccountNumber, amount, type, LocalDateTime.now(),
@@ -35,7 +77,26 @@ public class TransactionRecord {
 		validate(sourceAccountNumber, targetAccountNumber, amount, type);
 	}
 
-	// Lenient Constructor for database re-hydration and mapping
+	/**
+	 * Constructor for database re-hydration and mapping.
+	 *
+	 * @param id
+	 *            the transaction ID
+	 * @param sourceAccountNumber
+	 *            the source account number
+	 * @param targetAccountNumber
+	 *            the target account number
+	 * @param amount
+	 *            the transaction amount
+	 * @param type
+	 *            the transaction type
+	 * @param timestamp
+	 *            the transaction timestamp
+	 * @param status
+	 *            the transaction status
+	 * @param failureReason
+	 *            the reason why the transaction failed, if any
+	 */
 	public TransactionRecord(String id, String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
 			TransactionType type, LocalDateTime timestamp, TransactionStatus status, String failureReason) {
 		this.id = id;
@@ -49,9 +110,10 @@ public class TransactionRecord {
 	}
 
 	/**
-	 * Returns a new {@link TransactionRecord} representing this transaction in the
-	 * {@link TransactionStatus#COMPLETED} state. The original record is not mutated
-	 * (immutable wither pattern).
+	 * Returns a new TransactionRecord representing this transaction in the
+	 * COMPLETED state.
+	 *
+	 * @return the completed transaction record
 	 */
 	public TransactionRecord complete() {
 		if (this.status != TransactionStatus.PENDING) {
@@ -63,9 +125,12 @@ public class TransactionRecord {
 	}
 
 	/**
-	 * Returns a new {@link TransactionRecord} representing this transaction in the
-	 * {@link TransactionStatus#FAILED} state with a human-readable reason. The
-	 * original record is not mutated.
+	 * Returns a new TransactionRecord representing this transaction in the FAILED
+	 * state with a human-readable reason.
+	 *
+	 * @param reason
+	 *            the failure reason
+	 * @return the failed transaction record
 	 */
 	public TransactionRecord fail(String reason) {
 		if (this.status != TransactionStatus.PENDING) {

@@ -9,13 +9,21 @@ import com.example.demo.transaction.domain.model.AggregateType;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * JPA entity representing an event in the outbox table.
+ */
 @Entity
 @Table(name = "outbox_events", schema = "events_schema")
 @Getter
-@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class OutboxEventJpaEntity {
+
+	/**
+	 * Default constructor required by JPA.
+	 */
+	public OutboxEventJpaEntity() {
+	}
 
 	@Id
 	private UUID id;

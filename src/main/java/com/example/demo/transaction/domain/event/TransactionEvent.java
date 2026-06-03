@@ -14,8 +14,31 @@ import com.example.demo.transaction.domain.model.TransactionRecord.TransactionTy
 public sealed interface TransactionEvent
 		permits TransactionPendingEvent, TransactionCompletedEvent, TransactionFailedEvent {
 
+	/**
+	 * Returns the unique ID of the event instance.
+	 *
+	 * @return the event ID
+	 */
 	UUID eventId();
+
+	/**
+	 * Returns the unique ID of the associated transaction.
+	 *
+	 * @return the transaction ID
+	 */
 	String transactionId();
+
+	/**
+	 * Returns the instant when the event occurred.
+	 *
+	 * @return the event timestamp
+	 */
 	Instant timestamp();
+
+	/**
+	 * Returns the event type of this domain event.
+	 *
+	 * @return the event type
+	 */
 	EventType eventType();
 }

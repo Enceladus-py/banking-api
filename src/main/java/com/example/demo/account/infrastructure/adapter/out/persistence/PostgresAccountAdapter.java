@@ -10,13 +10,24 @@ import com.example.demo.account.domain.model.Account;
 import com.example.demo.account.infrastructure.adapter.out.persistence.entity.AccountJpaEntity;
 import com.example.demo.account.infrastructure.adapter.out.persistence.repository.SpringDataAccountRepository;
 
-import lombok.RequiredArgsConstructor;
-
+/**
+ * Persistence adapter implementing AccountRepository for PostgreSQL database.
+ */
 @Component
-@RequiredArgsConstructor
 public class PostgresAccountAdapter implements AccountRepository {
 
 	private final SpringDataAccountRepository repository;
+
+	/**
+	 * Constructs a new PostgresAccountAdapter with the specified Spring Data
+	 * repository.
+	 *
+	 * @param repository
+	 *            the Spring Data JPA repository
+	 */
+	public PostgresAccountAdapter(SpringDataAccountRepository repository) {
+		this.repository = repository;
+	}
 
 	@Override
 	public Account save(Account account) {

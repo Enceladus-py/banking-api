@@ -11,16 +11,30 @@ import com.example.demo.transaction.infrastructure.adapter.out.persistence.entit
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.entity.OutboxStatus;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.repository.SpringDataOutboxEventRepository;
 
-import lombok.RequiredArgsConstructor;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
+/**
+ * Outbox implementation of the EventPublisher port.
+ */
 @Component
-@RequiredArgsConstructor
 public class OutboxEventPublisherAdapter implements EventPublisher {
 
 	private final SpringDataOutboxEventRepository outboxRepository;
 	private final ObjectMapper objectMapper;
+
+	/**
+	 * Constructs a new OutboxEventPublisherAdapter with the specified dependencies.
+	 *
+	 * @param outboxRepository
+	 *            the Spring Data repository for outbox events
+	 * @param objectMapper
+	 *            the mapper for serializing events
+	 */
+	public OutboxEventPublisherAdapter(SpringDataOutboxEventRepository outboxRepository, ObjectMapper objectMapper) {
+		this.outboxRepository = outboxRepository;
+		this.objectMapper = objectMapper;
+	}
 
 	@Override
 	public void publish(TransactionEvent event) {

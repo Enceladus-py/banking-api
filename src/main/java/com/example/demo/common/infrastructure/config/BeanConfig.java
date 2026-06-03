@@ -6,7 +6,17 @@ import org.springframework.context.annotation.FilterType;
 
 import com.example.demo.common.application.annotation.UseCase;
 
+/**
+ * Configuration class that sets up Component Scanning for classes annotated
+ * with {@link UseCase}.
+ */
 @Configuration
 @ComponentScan(basePackages = "com.example.demo", includeFilters = @ComponentScan.Filter(type = FilterType.ANNOTATION, classes = UseCase.class))
 public class BeanConfig {
+
+	/**
+	 * Default constructor.
+	 */
+	public BeanConfig() {
+	}
 }

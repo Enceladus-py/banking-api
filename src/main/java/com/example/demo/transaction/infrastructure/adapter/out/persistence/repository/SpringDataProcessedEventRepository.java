@@ -6,5 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.entity.ProcessedEventJpaEntity;
 
+/**
+ * Spring Data JPA repository for {@link ProcessedEventJpaEntity}.
+ */
 public interface SpringDataProcessedEventRepository extends JpaRepository<ProcessedEventJpaEntity, UUID> {
 }

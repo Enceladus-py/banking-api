@@ -8,12 +8,23 @@ import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.application.annotation.TransactionalUseCase;
 import com.example.demo.user.application.port.in.GetUserUseCase;
 
+/**
+ * Service class that implements the use case for creating bank accounts.
+ */
 @TransactionalUseCase
 public class CreateAccountService implements CreateAccountUseCase {
 
 	private final AccountRepository accountRepository;
 	private final GetUserUseCase getUserUseCase;
 
+	/**
+	 * Constructs a new CreateAccountService with the specified ports.
+	 *
+	 * @param accountRepository
+	 *            the account repository outbound port
+	 * @param getUserUseCase
+	 *            the user retrieval inbound port
+	 */
 	public CreateAccountService(AccountRepository accountRepository, GetUserUseCase getUserUseCase) {
 		this.accountRepository = accountRepository;
 		this.getUserUseCase = getUserUseCase;

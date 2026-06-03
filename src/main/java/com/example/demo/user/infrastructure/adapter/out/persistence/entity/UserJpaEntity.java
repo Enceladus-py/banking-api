@@ -4,13 +4,20 @@ import java.util.UUID;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
+/**
+ * JPA entity representing a user in the database.
+ */
 @Entity
 @Table(name = "users")
 @Data
-@NoArgsConstructor
 public class UserJpaEntity {
+
+	/**
+	 * Default constructor required by JPA.
+	 */
+	public UserJpaEntity() {
+	}
 
 	@Id
 	private UUID id;
@@ -24,6 +31,18 @@ public class UserJpaEntity {
 	@Version
 	private Long version;
 
+	/**
+	 * Constructs a UserJpaEntity with all attributes.
+	 *
+	 * @param id
+	 *            the user ID
+	 * @param name
+	 *            the user's first name
+	 * @param surname
+	 *            the user's last name
+	 * @param version
+	 *            the database version
+	 */
 	public UserJpaEntity(UUID id, String name, String surname, Long version) {
 		this.id = id;
 		this.name = name;

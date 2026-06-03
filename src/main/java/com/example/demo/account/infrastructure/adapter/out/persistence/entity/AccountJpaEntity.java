@@ -6,14 +6,22 @@ import java.util.UUID;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * JPA entity representing a bank account in the database.
+ */
 @Entity
 @Table(name = "account", uniqueConstraints = @UniqueConstraint(name = "uq_account_number", columnNames = "accountNumber"))
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class AccountJpaEntity {
+
+	/**
+	 * Default constructor required by JPA.
+	 */
+	public AccountJpaEntity() {
+	}
 
 	@Id
 	private UUID id;

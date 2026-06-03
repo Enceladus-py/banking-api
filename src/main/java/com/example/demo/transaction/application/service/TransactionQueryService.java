@@ -11,12 +11,23 @@ import com.example.demo.transaction.application.port.in.GetTransactionUseCase;
 import com.example.demo.transaction.application.port.out.TransactionRecordRepository;
 import com.example.demo.transaction.domain.model.TransactionRecord;
 
+/**
+ * Service class implementing queries for transaction histories and details.
+ */
 @UseCase
 public class TransactionQueryService implements GetAccountTransactionsUseCase, GetTransactionUseCase {
 
 	private final TransactionRecordRepository transactionRecordRepository;
 	private final AccountOperationsPort accountOperationsPort;
 
+	/**
+	 * Constructs a new TransactionQueryService with the specified ports.
+	 *
+	 * @param transactionRecordRepository
+	 *            the transaction record repository outbound port
+	 * @param accountOperationsPort
+	 *            the account operations inbound port
+	 */
 	public TransactionQueryService(TransactionRecordRepository transactionRecordRepository,
 			AccountOperationsPort accountOperationsPort) {
 		this.transactionRecordRepository = transactionRecordRepository;

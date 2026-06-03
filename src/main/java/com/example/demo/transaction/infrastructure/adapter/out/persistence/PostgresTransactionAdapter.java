@@ -15,13 +15,25 @@ import com.example.demo.transaction.domain.model.TransactionRecord;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.entity.TransactionJpaEntity;
 import com.example.demo.transaction.infrastructure.adapter.out.persistence.repository.SpringDataTransactionRepository;
 
-import lombok.RequiredArgsConstructor;
-
+/**
+ * Persistence adapter implementing TransactionRecordRepository for PostgreSQL
+ * database.
+ */
 @Component
-@RequiredArgsConstructor
 public class PostgresTransactionAdapter implements TransactionRecordRepository {
 
 	private final SpringDataTransactionRepository repository;
+
+	/**
+	 * Constructs a new PostgresTransactionAdapter with the specified Spring Data
+	 * repository.
+	 *
+	 * @param repository
+	 *            the Spring Data JPA repository
+	 */
+	public PostgresTransactionAdapter(SpringDataTransactionRepository repository) {
+		this.repository = repository;
+	}
 
 	@Override
 	public void save(TransactionRecord transaction) {

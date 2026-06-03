@@ -4,12 +4,46 @@ import java.math.BigDecimal;
 
 import com.example.demo.transaction.domain.model.TransactionRecord;
 
+/**
+ * Inbound port interface for transferring money between bank accounts.
+ */
 public interface TransferMoneyUseCase {
 
+	/**
+	 * Processes a transfer transaction between source and target accounts.
+	 *
+	 * @param command
+	 *            the transfer command details
+	 * @return the transaction record for the transfer
+	 */
 	TransactionRecord transfer(TransferCommand command);
 
+	/**
+	 * Command containing input details for transferring money.
+	 *
+	 * @param sourceAccountNumber
+	 *            the source account number
+	 * @param targetAccountNumber
+	 *            the target account number
+	 * @param amount
+	 *            the transfer amount
+	 * @param requesterId
+	 *            the user ID requesting the transfer
+	 */
 	record TransferCommand(String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
 			String requesterId) {
+		/**
+		 * Constructor validating transfer input fields.
+		 *
+		 * @param sourceAccountNumber
+		 *            the source account number
+		 * @param targetAccountNumber
+		 *            the target account number
+		 * @param amount
+		 *            the transfer amount
+		 * @param requesterId
+		 *            the requester user ID
+		 */
 		public TransferCommand {
 			java.util.Objects.requireNonNull(sourceAccountNumber, "Source account number is required");
 			if (sourceAccountNumber.trim().isBlank()) {

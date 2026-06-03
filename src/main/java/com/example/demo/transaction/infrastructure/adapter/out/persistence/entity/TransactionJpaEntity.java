@@ -12,14 +12,22 @@ import com.example.demo.transaction.domain.model.TransactionRecord.TransactionTy
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * JPA entity representing a transaction record in the database.
+ */
 @Entity
 @Table(name = "transaction_records")
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 public class TransactionJpaEntity implements Persistable<UUID> {
+
+	/**
+	 * Default constructor required by JPA.
+	 */
+	public TransactionJpaEntity() {
+	}
 
 	@Id
 	private UUID id;
