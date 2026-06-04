@@ -90,4 +90,41 @@ class PostgresAccountAdapterTest {
 		assertEquals(ownerId, fetchedOpt.get().getOwnerId());
 		assertEquals(0, BigDecimal.ZERO.compareTo(fetchedOpt.get().getBalance()));
 	}
+	@Test
+	void shouldFindByAccountNumberSuccessfully() {
+		// Arrange
+		String ownerId = "USER-22222";
+		String accountNumber = "2222222222";
+		Account baseAccount = Account.createNew(ownerId, accountNumber);
+		adapter.save(baseAccount);
+
+		// Act
+		Optional<Account> fetchedOpt = adapter.findByAccountNumber(accountNumber);
+
+		// Assert
+		assertTrue(fetchedOpt.isPresent());
+		assertEquals(baseAccount.getId(), fetchedOpt.get().getId());
+		assertEquals(ownerId, fetchedOpt.get().getOwnerId());
+		assertEquals(0, BigDecimal.ZERO.compareTo(fetchedOpt.get().getBalance()));
+	}
+
+	@Test
+	void shouldFindByOwnerIdSuccessfully() {
+		// Arrange
+		String ownerId = "USER-33333";
+		String accountNumber = "3333333333";
+		Account baseAccount = Account.createNew(ownerId, accountNumber);
+		adapter.save(baseAccount);
+
+		// Act
+		com.example.demo.common.application.port.in.dto.PageRequest pageRequest = new com.example.demo.common.application.port.in.dto.PageRequest(
+				0, 10);
+		com.example.demo.common.application.port.in.dto.PageResult<Account> result = adapter.findByOwnerId(ownerId,
+				pageRequest);
+
+		// Assert
+		assertNotNull(result);
+		assertEquals(1, result.totalElements());
+		assertEquals(baseAccount.getId(), result.content().get(0).getId());
+	}
 }

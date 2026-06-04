@@ -78,4 +78,25 @@ class AccountControllerTest {
 
 		verify(getAccountUseCase).getAccount(accountNumber, requesterId);
 	}
+
+	@Test
+	void shouldReturn200AndAccountsWhenGettingAccounts() throws Exception {
+		String requesterId = "USER-123";
+		Account mockAccount = new Account("uuid-1", requesterId, "1234567890", new BigDecimal("250.00"), 1L);
+		com.example.demo.common.application.port.in.dto.PageRequest pageRequest = new com.example.demo.common.application.port.in.dto.PageRequest(
+				0, 10);
+		com.example.demo.common.application.port.in.dto.PageResult<Account> mockPageResult = new com.example.demo.common.application.port.in.dto.PageResult<>(
+				java.util.List.of(mockAccount), 0, 10, 1, 1);
+
+		when(getAccountsUseCase.getAccountsByUserId(requesterId, pageRequest)).thenReturn(mockPageResult);
+
+		mockMvc.perform(get("/api/accounts").param("page", "0").param("size", "10").header("X-User-Id", requesterId))
+				.andExpect(status().isOk()).andExpect(jsonPath("$.content[0].id").value("uuid-1"))
+				.andExpect(jsonPath("$.content[0].ownerId").value("USER-123"))
+				.andExpect(jsonPath("$.content[0].accountNumber").value("1234567890"))
+				.andExpect(jsonPath("$.content[0].balance").value(250.00))
+				.andExpect(jsonPath("$.totalElements").value(1));
+
+		verify(getAccountsUseCase).getAccountsByUserId(requesterId, pageRequest);
+	}
 }

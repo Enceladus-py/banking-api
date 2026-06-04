@@ -50,4 +50,18 @@ class AccountQueryServiceTest {
 
 		assertThrows(EntityNotFoundException.class, () -> accountQueryService.getAccount("1234567890", "USER-1"));
 	}
+
+	@Test
+	void shouldReturnAccountsByUserId() {
+		com.example.demo.common.application.port.in.dto.PageRequest pageRequest = new com.example.demo.common.application.port.in.dto.PageRequest(
+				0, 10);
+		com.example.demo.common.application.port.in.dto.PageResult<Account> mockResult = new com.example.demo.common.application.port.in.dto.PageResult<>(
+				java.util.List.of(Account.createNew("USER-1", "1234567890")), 0, 10, 1, 1);
+		when(accountRepository.findByOwnerId("USER-1", pageRequest)).thenReturn(mockResult);
+
+		com.example.demo.common.application.port.in.dto.PageResult<Account> result = accountQueryService
+				.getAccountsByUserId("USER-1", pageRequest);
+
+		assertEquals(1, result.totalElements());
+	}
 }

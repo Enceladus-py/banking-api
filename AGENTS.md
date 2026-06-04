@@ -299,6 +299,10 @@ public class MyService {
 | Module integration   | Integration       | `Test`    | `@ApplicationModuleTest` | `mvn test` |
 | Modularity structure | Verification      | `Tests`   | Spring Modulith    | `mvn test`       |
 
+### Code Coverage Requirement
+
+**All code changes must achieve nearly 100% test coverage.** After running `./mvnw clean verify`, always check the JaCoCo report generated in `target/site/jacoco/jacoco.csv` (or `index.html`) to verify that all lines and branches are covered. Extend tests if coverage drops below 100%.
+
 ### Test Database
 
 Tests use **H2 in-memory database** in PostgreSQL compatibility mode
@@ -530,8 +534,9 @@ When adding a new entity/feature to an existing module:
 13. [ ] Add `package-info.java` to any new packages with Javadoc
 14. [ ] Write **unit tests** for domain model, service, controller, and adapter
 15. [ ] Write **module integration test** if needed
-16. [ ] Run `./mvnw spotless:apply` to fix formatting
-17. [ ] Run `./mvnw clean verify` — **must pass before commit**
+16. [ ] Check **JaCoCo report** (`target/site/jacoco/jacoco.csv`) and ensure **100% coverage** (extend tests if needed)
+17. [ ] Run `./mvnw spotless:apply` to fix formatting
+18. [ ] Run `./mvnw clean verify` — **must pass before commit**
 
 When creating a **new module**:
 
