@@ -3,6 +3,8 @@ package com.example.demo.account.application.port.out;
 import java.util.Optional;
 
 import com.example.demo.account.domain.model.Account;
+import com.example.demo.common.application.port.in.dto.PageRequest;
+import com.example.demo.common.application.port.in.dto.PageResult;
 
 /**
  * Outbound port interface for account persistence operations.
@@ -36,4 +38,15 @@ public interface AccountRepository {
 	 * @return an Optional containing the locked account if found, or empty
 	 */
 	Optional<Account> lockAndLoad(String accountNumber);
+
+	/**
+	 * Finds a page of accounts owned by the specified user.
+	 *
+	 * @param ownerId
+	 *            the ID of the user
+	 * @param pageRequest
+	 *            the pagination information
+	 * @return a page of accounts owned by the user
+	 */
+	PageResult<Account> findByOwnerId(String ownerId, PageRequest pageRequest);
 }

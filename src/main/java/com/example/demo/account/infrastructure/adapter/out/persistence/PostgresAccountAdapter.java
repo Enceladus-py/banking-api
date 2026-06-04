@@ -3,12 +3,16 @@ package com.example.demo.account.infrastructure.adapter.out.persistence;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import com.example.demo.account.application.port.out.AccountRepository;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.account.infrastructure.adapter.out.persistence.entity.AccountJpaEntity;
 import com.example.demo.account.infrastructure.adapter.out.persistence.repository.SpringDataAccountRepository;
+import com.example.demo.common.application.port.in.dto.PageRequest;
+import com.example.demo.common.application.port.in.dto.PageResult;
 
 /**
  * Persistence adapter implementing AccountRepository for PostgreSQL database.
@@ -61,5 +65,16 @@ public class PostgresAccountAdapter implements AccountRepository {
 	@Override
 	public Optional<Account> lockAndLoad(String accountNumber) {
 		return repository.findByAccountNumberForWrite(accountNumber).map(this::toDomainModel);
+	}
+
+	@Override
+	public PageResult<Account> findByOwnerId(String ownerId, PageRequest pageRequest) {
+		Pageable pageable = org.springframework.data.domain.PageRequest.of(pageRequest.pageNumber(),
+				pageRequest.pageSize());
+		Page<AccountJpaEntity> entityPage = repository.findByOwnerId(ownerId, pageable);
+
+		return new PageResult<>(entityPage.getContent().stream().map(this::toDomainModel).toList(),
+				entityPage.getNumber(), entityPage.getSize(), entityPage.getTotalElements(),
+				entityPage.getTotalPages());
 	}
 }

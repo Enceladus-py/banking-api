@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.example.demo.account.application.port.in.CreateAccountUseCase;
 import com.example.demo.account.application.port.in.CreateAccountUseCase.CreateAccountCommand;
 import com.example.demo.account.application.port.in.GetAccountUseCase;
+import com.example.demo.account.application.port.in.GetAccountsUseCase;
 import com.example.demo.account.domain.model.Account;
 
 @WebMvcTest(AccountController.class)
@@ -31,6 +32,9 @@ class AccountControllerTest {
 
 	@MockitoBean
 	private GetAccountUseCase getAccountUseCase;
+
+	@MockitoBean
+	private GetAccountsUseCase getAccountsUseCase;
 
 	@Test
 	void shouldReturn200WhenAccountIsCreated() throws Exception {
