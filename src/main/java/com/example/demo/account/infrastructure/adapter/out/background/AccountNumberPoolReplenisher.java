@@ -2,8 +2,6 @@ package com.example.demo.account.infrastructure.adapter.out.background;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,13 +11,14 @@ import com.example.demo.account.infrastructure.adapter.out.persistence.entity.Av
 import com.example.demo.account.infrastructure.adapter.out.persistence.repository.SpringDataAccountRepository;
 import com.example.demo.account.infrastructure.adapter.out.persistence.repository.SpringDataAvailableAccountNumberRepository;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Background job that ensures the account number pool is adequately stocked.
  */
 @Component
+@Slf4j
 public class AccountNumberPoolReplenisher {
-
-	private static final Logger log = LoggerFactory.getLogger(AccountNumberPoolReplenisher.class);
 
 	private final SpringDataAvailableAccountNumberRepository poolRepository;
 	private final SpringDataAccountRepository accountRepository;
