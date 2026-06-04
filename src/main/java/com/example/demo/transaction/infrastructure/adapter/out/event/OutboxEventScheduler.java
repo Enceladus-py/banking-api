@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Polls the outbox table for PENDING events and dispatches them to the local
  * Polls the outbox table for PENDING events and dispatches them to Kafka.
  *
  * <p>
