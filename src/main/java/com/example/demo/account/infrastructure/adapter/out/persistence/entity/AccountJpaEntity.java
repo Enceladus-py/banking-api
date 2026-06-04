@@ -10,7 +10,7 @@ import lombok.*;
  * JPA entity representing a bank account in the database.
  */
 @Entity
-@Table(name = "account", uniqueConstraints = @UniqueConstraint(name = "uq_account_number", columnNames = "accountNumber"))
+@Table(name = "account", uniqueConstraints = @UniqueConstraint(name = "uq_account_number", columnNames = "account_number"))
 @Getter
 @Setter
 @AllArgsConstructor

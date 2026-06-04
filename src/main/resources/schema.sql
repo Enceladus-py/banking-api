@@ -37,3 +37,18 @@ CREATE TABLE IF NOT EXISTS transaction_records (
 -- Ensure transaction_records table has the status and failure_reason columns in case the table existed previously without them
 ALTER TABLE transaction_records ADD COLUMN IF NOT EXISTS status VARCHAR(255) DEFAULT 'PENDING';
 ALTER TABLE transaction_records ADD COLUMN IF NOT EXISTS failure_reason VARCHAR(255);
+
+-- Ensure account table exists with unique account_number
+CREATE TABLE IF NOT EXISTS account (
+    id UUID PRIMARY KEY,
+    account_number VARCHAR(255) NOT NULL,
+    balance DECIMAL(38,2),
+    owner_id VARCHAR(255) NOT NULL,
+    version BIGINT,
+    CONSTRAINT uq_account_number UNIQUE (account_number)
+);
+
+-- Available Account Numbers pool
+CREATE TABLE IF NOT EXISTS available_account_numbers (
+    account_number VARCHAR(255) PRIMARY KEY
+);

@@ -28,6 +28,26 @@ public interface SpringDataAccountRepository extends JpaRepository<AccountJpaEnt
 	Optional<AccountJpaEntity> findByAccountNumber(String accountNumber);
 
 	/**
+	 * Checks if an account exists with the given account number.
+	 *
+	 * @param accountNumber
+	 *            the account number to check
+	 * @return true if it exists, false otherwise
+	 */
+	boolean existsByAccountNumber(String accountNumber);
+
+	/**
+	 * Finds account numbers that already exist from a given set of candidates.
+	 *
+	 * @param accountNumbers
+	 *            the candidate account numbers
+	 * @return a set of account numbers that already exist
+	 */
+	@Query("SELECT a.accountNumber FROM AccountJpaEntity a WHERE a.accountNumber IN :accountNumbers")
+	java.util.Set<String> findExistingAccountNumbers(
+			@Param("accountNumbers") java.util.Collection<String> accountNumbers);
+
+	/**
 	 * Loads an account entity and locks it using a pessimistic write lock.
 	 *
 	 * @param accountNumber
