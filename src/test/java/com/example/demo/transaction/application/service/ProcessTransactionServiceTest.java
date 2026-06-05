@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
+import com.example.demo.transaction.application.port.out.ProcessedEventPort;
 import com.example.demo.transaction.application.port.out.TransactionRecordRepository;
 import com.example.demo.transaction.domain.event.TransactionPendingEvent;
 import com.example.demo.transaction.domain.model.TransactionRecord;
@@ -35,6 +36,9 @@ class ProcessTransactionServiceTest {
 	@Mock
 	private TransactionRecordRepository transactionRecordRepository;
 
+	@Mock
+	private ProcessedEventPort processedEventPort;
+
 	private ProcessTransactionService processTransactionService;
 
 	@Captor
@@ -42,7 +46,8 @@ class ProcessTransactionServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		processTransactionService = new ProcessTransactionService(accountOperationsPort, transactionRecordRepository);
+		processTransactionService = new ProcessTransactionService(accountOperationsPort, transactionRecordRepository,
+				processedEventPort);
 	}
 
 	@Test
@@ -57,6 +62,7 @@ class ProcessTransactionServiceTest {
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(accountNumber)).thenReturn(Optional.of(targetAccount));
+		when(processedEventPort.saveIfAbsent(any())).thenReturn(true);
 
 		processTransactionService.process(event);
 
@@ -82,6 +88,7 @@ class ProcessTransactionServiceTest {
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(accountNumber)).thenReturn(Optional.of(sourceAccount));
+		when(processedEventPort.saveIfAbsent(any())).thenReturn(true);
 
 		processTransactionService.process(event);
 
@@ -106,6 +113,7 @@ class ProcessTransactionServiceTest {
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(accountNumber)).thenReturn(Optional.of(sourceAccount));
+		when(processedEventPort.saveIfAbsent(any())).thenReturn(true);
 
 		processTransactionService.process(event);
 
@@ -125,6 +133,7 @@ class ProcessTransactionServiceTest {
 				"ACC123", new BigDecimal("100.00"), TransactionType.DEPOSIT, "USER-123");
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.empty());
+		when(processedEventPort.saveIfAbsent(any())).thenReturn(true);
 
 		assertThrows(EntityNotFoundException.class, () -> processTransactionService.process(event));
 		verify(accountOperationsPort, never()).lockAndLoad(anyString());
@@ -141,6 +150,7 @@ class ProcessTransactionServiceTest {
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(accountNumber)).thenReturn(Optional.empty());
+		when(processedEventPort.saveIfAbsent(any())).thenReturn(true);
 
 		processTransactionService.process(event);
 
@@ -162,6 +172,7 @@ class ProcessTransactionServiceTest {
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(accountNumber)).thenReturn(Optional.empty());
+		when(processedEventPort.saveIfAbsent(any())).thenReturn(true);
 
 		processTransactionService.process(event);
 
@@ -189,6 +200,7 @@ class ProcessTransactionServiceTest {
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.of(sourceAccount));
 		when(accountOperationsPort.lockAndLoad(targetAccountNumber)).thenReturn(Optional.of(targetAccount));
+		when(processedEventPort.saveIfAbsent(any())).thenReturn(true);
 
 		processTransactionService.process(event);
 
@@ -220,6 +232,7 @@ class ProcessTransactionServiceTest {
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(targetAccountNumber)).thenReturn(Optional.of(targetAccount));
 		when(accountOperationsPort.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.of(sourceAccount));
+		when(processedEventPort.saveIfAbsent(any())).thenReturn(true);
 
 		processTransactionService.process(event);
 
@@ -249,6 +262,7 @@ class ProcessTransactionServiceTest {
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.empty()); // first
 																									// alphabetically
+		when(processedEventPort.saveIfAbsent(any())).thenReturn(true);
 
 		processTransactionService.process(event);
 
@@ -277,6 +291,7 @@ class ProcessTransactionServiceTest {
 																												// alphabetically
 		when(accountOperationsPort.lockAndLoad(targetAccountNumber)).thenReturn(Optional.empty()); // second
 																									// alphabetically
+		when(processedEventPort.saveIfAbsent(any())).thenReturn(true);
 
 		processTransactionService.process(event);
 
@@ -296,6 +311,7 @@ class ProcessTransactionServiceTest {
 				"ACC123", new BigDecimal("100.00"), TransactionType.DEPOSIT, "USER-123");
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(completedTx));
+		when(processedEventPort.saveIfAbsent(any())).thenReturn(true);
 
 		processTransactionService.process(event);
 
@@ -314,11 +330,27 @@ class ProcessTransactionServiceTest {
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(accountNumber)).thenThrow(new RuntimeException("Database lock timeout"));
+		when(processedEventPort.saveIfAbsent(any())).thenReturn(true);
 
 		RuntimeException exception = assertThrows(RuntimeException.class,
 				() -> processTransactionService.process(event));
 		assertEquals("Database lock timeout", exception.getMessage());
 
+		verify(transactionRecordRepository, never()).save(any());
+	}
+
+	@Test
+	void shouldIgnoreDuplicateEventWhenProcessedEventPortReturnsFalse() {
+		String txId = "tx-123";
+		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(), null,
+				"ACC123", new BigDecimal("100.00"), TransactionType.DEPOSIT, "USER-123");
+
+		when(processedEventPort.saveIfAbsent(event.eventId())).thenReturn(false);
+
+		processTransactionService.process(event);
+
+		verify(transactionRecordRepository, never()).findById(anyString());
+		verify(accountOperationsPort, never()).lockAndLoad(anyString());
 		verify(transactionRecordRepository, never()).save(any());
 	}
 }

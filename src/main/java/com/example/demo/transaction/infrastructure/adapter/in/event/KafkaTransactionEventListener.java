@@ -1,8 +1,5 @@
 package com.example.demo.transaction.infrastructure.adapter.in.event;
 
-import java.time.LocalDateTime;
-
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,8 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.transaction.application.port.in.ProcessTransactionUseCase;
 import com.example.demo.transaction.domain.event.EventType;
 import com.example.demo.transaction.domain.event.TransactionPendingEvent;
-import com.example.demo.transaction.infrastructure.adapter.out.persistence.entity.ProcessedEventJpaEntity;
-import com.example.demo.transaction.infrastructure.adapter.out.persistence.repository.SpringDataProcessedEventRepository;
 
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.ObjectMapper;
@@ -24,7 +19,6 @@ import tools.jackson.databind.ObjectMapper;
 public class KafkaTransactionEventListener {
 
 	private final ProcessTransactionUseCase processTransactionUseCase;
-	private final SpringDataProcessedEventRepository processedEventRepository;
 	private final ObjectMapper objectMapper;
 
 	/**
@@ -32,15 +26,12 @@ public class KafkaTransactionEventListener {
 	 *
 	 * @param processTransactionUseCase
 	 *            the use case for processing transactions
-	 * @param processedEventRepository
-	 *            the repository for tracking processed events
 	 * @param objectMapper
 	 *            the mapper for deserializing payloads
 	 */
 	public KafkaTransactionEventListener(ProcessTransactionUseCase processTransactionUseCase,
-			SpringDataProcessedEventRepository processedEventRepository, ObjectMapper objectMapper) {
+			ObjectMapper objectMapper) {
 		this.processTransactionUseCase = processTransactionUseCase;
-		this.processedEventRepository = processedEventRepository;
 		this.objectMapper = objectMapper;
 	}
 
@@ -67,17 +58,6 @@ public class KafkaTransactionEventListener {
 
 			log.info("Received transaction pending event from Kafka: {} for transaction: {}", pendingEvent.eventId(),
 					pendingEvent.transactionId());
-
-			// Idempotency: attempt to insert a processed_events row first.
-			// If the row already exists, the UNIQUE constraint on 'id' raises a
-			// DataIntegrityViolationException — we catch it and skip processing.
-			try {
-				processedEventRepository
-						.saveAndFlush(new ProcessedEventJpaEntity(pendingEvent.eventId(), LocalDateTime.now()));
-			} catch (DataIntegrityViolationException e) {
-				log.warn("Event {} has already been processed. Ignoring duplicate.", pendingEvent.eventId());
-				return;
-			}
 
 			processTransactionUseCase.process(pendingEvent);
 		} catch (Exception e) {

@@ -5,6 +5,7 @@ import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.application.annotation.TransactionalUseCase;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.transaction.application.port.in.ProcessTransactionUseCase;
+import com.example.demo.transaction.application.port.out.ProcessedEventPort;
 import com.example.demo.transaction.application.port.out.TransactionRecordRepository;
 import com.example.demo.transaction.domain.event.TransactionPendingEvent;
 import com.example.demo.transaction.domain.model.TransactionRecord;
@@ -22,6 +23,7 @@ public class ProcessTransactionService implements ProcessTransactionUseCase {
 
 	private final AccountOperationsPort accountOperationsPort;
 	private final TransactionRecordRepository transactionRecordRepository;
+	private final ProcessedEventPort processedEventPort;
 
 	/**
 	 * Constructs a new ProcessTransactionService with the specified ports.
@@ -30,16 +32,24 @@ public class ProcessTransactionService implements ProcessTransactionUseCase {
 	 *            the port for account queries and operations
 	 * @param transactionRecordRepository
 	 *            the repository for transaction ledger records
+	 * @param processedEventPort
+	 *            the port for checking event idempotency
 	 */
 	public ProcessTransactionService(AccountOperationsPort accountOperationsPort,
-			TransactionRecordRepository transactionRecordRepository) {
+			TransactionRecordRepository transactionRecordRepository, ProcessedEventPort processedEventPort) {
 		this.accountOperationsPort = accountOperationsPort;
 		this.transactionRecordRepository = transactionRecordRepository;
+		this.processedEventPort = processedEventPort;
 	}
 
 	@Override
 	public void process(TransactionPendingEvent event) {
 		log.info("Processing pending event for transaction ID: {}", event.transactionId());
+
+		if (!processedEventPort.saveIfAbsent(event.eventId())) {
+			log.warn("Event {} has already been processed. Ignoring duplicate.", event.eventId());
+			return;
+		}
 
 		TransactionRecord tx = transactionRecordRepository.findById(event.transactionId()).orElseThrow(
 				() -> new EntityNotFoundException("Transaction not found for ID: " + event.transactionId()));
