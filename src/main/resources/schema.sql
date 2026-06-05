@@ -61,11 +61,22 @@ CREATE TABLE IF NOT EXISTS users (
     version BIGINT
 );
 
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255) UNIQUE NOT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255) NOT NULL DEFAULT 'default_password';
+ALTER TABLE users DROP COLUMN IF EXISTS name;
+ALTER TABLE users DROP COLUMN IF EXISTS surname;
+
 -- Ensure profiles table exists
 CREATE TABLE IF NOT EXISTS profiles (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL UNIQUE,
     name VARCHAR(255) NOT NULL,
     surname VARCHAR(255) NOT NULL,
+    mobile_number VARCHAR(255),
+    address TEXT,
     CONSTRAINT fk_user_profile FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Migration for existing 'profiles' table
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS mobile_number VARCHAR(255);
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS address TEXT;

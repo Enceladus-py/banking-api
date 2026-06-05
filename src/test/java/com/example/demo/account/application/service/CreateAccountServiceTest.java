@@ -44,7 +44,8 @@ class CreateAccountServiceTest {
 		String requesterId = "USER-123";
 		CreateAccountCommand command = new CreateAccountCommand(requesterId);
 
-		when(getUserUseCase.getUserById(requesterId)).thenReturn(new User(requesterId, "user@example.com", "pwd", new com.example.demo.user.domain.model.Profile("Berat", "Dalsuna"), 1L));
+		when(getUserUseCase.getUserById(requesterId)).thenReturn(new User(requesterId, "user@example.com", "pwd",
+				new com.example.demo.user.domain.model.Profile("Berat", "Dalsuna"), 1L));
 		when(accountNumberGeneratorPort.getNextAvailableNumber()).thenReturn("1234567890");
 
 		Account mockSavedAccount = new Account("uuid-123", requesterId, "1234567890", BigDecimal.ZERO, 1L);

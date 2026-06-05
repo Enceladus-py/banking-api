@@ -35,10 +35,11 @@ public class PostgresUserAdapter implements UserRepository {
 	public User save(User user) {
 		UserJpaEntity entity = new UserJpaEntity(UUID.fromString(user.getId()), user.getEmail(), user.getPassword(),
 				user.getVersion());
-		
+
 		ProfileJpaEntity profileEntity = new ProfileJpaEntity(UUID.fromString(user.getProfile().getId()), entity,
-				user.getProfile().getName(), user.getProfile().getSurname());
-		
+				user.getProfile().getName(), user.getProfile().getSurname(), user.getProfile().getMobileNumber(),
+				user.getProfile().getAddress());
+
 		entity.setProfile(profileEntity);
 
 		UserJpaEntity saved = repository.save(entity);
@@ -57,7 +58,8 @@ public class PostgresUserAdapter implements UserRepository {
 
 	private User mapToDomain(UserJpaEntity entity) {
 		Profile profile = new Profile(entity.getProfile().getId().toString(), entity.getProfile().getName(),
-				entity.getProfile().getSurname());
+				entity.getProfile().getSurname(), entity.getProfile().getMobileNumber(),
+				entity.getProfile().getAddress());
 		return new User(entity.getId().toString(), entity.getEmail(), entity.getPassword(), profile,
 				entity.getVersion());
 	}

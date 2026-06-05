@@ -35,6 +35,7 @@ import com.example.demo.user.infrastructure.adapter.out.persistence.repository.S
 @org.springframework.test.context.TestPropertySource(properties = {
 		"spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
 		"spring.kafka.consumer.auto-offset-reset=earliest"})
+@org.springframework.security.test.context.support.WithMockUser
 class TransactionOutboxIntegrationTest {
 
 	@Autowired
@@ -68,11 +69,14 @@ class TransactionOutboxIntegrationTest {
 		outboxRepository.deleteAllInBatch();
 		transactionRepository.deleteAllInBatch();
 		accountRepository.deleteAllInBatch();
-		userRepository.deleteAllInBatch();
+		userRepository.deleteAll();
 
 		// Save test user (Jpa Entity)
 		var userEntity = new com.example.demo.user.infrastructure.adapter.out.persistence.entity.UserJpaEntity(
 				UUID.fromString(userId), "Integration", "Tester", null);
+		var profileEntity = new com.example.demo.user.infrastructure.adapter.out.persistence.entity.ProfileJpaEntity(
+				UUID.randomUUID(), userEntity, "Integration", "Tester", null, null);
+		userEntity.setProfile(profileEntity);
 		userRepository.save(userEntity);
 
 		// Save test account
@@ -87,8 +91,11 @@ class TransactionOutboxIntegrationTest {
 		outboxRepository.deleteAllInBatch();
 		transactionRepository.deleteAllInBatch();
 		accountRepository.deleteAllInBatch();
-		userRepository.deleteAllInBatch();
+		userRepository.deleteAll();
 	}
+
+	@Autowired
+	private com.example.demo.common.security.JwtService jwtService;
 
 	@Test
 	void shouldProcessDepositOutboxEventAsynchronously() throws Exception {
@@ -99,9 +106,15 @@ class TransactionOutboxIntegrationTest {
 				}
 				""";
 
+		org.springframework.security.core.userdetails.UserDetails userDetails = org.springframework.security.core.userdetails.User
+				.builder().username("Integration").password("Tester").authorities("USER").build();
+		String token = jwtService.generateToken(userDetails);
+
 		// 1. Act: Call deposit endpoint
-		mockMvc.perform(post("/api/transactions/deposit").header("X-User-Id", userId)
-				.contentType(MediaType.APPLICATION_JSON).content(jsonPayload)).andExpect(status().isAccepted());
+		mockMvc.perform(
+				post("/api/transactions/deposit").header("X-User-Id", userId).header("Authorization", "Bearer " + token)
+						.contentType(MediaType.APPLICATION_JSON).content(jsonPayload))
+				.andExpect(status().isAccepted());
 
 		// 2. Assert Immediately: Balance is NOT updated yet (it's pending/asynchronous)
 		var accountBefore = accountRepository.findByAccountNumber(accountNumber);

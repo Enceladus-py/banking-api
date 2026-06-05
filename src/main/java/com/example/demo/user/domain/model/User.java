@@ -1,11 +1,12 @@
 package com.example.demo.user.domain.model;
 
 import java.util.UUID;
+
 import lombok.Getter;
 
 /**
- * Domain model representing a user in the system.
- * Acts as the Aggregate Root for User and Profile data.
+ * Domain model representing a user in the system. Acts as the Aggregate Root
+ * for User and Profile data.
  */
 @Getter
 public class User {
@@ -61,5 +62,17 @@ public class User {
 		this.password = password;
 		this.profile = profile;
 		this.version = version;
+	}
+
+	/**
+	 * Updates the user's profile information.
+	 *
+	 * @param mobileNumber
+	 *            the new mobile number
+	 * @param address
+	 *            the new address
+	 */
+	public void updateProfile(String mobileNumber, String address) {
+		this.profile.update(mobileNumber, address);
 	}
 }

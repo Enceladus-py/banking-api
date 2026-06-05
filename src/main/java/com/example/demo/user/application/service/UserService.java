@@ -19,7 +19,8 @@ public class UserService implements RegisterUserUseCase, GetUserUseCase {
 	private final PasswordEncoder passwordEncoder;
 
 	/**
-	 * Constructs a new UserService with the specified user repository and password encoder.
+	 * Constructs a new UserService with the specified user repository and password
+	 * encoder.
 	 *
 	 * @param userRepository
 	 *            the user repository outbound port

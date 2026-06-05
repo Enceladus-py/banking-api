@@ -6,8 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.modulith.test.ApplicationModuleTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.user.application.port.in.GetUserUseCase;
@@ -28,6 +28,12 @@ class UserModuleTest {
 	@MockitoBean
 	PasswordEncoder passwordEncoder;
 
+	@MockitoBean
+	org.springframework.security.authentication.AuthenticationManager authenticationManager;
+
+	@MockitoBean
+	com.example.demo.common.security.JwtService jwtService;
+
 	@Test
 	void shouldRegisterAndRetrieveUser() {
 		org.mockito.Mockito.when(passwordEncoder.encode("pwd123")).thenReturn("hashed");
@@ -47,7 +53,8 @@ class UserModuleTest {
 	void shouldRetrieveUserByIdAfterRegistration() {
 		org.mockito.Mockito.when(passwordEncoder.encode("pwd123")).thenReturn("hashed");
 
-		User registered = registerUserUseCase.registerUser(new RegisterUserCommand("diana@example.com", "pwd123", "Diana", "Prince"));
+		User registered = registerUserUseCase
+				.registerUser(new RegisterUserCommand("diana@example.com", "pwd123", "Diana", "Prince"));
 
 		User retrieved = getUserUseCase.getUserById(registered.getId());
 
@@ -65,7 +72,8 @@ class UserModuleTest {
 	@Test
 	void shouldTrimWhitespaceInNameAndSurname() {
 		org.mockito.Mockito.when(passwordEncoder.encode("pwd123")).thenReturn("hashed");
-		User registered = registerUserUseCase.registerUser(new RegisterUserCommand("eve@example.com", "pwd123", "  Eve  ", "  Walker  "));
+		User registered = registerUserUseCase
+				.registerUser(new RegisterUserCommand("eve@example.com", "pwd123", "  Eve  ", "  Walker  "));
 
 		assertThat(registered.getProfile().getName()).isEqualTo("Eve");
 		assertThat(registered.getProfile().getSurname()).isEqualTo("Walker");

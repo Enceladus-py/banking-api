@@ -1,8 +1,10 @@
 package com.example.demo.transaction.infrastructure.adapter.in.web;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.demo.common.security.CustomUserDetails;
 import com.example.demo.transaction.application.port.in.TransferMoneyUseCase;
 import com.example.demo.transaction.infrastructure.adapter.in.web.dto.TransactionResponse;
 import com.example.demo.transaction.infrastructure.adapter.in.web.dto.TransferRequest;
@@ -39,8 +41,8 @@ public class TransferController {
 	 *
 	 * @param request
 	 *            the transfer request containing source, destination, and amount
-	 * @param requesterId
-	 *            the user ID of the requester
+	 * @param userDetails
+	 *            the authenticated user details
 	 * @return the response containing transaction details
 	 */
 	@PostMapping
@@ -49,10 +51,10 @@ public class TransferController {
 			@ApiResponse(responseCode = "400", description = "Invalid account numbers, transfer amount, or insufficient funds"),
 			@ApiResponse(responseCode = "403", description = "Requester does not own the source account")})
 	public ResponseEntity<TransactionResponse> transferMoney(@Valid @RequestBody TransferRequest request,
-			@RequestHeader("X-User-Id") @Parameter(description = "The ID of the user requesting transfer", example = "123e4567-e89b-12d3-a456-426614174000") String requesterId) {
+			@AuthenticationPrincipal @Parameter(hidden = true) CustomUserDetails userDetails) {
 
 		TransferMoneyUseCase.TransferCommand command = new TransferMoneyUseCase.TransferCommand(
-				request.sourceAccountNumber(), request.targetAccountNumber(), request.amount(), requesterId);
+				request.sourceAccountNumber(), request.targetAccountNumber(), request.amount(), userDetails.getId());
 
 		var tx = transferMoneyUseCase.transfer(command);
 

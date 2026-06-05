@@ -4,7 +4,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +26,15 @@ public class JwtService {
 
 	@Value("${security.jwt.expiration-time:86400000}")
 	private long jwtExpiration;
+
+	@Value("${security.jwt.refresh-expiration-time:604800000}")
+	private long refreshExpiration;
+
+	/**
+	 * Default constructor.
+	 */
+	public JwtService() {
+	}
 
 	/**
 	 * Extracts the username (email) from the JWT token.
@@ -56,14 +64,25 @@ public class JwtService {
 	}
 
 	/**
-	 * Generates a JWT token for the given user details.
+	 * Generates a JWT access token for the given user details.
 	 *
 	 * @param userDetails
 	 *            the user details
-	 * @return the JWT token
+	 * @return the JWT access token
 	 */
 	public String generateToken(UserDetails userDetails) {
 		return generateToken(new HashMap<>(), userDetails);
+	}
+
+	/**
+	 * Generates a JWT refresh token for the given user details.
+	 *
+	 * @param userDetails
+	 *            the user details
+	 * @return the JWT refresh token
+	 */
+	public String generateRefreshToken(UserDetails userDetails) {
+		return buildToken(new HashMap<>(), userDetails, refreshExpiration);
 	}
 
 	/**

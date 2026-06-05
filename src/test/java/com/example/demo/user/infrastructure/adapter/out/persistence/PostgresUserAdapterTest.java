@@ -39,7 +39,8 @@ class PostgresUserAdapterTest {
 		String id = UUID.randomUUID().toString();
 		User user = new User(id, "john@example.com", "pwd", new Profile("John", "Doe"), 1L);
 		UserJpaEntity savedEntity = new UserJpaEntity(UUID.fromString(id), "john@example.com", "pwd", 1L);
-		ProfileJpaEntity profileEntity = new ProfileJpaEntity(UUID.fromString(user.getProfile().getId()), savedEntity, "John", "Doe");
+		ProfileJpaEntity profileEntity = new ProfileJpaEntity(UUID.fromString(user.getProfile().getId()), savedEntity,
+				"John", "Doe", null, null);
 		savedEntity.setProfile(profileEntity);
 
 		when(repository.save(any(UserJpaEntity.class))).thenReturn(savedEntity);
@@ -65,7 +66,7 @@ class PostgresUserAdapterTest {
 	void shouldFindUserById() {
 		String id = UUID.randomUUID().toString();
 		UserJpaEntity entity = new UserJpaEntity(UUID.fromString(id), "jane@example.com", "pwd", 2L);
-		ProfileJpaEntity profileEntity = new ProfileJpaEntity(UUID.randomUUID(), entity, "Jane", "Smith");
+		ProfileJpaEntity profileEntity = new ProfileJpaEntity(UUID.randomUUID(), entity, "Jane", "Smith", null, null);
 		entity.setProfile(profileEntity);
 
 		when(repository.findById(UUID.fromString(id))).thenReturn(Optional.of(entity));
@@ -84,7 +85,7 @@ class PostgresUserAdapterTest {
 	void shouldFindUserByEmail() {
 		String id = UUID.randomUUID().toString();
 		UserJpaEntity entity = new UserJpaEntity(UUID.fromString(id), "jane@example.com", "pwd", 2L);
-		ProfileJpaEntity profileEntity = new ProfileJpaEntity(UUID.randomUUID(), entity, "Jane", "Smith");
+		ProfileJpaEntity profileEntity = new ProfileJpaEntity(UUID.randomUUID(), entity, "Jane", "Smith", null, null);
 		entity.setProfile(profileEntity);
 
 		when(repository.findByEmail("jane@example.com")).thenReturn(Optional.of(entity));

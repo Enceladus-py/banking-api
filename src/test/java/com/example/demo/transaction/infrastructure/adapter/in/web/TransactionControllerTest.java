@@ -5,6 +5,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -17,6 +18,7 @@ import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,6 +26,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.example.demo.common.application.port.in.dto.PageRequest;
 import com.example.demo.common.application.port.in.dto.PageResult;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
+import com.example.demo.common.security.CustomUserDetails;
+import com.example.demo.common.security.SecurityConfig;
 import com.example.demo.transaction.application.port.in.DepositMoneyUseCase;
 import com.example.demo.transaction.application.port.in.DepositMoneyUseCase.DepositCommand;
 import com.example.demo.transaction.application.port.in.GetAccountTransactionsUseCase;
@@ -32,6 +36,7 @@ import com.example.demo.transaction.application.port.in.WithdrawMoneyUseCase;
 import com.example.demo.transaction.domain.model.TransactionRecord;
 
 @WebMvcTest(TransactionController.class)
+@Import(SecurityConfig.class)
 class TransactionControllerTest {
 	@MockitoBean
 	private DepositMoneyUseCase depositMoneyUseCase;
@@ -48,6 +53,12 @@ class TransactionControllerTest {
 	@MockitoBean
 	private GetTransactionUseCase getTransactionUseCase;
 
+	@MockitoBean
+	private com.example.demo.common.security.JwtService jwtService;
+
+	@MockitoBean
+	private org.springframework.security.core.userdetails.UserDetailsService userDetailsService;
+
 	@Test
 	void shouldReturnPaginatedTransactionsWithCustomParams() throws Exception {
 		// Arrange
@@ -59,14 +70,14 @@ class TransactionControllerTest {
 				.thenAnswer(invocation -> emptyResult);
 
 		// Act & Assert
-		mockMvc.perform(
-				get("/api/transactions/{accountNumber}?page=2&size=5", accountNumber).header("X-User-Id", requesterId) // Added
-																														// the
-																														// authentication
-																														// header
-						.contentType(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.pageNumber").value(2))
-				.andExpect(jsonPath("$.pageSize").value(5)).andExpect(jsonPath("$.totalElements").value(10));
+		mockMvc.perform(get("/api/transactions/{accountNumber}?page=2&size=5", accountNumber)
+				.with(user(new CustomUserDetails(requesterId, "test@test.com", "pass", Collections.emptyList()))) // Added
+				// the
+				// authentication
+				// header
+				.contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andExpect(jsonPath("$.pageNumber").value(2)).andExpect(jsonPath("$.pageSize").value(5))
+				.andExpect(jsonPath("$.totalElements").value(10));
 
 		// Verify the Controller passed the exact HTTP params AND the user ID to the Use
 		// Case
@@ -85,10 +96,11 @@ class TransactionControllerTest {
 
 		// Act & Assert
 		// We omit ?page= and ?size=
-		mockMvc.perform(get("/api/transactions/{accountNumber}", accountNumber).header("X-User-Id", requesterId) // Added
-																													// the
-																													// authentication
-																													// header
+		mockMvc.perform(get("/api/transactions/{accountNumber}", accountNumber)
+				.with(user(new CustomUserDetails(requesterId, "test@test.com", "pass", Collections.emptyList()))) // Added
+				// the
+				// authentication
+				// header
 				.contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
 		// Verify the Controller used the default values defined in @RequestParam AND
@@ -108,7 +120,8 @@ class TransactionControllerTest {
 
 		when(getTransactionUseCase.getTransaction(eq(txId), eq(requesterId))).thenReturn(tx);
 
-		mockMvc.perform(get("/api/transactions/id/{transactionId}", txId).header("X-User-Id", requesterId)
+		mockMvc.perform(get("/api/transactions/id/{transactionId}", txId)
+				.with(user(new CustomUserDetails(requesterId, "test@test.com", "pass", Collections.emptyList())))
 				.contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andExpect(jsonPath("$.id").value(txId)).andExpect(jsonPath("$.status").value("COMPLETED"))
 				.andExpect(jsonPath("$.amount").value(50.00));
@@ -134,7 +147,10 @@ class TransactionControllerTest {
 				""";
 
 		// Act & Assert
-		mockMvc.perform(post("/api/transactions/deposit").header("X-User-Id", requesterId) // Added Security Header
+		mockMvc.perform(post("/api/transactions/deposit")
+				.with(user(new CustomUserDetails(requesterId, "test@test.com", "pass", Collections.emptyList()))) // Added
+																													// Security
+																													// Header
 				.contentType(MediaType.APPLICATION_JSON).content(jsonPayload)).andExpect(status().isAccepted())
 				.andExpect(jsonPath("$.targetAccountNumber").value(accountNumber))
 				.andExpect(jsonPath("$.amount").value(100.00)).andExpect(jsonPath("$.status").value("PENDING"));
@@ -153,7 +169,8 @@ class TransactionControllerTest {
 				""";
 
 		// Act & Assert
-		mockMvc.perform(post("/api/transactions/deposit").header("X-User-Id", "USER-123")
+		mockMvc.perform(post("/api/transactions/deposit")
+				.with(user(new CustomUserDetails("USER-123", "test@test.com", "pass", Collections.emptyList())))
 				.contentType(MediaType.APPLICATION_JSON).content(jsonPayload)).andExpect(status().isBadRequest()); // Blocked
 																													// by
 																													// Web
@@ -176,7 +193,8 @@ class TransactionControllerTest {
 				""";
 
 		// Act & Assert
-		mockMvc.perform(post("/api/transactions/deposit").header("X-User-Id", "USER-123")
+		mockMvc.perform(post("/api/transactions/deposit")
+				.with(user(new CustomUserDetails("USER-123", "test@test.com", "pass", Collections.emptyList())))
 				.contentType(MediaType.APPLICATION_JSON).content(jsonPayload)).andExpect(status().isBadRequest()); // Blocked
 																													// by
 																													// Web
@@ -201,7 +219,8 @@ class TransactionControllerTest {
 				""";
 
 		// Act & Assert
-		mockMvc.perform(post("/api/transactions/deposit").header("X-User-Id", "HACKER-ID")
+		mockMvc.perform(post("/api/transactions/deposit")
+				.with(user(new CustomUserDetails("HACKER-ID", "test@test.com", "pass", Collections.emptyList())))
 				.contentType(MediaType.APPLICATION_JSON).content(jsonPayload)).andExpect(status().isForbidden()) // Ensure
 																													// GlobalExceptionHandler
 																													// maps
@@ -225,7 +244,8 @@ class TransactionControllerTest {
 				""";
 
 		// Act & Assert
-		mockMvc.perform(post("/api/transactions/deposit").header("X-User-Id", "USER-123")
+		mockMvc.perform(post("/api/transactions/deposit")
+				.with(user(new CustomUserDetails("USER-123", "test@test.com", "pass", Collections.emptyList())))
 				.contentType(MediaType.APPLICATION_JSON).content(jsonPayload)).andExpect(status().isNotFound()); // We
 																													// expect
 																													// an
@@ -252,7 +272,8 @@ class TransactionControllerTest {
 				""";
 
 		// Act & Assert
-		mockMvc.perform(post("/api/transactions/withdraw").header("X-User-Id", requesterId)
+		mockMvc.perform(post("/api/transactions/withdraw")
+				.with(user(new CustomUserDetails(requesterId, "test@test.com", "pass", Collections.emptyList())))
 				.contentType(MediaType.APPLICATION_JSON).content(validPayload)).andExpect(status().isAccepted())
 				.andExpect(jsonPath("$.sourceAccountNumber").value(accountNumber))
 				.andExpect(jsonPath("$.amount").value(150.00)).andExpect(jsonPath("$.status").value("PENDING"));
@@ -272,7 +293,8 @@ class TransactionControllerTest {
 				""";
 
 		// Act & Assert: GlobalExceptionHandler should map this to HTTP 400
-		mockMvc.perform(post("/api/transactions/withdraw").header("X-User-Id", "USER-123")
+		mockMvc.perform(post("/api/transactions/withdraw")
+				.with(user(new CustomUserDetails("USER-123", "test@test.com", "pass", Collections.emptyList())))
 				.contentType(MediaType.APPLICATION_JSON).content(overDraftPayload)).andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value("Insufficient funds"));
 	}
@@ -288,7 +310,8 @@ class TransactionControllerTest {
 				""";
 
 		// Act & Assert
-		mockMvc.perform(post("/api/transactions/withdraw").header("X-User-Id", "USER-123")
+		mockMvc.perform(post("/api/transactions/withdraw")
+				.with(user(new CustomUserDetails("USER-123", "test@test.com", "pass", Collections.emptyList())))
 				.contentType(MediaType.APPLICATION_JSON).content(invalidPayload)).andExpect(status().isBadRequest());
 
 		// Ensure the core business logic was never touched

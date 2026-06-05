@@ -1,10 +1,12 @@
 package com.example.demo.transaction.infrastructure.adapter.in.web;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.common.application.port.in.dto.PageRequest;
 import com.example.demo.common.application.port.in.dto.PageResult;
+import com.example.demo.common.security.CustomUserDetails;
 import com.example.demo.transaction.application.port.in.DepositMoneyUseCase;
 import com.example.demo.transaction.application.port.in.GetAccountTransactionsUseCase;
 import com.example.demo.transaction.application.port.in.GetTransactionUseCase;
@@ -17,6 +19,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -26,6 +29,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/transactions")
 @Tag(name = "Transactions", description = "Endpoints for deposit, withdrawal operations, and transaction audit trails")
+@SecurityRequirement(name = "bearerAuth")
 public class TransactionController {
 
 	private final GetAccountTransactionsUseCase getAccountTransactionsUseCase;
@@ -59,8 +63,8 @@ public class TransactionController {
 	 *
 	 * @param request
 	 *            the transaction request details
-	 * @param requesterId
-	 *            the user ID of the requester
+	 * @param userDetails
+	 *            the authenticated user details
 	 * @return the response containing transaction details
 	 */
 	@PostMapping("/deposit")
@@ -70,9 +74,10 @@ public class TransactionController {
 			@ApiResponse(responseCode = "400", description = "Invalid deposit amount or account details"),
 			@ApiResponse(responseCode = "403", description = "Requester does not own the account")})
 	public ResponseEntity<TransactionResponse> depositMoney(@Valid @RequestBody TransactionRequest request,
-			@RequestHeader("X-User-Id") @Parameter(description = "The ID of the user requesting deposit", example = "123e4567-e89b-12d3-a456-426614174000") String requesterId) {
+			@AuthenticationPrincipal @Parameter(hidden = true) CustomUserDetails userDetails) {
 
-		var command = new DepositMoneyUseCase.DepositCommand(request.accountNumber(), request.amount(), requesterId);
+		var command = new DepositMoneyUseCase.DepositCommand(request.accountNumber(), request.amount(),
+				userDetails.getId());
 		var tx = depositMoneyUseCase.deposit(command);
 		return ResponseEntity.accepted().body(TransactionResponse.from(tx));
 	}
@@ -82,8 +87,8 @@ public class TransactionController {
 	 *
 	 * @param request
 	 *            the transaction request details
-	 * @param requesterId
-	 *            the user ID of the requester
+	 * @param userDetails
+	 *            the authenticated user details
 	 * @return the response containing transaction details
 	 */
 	@PostMapping("/withdraw")
@@ -93,9 +98,10 @@ public class TransactionController {
 			@ApiResponse(responseCode = "400", description = "Invalid withdrawal amount, account details, or insufficient funds"),
 			@ApiResponse(responseCode = "403", description = "Requester does not own the account")})
 	public ResponseEntity<TransactionResponse> withdrawMoney(@Valid @RequestBody TransactionRequest request,
-			@RequestHeader("X-User-Id") @Parameter(description = "The ID of the user requesting withdrawal", example = "123e4567-e89b-12d3-a456-426614174000") String requesterId) {
+			@AuthenticationPrincipal @Parameter(hidden = true) CustomUserDetails userDetails) {
 
-		var command = new WithdrawMoneyUseCase.WithdrawCommand(request.accountNumber(), request.amount(), requesterId);
+		var command = new WithdrawMoneyUseCase.WithdrawCommand(request.accountNumber(), request.amount(),
+				userDetails.getId());
 		var tx = withdrawMoneyUseCase.withdraw(command);
 		return ResponseEntity.accepted().body(TransactionResponse.from(tx));
 	}
@@ -109,8 +115,8 @@ public class TransactionController {
 	 *            the page number (0-based)
 	 * @param size
 	 *            the size of the page
-	 * @param requesterId
-	 *            the user ID of the requester
+	 * @param userDetails
+	 *            the authenticated user details
 	 * @return the page result containing transaction records
 	 */
 	@GetMapping("/{accountNumber}")
@@ -122,11 +128,11 @@ public class TransactionController {
 			@PathVariable @Parameter(description = "The 10-digit account number to query", example = "1234567890") String accountNumber,
 			@RequestParam(defaultValue = "0") @Parameter(description = "Zero-based page index", example = "0") int page,
 			@RequestParam(defaultValue = "10") @Parameter(description = "Size of the page to retrieve", example = "10") int size,
-			@RequestHeader("X-User-Id") @Parameter(description = "The ID of the user requesting transaction records", example = "123e4567-e89b-12d3-a456-426614174000") String requesterId) {
+			@AuthenticationPrincipal @Parameter(hidden = true) CustomUserDetails userDetails) {
 
 		PageRequest pageRequest = new PageRequest(page, size);
 		PageResult<TransactionRecord> result = getAccountTransactionsUseCase.getTransactions(accountNumber, pageRequest,
-				requesterId);
+				userDetails.getId());
 
 		return ResponseEntity.ok(result);
 	}
@@ -136,8 +142,8 @@ public class TransactionController {
 	 *
 	 * @param transactionId
 	 *            the transaction ID
-	 * @param requesterId
-	 *            the user ID of the requester
+	 * @param userDetails
+	 *            the authenticated user details
 	 * @return the response containing transaction details
 	 */
 	@GetMapping("/id/{transactionId}")
@@ -147,9 +153,9 @@ public class TransactionController {
 			@ApiResponse(responseCode = "404", description = "Transaction not found")})
 	public ResponseEntity<TransactionResponse> getTransactionById(
 			@PathVariable @Parameter(description = "The unique identifier of the transaction", example = "123e4567-e89b-12d3-a456-426614174000") String transactionId,
-			@RequestHeader("X-User-Id") @Parameter(description = "The ID of the user requesting transaction details", example = "123e4567-e89b-12d3-a456-426614174000") String requesterId) {
+			@AuthenticationPrincipal @Parameter(hidden = true) CustomUserDetails userDetails) {
 
-		TransactionRecord record = getTransactionUseCase.getTransaction(transactionId, requesterId);
+		TransactionRecord record = getTransactionUseCase.getTransaction(transactionId, userDetails.getId());
 		return ResponseEntity.ok(TransactionResponse.from(record));
 	}
 }

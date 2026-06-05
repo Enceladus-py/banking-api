@@ -34,6 +34,12 @@ public class ProfileJpaEntity {
 	@Column(nullable = false)
 	private String surname;
 
+	@Column(name = "mobile_number")
+	private String mobileNumber;
+
+	@Column(name = "address")
+	private String address;
+
 	/**
 	 * Constructs a ProfileJpaEntity with all attributes.
 	 *
@@ -45,11 +51,18 @@ public class ProfileJpaEntity {
 	 *            the user's first name
 	 * @param surname
 	 *            the user's last name
+	 * @param mobileNumber
+	 *            the user's mobile number
+	 * @param address
+	 *            the user's address
 	 */
-	public ProfileJpaEntity(UUID id, UserJpaEntity user, String name, String surname) {
+	public ProfileJpaEntity(UUID id, UserJpaEntity user, String name, String surname, String mobileNumber,
+			String address) {
 		this.id = id;
 		this.user = user;
 		this.name = name;
 		this.surname = surname;
+		this.mobileNumber = mobileNumber;
+		this.address = address;
 	}
 }
