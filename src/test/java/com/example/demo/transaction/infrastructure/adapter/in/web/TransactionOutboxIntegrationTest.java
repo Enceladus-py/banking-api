@@ -1,6 +1,7 @@
 package com.example.demo.transaction.infrastructure.adapter.in.web;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -39,6 +40,9 @@ class TransactionOutboxIntegrationTest {
 
 	@Autowired
 	private MockMvc mockMvc;
+
+	@org.springframework.test.context.bean.override.mockito.MockitoBean
+	private org.springframework.security.oauth2.jwt.JwtDecoder jwtDecoder;
 
 	@Autowired
 	private SpringDataUserRepository userRepository;
@@ -100,7 +104,7 @@ class TransactionOutboxIntegrationTest {
 				""";
 
 		// 1. Act: Call deposit endpoint
-		mockMvc.perform(post("/api/transactions/deposit").header("X-User-Id", userId)
+		mockMvc.perform(post("/api/transactions/deposit").with(jwt().jwt(j -> j.subject(userId)))
 				.contentType(MediaType.APPLICATION_JSON).content(jsonPayload)).andExpect(status().isAccepted());
 
 		// 2. Assert Immediately: Balance is NOT updated yet (it's pending/asynchronous)

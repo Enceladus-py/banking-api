@@ -1,6 +1,8 @@
 package com.example.demo.transaction.infrastructure.adapter.in.web;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.transaction.application.port.in.TransferMoneyUseCase;
@@ -11,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -20,6 +23,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/transfers")
 @Tag(name = "Transfers", description = "Endpoints for initiating funds transfers between bank accounts")
+@SecurityRequirement(name = "keycloak")
 public class TransferController {
 
 	private final TransferMoneyUseCase transferMoneyUseCase;
@@ -39,8 +43,8 @@ public class TransferController {
 	 *
 	 * @param request
 	 *            the transfer request containing source, destination, and amount
-	 * @param requesterId
-	 *            the user ID of the requester
+	 * @param jwt
+	 *            the JWT authentication token
 	 * @return the response containing transaction details
 	 */
 	@PostMapping
@@ -49,7 +53,8 @@ public class TransferController {
 			@ApiResponse(responseCode = "400", description = "Invalid account numbers, transfer amount, or insufficient funds"),
 			@ApiResponse(responseCode = "403", description = "Requester does not own the source account")})
 	public ResponseEntity<TransactionResponse> transferMoney(@Valid @RequestBody TransferRequest request,
-			@RequestHeader("X-User-Id") @Parameter(description = "The ID of the user requesting transfer", example = "123e4567-e89b-12d3-a456-426614174000") String requesterId) {
+			@AuthenticationPrincipal @Parameter(hidden = true) Jwt jwt) {
+		String requesterId = jwt.getSubject();
 
 		TransferMoneyUseCase.TransferCommand command = new TransferMoneyUseCase.TransferCommand(
 				request.sourceAccountNumber(), request.targetAccountNumber(), request.amount(), requesterId);

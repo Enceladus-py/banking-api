@@ -1,6 +1,8 @@
 package com.example.demo.user.infrastructure.adapter.in.web;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.user.application.port.in.GetUserUseCase;
@@ -13,6 +15,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -22,6 +25,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/users")
 @Tag(name = "Users", description = "Endpoints for user registration and profile management")
+@SecurityRequirement(name = "keycloak")
 public class UserController {
 
 	private final RegisterUserUseCase registerUserUseCase;
@@ -45,15 +49,18 @@ public class UserController {
 	 *
 	 * @param request
 	 *            the user registration details request payload
+	 * @param jwt
+	 *            the JWT authentication token
 	 * @return the response containing user details
 	 */
 	@PostMapping
 	@Operation(summary = "Register user", description = "Registers a new customer in the system with their name and surname")
 	@ApiResponses(value = {@ApiResponse(responseCode = "200", description = "User successfully registered"),
 			@ApiResponse(responseCode = "400", description = "Invalid request validation failed")})
-	public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterUserRequest request) {
-		RegisterUserUseCase.RegisterUserCommand command = new RegisterUserUseCase.RegisterUserCommand(request.name(),
-				request.surname());
+	public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterUserRequest request,
+			@AuthenticationPrincipal @Parameter(hidden = true) Jwt jwt) {
+		RegisterUserUseCase.RegisterUserCommand command = new RegisterUserUseCase.RegisterUserCommand(jwt.getSubject(),
+				request.name(), request.surname());
 
 		User user = registerUserUseCase.registerUser(command);
 		return ResponseEntity.ok(new UserResponse(user.getId(), user.getName(), user.getSurname()));

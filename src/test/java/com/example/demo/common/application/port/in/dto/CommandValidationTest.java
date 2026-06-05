@@ -100,14 +100,21 @@ class CommandValidationTest {
 
 	@Test
 	void shouldCreateValidRegisterUserCommand() {
-		RegisterUserUseCase.RegisterUserCommand command = new RegisterUserUseCase.RegisterUserCommand("Alice", "Smith");
+		RegisterUserUseCase.RegisterUserCommand command = new RegisterUserUseCase.RegisterUserCommand(
+				"123e4567-e89b-12d3-a456-426614174001", "Alice", "Smith");
+		assertEquals("123e4567-e89b-12d3-a456-426614174001", command.id());
 		assertEquals("Alice", command.name());
 		assertEquals("Smith", command.surname());
 	}
 
 	@Test
 	void shouldThrowExceptionWhenRegisterUserCommandHasInvalidParameters() {
-		assertThrows(IllegalArgumentException.class, () -> new RegisterUserUseCase.RegisterUserCommand(" ", "Smith"));
-		assertThrows(IllegalArgumentException.class, () -> new RegisterUserUseCase.RegisterUserCommand("Alice", ""));
+		assertThrows(IllegalArgumentException.class,
+				() -> new RegisterUserUseCase.RegisterUserCommand("123e4567-e89b-12d3-a456-426614174002", " ",
+						"Smith"));
+		assertThrows(IllegalArgumentException.class,
+				() -> new RegisterUserUseCase.RegisterUserCommand("123e4567-e89b-12d3-a456-426614174003", "Alice", ""));
+		assertThrows(IllegalArgumentException.class,
+				() -> new RegisterUserUseCase.RegisterUserCommand(" ", "Alice", "Smith"));
 	}
 }

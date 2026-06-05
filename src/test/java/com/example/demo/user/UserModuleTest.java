@@ -33,7 +33,8 @@ class UserModuleTest {
 
 	@Test
 	void shouldRegisterAndRetrieveUser() {
-		RegisterUserCommand command = new RegisterUserCommand("Charlie", "Brown");
+		RegisterUserCommand command = new RegisterUserCommand("123e4567-e89b-12d3-a456-426614174001", "Charlie",
+				"Brown");
 
 		User registered = registerUserUseCase.registerUser(command);
 
@@ -45,7 +46,8 @@ class UserModuleTest {
 
 	@Test
 	void shouldRetrieveUserByIdAfterRegistration() {
-		User registered = registerUserUseCase.registerUser(new RegisterUserCommand("Diana", "Prince"));
+		User registered = registerUserUseCase
+				.registerUser(new RegisterUserCommand("123e4567-e89b-12d3-a456-426614174002", "Diana", "Prince"));
 
 		User retrieved = getUserUseCase.getUserById(registered.getId());
 
@@ -62,7 +64,8 @@ class UserModuleTest {
 
 	@Test
 	void shouldTrimWhitespaceInNameAndSurname() {
-		User registered = registerUserUseCase.registerUser(new RegisterUserCommand("  Eve  ", "  Walker  "));
+		User registered = registerUserUseCase
+				.registerUser(new RegisterUserCommand("123e4567-e89b-12d3-a456-426614174003", "  Eve  ", "  Walker  "));
 
 		assertThat(registered.getName()).isEqualTo("Eve");
 		assertThat(registered.getSurname()).isEqualTo("Walker");

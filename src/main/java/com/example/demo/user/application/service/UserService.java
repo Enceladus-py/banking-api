@@ -27,8 +27,7 @@ public class UserService implements RegisterUserUseCase, GetUserUseCase {
 
 	@Override
 	public User registerUser(RegisterUserCommand command) {
-		// The Domain model generates its own UUID and trims the strings
-		User user = new User(command.name(), command.surname());
+		User user = new User(command.id(), command.name(), command.surname(), null);
 		return userRepository.save(user);
 	}
 

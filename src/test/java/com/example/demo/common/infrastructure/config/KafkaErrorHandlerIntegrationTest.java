@@ -31,6 +31,9 @@ public class KafkaErrorHandlerIntegrationTest {
 	@Autowired
 	private KafkaTemplate<String, String> kafkaTemplate;
 
+	@org.springframework.test.context.bean.override.mockito.MockitoBean
+	private org.springframework.security.oauth2.jwt.JwtDecoder jwtDecoder;
+
 	@Autowired
 	private DlqTestListener dlqTestListener;
 

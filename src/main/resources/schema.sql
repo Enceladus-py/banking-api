@@ -60,3 +60,5 @@ CREATE TABLE IF NOT EXISTS users (
     surname VARCHAR(255) NOT NULL,
     version BIGINT
 );
+
+CREATE SCHEMA IF NOT EXISTS keycloak;

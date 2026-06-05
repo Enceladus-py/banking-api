@@ -28,14 +28,14 @@ class UserServiceTest {
 
 	@Test
 	void shouldRegisterUserSuccessfully() {
-		RegisterUserCommand command = new RegisterUserCommand("Alice", "Smith");
+		RegisterUserCommand command = new RegisterUserCommand("123e4567-e89b-12d3-a456-426614174004", "John", "Doe");
 		when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
 		User result = userService.registerUser(command);
 
 		assertNotNull(result.getId());
-		assertEquals("Alice", result.getName());
-		assertEquals("Smith", result.getSurname());
+		assertEquals("John", result.getName());
+		assertEquals("Doe", result.getSurname());
 		verify(userRepository, times(1)).save(any(User.class));
 	}
 

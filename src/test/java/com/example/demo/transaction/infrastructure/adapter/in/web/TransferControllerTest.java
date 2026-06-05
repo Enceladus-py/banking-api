@@ -3,6 +3,7 @@ package com.example.demo.transaction.infrastructure.adapter.in.web;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -12,17 +13,24 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.demo.account.domain.exception.InsufficientFundsException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
+import com.example.demo.common.infrastructure.config.SecurityConfig;
 import com.example.demo.transaction.application.port.in.TransferMoneyUseCase;
 import com.example.demo.transaction.domain.model.TransactionRecord;
 
+@Import(SecurityConfig.class)
 @WebMvcTest(TransferController.class)
 class TransferControllerTest {
+
+	@MockitoBean
+	private JwtDecoder jwtDecoder;
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -46,7 +54,7 @@ class TransferControllerTest {
 				TransactionRecord.TransactionStatus.PENDING, null);
 		when(transferMoneyUseCase.transfer(any(TransferMoneyUseCase.TransferCommand.class))).thenReturn(expectedTx);
 
-		mockMvc.perform(post("/api/transfers").header("X-User-Id", requesterId) // Added Security Header
+		mockMvc.perform(post("/api/transfers").with(jwt().jwt(j -> j.subject(requesterId))) // Added Security Header
 				.contentType(MediaType.APPLICATION_JSON).content(validPayload)).andExpect(status().isAccepted());
 
 		// Capture and verify the command mapping
@@ -71,7 +79,7 @@ class TransferControllerTest {
 
 		// Attempting to call the endpoint without the authentication header
 		mockMvc.perform(post("/api/transfers").contentType(MediaType.APPLICATION_JSON).content(validPayload))
-				.andExpect(status().isBadRequest());
+				.andExpect(status().isUnauthorized());
 
 		verify(transferMoneyUseCase, never()).transfer(any());
 	}
@@ -89,8 +97,8 @@ class TransferControllerTest {
 		when(transferMoneyUseCase.transfer(any(TransferMoneyUseCase.TransferCommand.class)))
 				.thenThrow(new SecurityException("You are not authorized to transfer money from this account"));
 
-		mockMvc.perform(post("/api/transfers").header("X-User-Id", "HACKER-ID").contentType(MediaType.APPLICATION_JSON)
-				.content(payload)).andExpect(status().isForbidden())
+		mockMvc.perform(post("/api/transfers").with(jwt().jwt(j -> j.subject("HACKER-ID")))
+				.contentType(MediaType.APPLICATION_JSON).content(payload)).andExpect(status().isForbidden())
 				.andExpect(jsonPath("$.message").value("You are not authorized to transfer money from this account"));
 	}
 
@@ -107,8 +115,8 @@ class TransferControllerTest {
 		when(transferMoneyUseCase.transfer(any(TransferMoneyUseCase.TransferCommand.class)))
 				.thenThrow(new InsufficientFundsException("Insufficient funds"));
 
-		mockMvc.perform(post("/api/transfers").header("X-User-Id", "USER-123").contentType(MediaType.APPLICATION_JSON)
-				.content(overdraftPayload)).andExpect(status().isBadRequest())
+		mockMvc.perform(post("/api/transfers").with(jwt().jwt(j -> j.subject("USER-123")))
+				.contentType(MediaType.APPLICATION_JSON).content(overdraftPayload)).andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value("Insufficient funds"));
 	}
 
@@ -126,8 +134,10 @@ class TransferControllerTest {
 		when(transferMoneyUseCase.transfer(any(TransferMoneyUseCase.TransferCommand.class)))
 				.thenThrow(new EntityNotFoundException("Target account not found"));
 
-		mockMvc.perform(post("/api/transfers").header("X-User-Id", "USER-123").contentType(MediaType.APPLICATION_JSON)
-				.content(payload)).andExpect(status().isNotFound()); // Mapped by GlobalExceptionHandler
+		mockMvc.perform(post("/api/transfers").with(jwt().jwt(j -> j.subject("USER-123")))
+				.contentType(MediaType.APPLICATION_JSON).content(payload)).andExpect(status().isNotFound()); // Mapped
+																												// by
+																												// GlobalExceptionHandler
 	}
 
 	@Test
@@ -141,8 +151,8 @@ class TransferControllerTest {
 				}
 				""";
 
-		mockMvc.perform(post("/api/transfers").header("X-User-Id", "USER-123").contentType(MediaType.APPLICATION_JSON)
-				.content(invalidPayload)).andExpect(status().isBadRequest());
+		mockMvc.perform(post("/api/transfers").with(jwt().jwt(j -> j.subject("USER-123")))
+				.contentType(MediaType.APPLICATION_JSON).content(invalidPayload)).andExpect(status().isBadRequest());
 
 		// The core business logic should be protected from bad data
 		verify(transferMoneyUseCase, never()).transfer(any(TransferMoneyUseCase.TransferCommand.class));

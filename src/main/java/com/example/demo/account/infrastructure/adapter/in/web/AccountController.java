@@ -1,6 +1,8 @@
 package com.example.demo.account.infrastructure.adapter.in.web;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.account.application.port.in.CreateAccountUseCase;
@@ -15,6 +17,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
@@ -23,6 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/accounts")
 @Tag(name = "Accounts", description = "Endpoints for bank account creation and retrieval")
+@SecurityRequirement(name = "keycloak")
 public class AccountController {
 
 	// Inject the Inbound Port (Spring will provide the BankAccountService bean we
@@ -51,8 +55,8 @@ public class AccountController {
 	/**
 	 * Creates a new account for the requester.
 	 *
-	 * @param requesterId
-	 *            the user ID of the account owner
+	 * @param jwt
+	 *            the JWT authentication token
 	 * @return the response containing created account details
 	 */
 	@PostMapping
@@ -60,8 +64,8 @@ public class AccountController {
 	@ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Account successfully created"),
 			@ApiResponse(responseCode = "400", description = "Invalid request or user details"),
 			@ApiResponse(responseCode = "404", description = "Owner user profile not found")})
-	public ResponseEntity<AccountResponse> createAccount(
-			@RequestHeader("X-User-Id") @Parameter(description = "The ID of the user requesting account creation", example = "123e4567-e89b-12d3-a456-426614174000") String requesterId) {
+	public ResponseEntity<AccountResponse> createAccount(@AuthenticationPrincipal @Parameter(hidden = true) Jwt jwt) {
+		String requesterId = jwt.getSubject();
 		var command = new CreateAccountUseCase.CreateAccountCommand(requesterId);
 		Account account = createAccountUseCase.createAccount(command);
 		return ResponseEntity.ok(toResponse(account));
@@ -72,8 +76,8 @@ public class AccountController {
 	 *
 	 * @param accountNumber
 	 *            the bank account number
-	 * @param requesterId
-	 *            the user ID of the requester
+	 * @param jwt
+	 *            the JWT authentication token
 	 * @return the response containing account details
 	 */
 	@GetMapping("/{accountNumber}")
@@ -83,7 +87,8 @@ public class AccountController {
 			@ApiResponse(responseCode = "404", description = "Account not found")})
 	public ResponseEntity<AccountResponse> getAccount(
 			@PathVariable @Parameter(description = "The 10-digit account number to retrieve", example = "1234567890") String accountNumber,
-			@RequestHeader("X-User-Id") @Parameter(description = "The ID of the user requesting account information", example = "123e4567-e89b-12d3-a456-426614174000") String requesterId) {
+			@AuthenticationPrincipal @Parameter(hidden = true) Jwt jwt) {
+		String requesterId = jwt.getSubject();
 
 		Account account = getAccountUseCase.getAccount(accountNumber, requesterId);
 		return ResponseEntity.ok(toResponse(account));
@@ -96,8 +101,8 @@ public class AccountController {
 	 *            the page number
 	 * @param size
 	 *            the page size
-	 * @param requesterId
-	 *            the user ID of the requester
+	 * @param jwt
+	 *            the JWT authentication token
 	 * @return the response containing a list of accounts
 	 */
 	@GetMapping
@@ -107,7 +112,8 @@ public class AccountController {
 	public ResponseEntity<PageResult<AccountResponse>> getAccounts(
 			@RequestParam(defaultValue = "0") @Parameter(description = "Page number (0-based)") int page,
 			@RequestParam(defaultValue = "10") @Parameter(description = "Number of records per page") int size,
-			@RequestHeader("X-User-Id") @Parameter(description = "The ID of the user requesting their account information", example = "123e4567-e89b-12d3-a456-426614174000") String requesterId) {
+			@AuthenticationPrincipal @Parameter(hidden = true) Jwt jwt) {
+		String requesterId = jwt.getSubject();
 
 		var pageRequest = new PageRequest(page, size);
 		PageResult<Account> accountPage = getAccountsUseCase.getAccountsByUserId(requesterId, pageRequest);

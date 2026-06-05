@@ -18,21 +18,31 @@ public interface RegisterUserUseCase {
 	/**
 	 * Command containing input details for registering a new user.
 	 *
+	 * @param id
+	 *            the user ID
 	 * @param name
 	 *            the user name
 	 * @param surname
 	 *            the user surname
 	 */
-	record RegisterUserCommand(String name, String surname) {
+	record RegisterUserCommand(String id, String name, String surname) {
 		/**
 		 * Constructor validating name and surname fields.
 		 *
+		 * Constructor validating id, name and surname fields.
+		 *
+		 * @param id
+		 *            the user ID
 		 * @param name
 		 *            the user name
 		 * @param surname
 		 *            the user surname
 		 */
 		public RegisterUserCommand {
+			java.util.Objects.requireNonNull(id, "ID is required");
+			if (id.trim().isBlank()) {
+				throw new IllegalArgumentException("ID cannot be blank");
+			}
 			java.util.Objects.requireNonNull(name, "Name is required");
 			if (name.trim().isBlank()) {
 				throw new IllegalArgumentException("Name cannot be blank");

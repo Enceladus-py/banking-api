@@ -8,6 +8,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 @org.springframework.test.context.TestPropertySource(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 class DemoApplicationTests {
 
+	@org.springframework.test.context.bean.override.mockito.MockitoBean
+	private org.springframework.security.oauth2.jwt.JwtDecoder jwtDecoder;
+
 	@Test
 	void contextLoads() {
 	}

@@ -13,7 +13,7 @@ spring:
       # Use Flyway/Liquibase or schema.sql for schema changes.
       ddl-auto: validate
     # Show the generated SQL in your terminal so you can see it working
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         "[format_sql]": true
