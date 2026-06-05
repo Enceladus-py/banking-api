@@ -3,14 +3,16 @@ package com.example.demo.user.infrastructure.adapter.out.persistence.entity;
 import java.util.UUID;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * JPA entity representing a user in the database.
  */
 @Entity
 @Table(name = "users")
-@Data
+@Getter
+@Setter
 public class UserJpaEntity {
 
 	/**
