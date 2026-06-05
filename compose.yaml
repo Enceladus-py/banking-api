@@ -11,16 +11,17 @@ services:
       - kafka
 
   postgres:
-    image: postgres:latest
+    image: postgres:18.4
     container_name: bank_postgres
     environment:
       POSTGRES_USER: bank_user
       POSTGRES_PASSWORD: bank_password
       POSTGRES_DB: bank_db
+      PGDATA: /var/lib/postgresql/data
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
