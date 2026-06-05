@@ -47,16 +47,16 @@ public class UserController {
 	 *            the user registration details request payload
 	 * @return the response containing user details
 	 */
-	@PostMapping
-	@Operation(summary = "Register user", description = "Registers a new customer in the system with their name and surname")
+	@PostMapping("/register")
+	@Operation(summary = "Register user", description = "Registers a new customer in the system with their email, password, name and surname")
 	@ApiResponses(value = {@ApiResponse(responseCode = "200", description = "User successfully registered"),
 			@ApiResponse(responseCode = "400", description = "Invalid request validation failed")})
 	public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterUserRequest request) {
-		RegisterUserUseCase.RegisterUserCommand command = new RegisterUserUseCase.RegisterUserCommand(request.name(),
-				request.surname());
+		RegisterUserUseCase.RegisterUserCommand command = new RegisterUserUseCase.RegisterUserCommand(
+				request.email(), request.password(), request.name(), request.surname());
 
 		User user = registerUserUseCase.registerUser(command);
-		return ResponseEntity.ok(new UserResponse(user.getId(), user.getName(), user.getSurname()));
+		return ResponseEntity.ok(new UserResponse(user.getId(), user.getEmail(), user.getProfile().getName(), user.getProfile().getSurname()));
 	}
 
 	/**
@@ -73,6 +73,6 @@ public class UserController {
 	public ResponseEntity<UserResponse> getUserById(
 			@PathVariable @Parameter(description = "The unique identifier of the user", example = "123e4567-e89b-12d3-a456-426614174000") String id) {
 		User user = getUserUseCase.getUserById(id);
-		return ResponseEntity.ok(new UserResponse(user.getId(), user.getName(), user.getSurname()));
+		return ResponseEntity.ok(new UserResponse(user.getId(), user.getEmail(), user.getProfile().getName(), user.getProfile().getSurname()));
 	}
 }

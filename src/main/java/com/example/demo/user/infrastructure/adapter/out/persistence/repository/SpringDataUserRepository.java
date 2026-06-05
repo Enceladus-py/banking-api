@@ -10,4 +10,12 @@ import com.example.demo.user.infrastructure.adapter.out.persistence.entity.UserJ
  * Spring Data JPA repository for {@link UserJpaEntity}.
  */
 public interface SpringDataUserRepository extends JpaRepository<UserJpaEntity, UUID> {
+	/**
+	 * Finds a user by their email.
+	 *
+	 * @param email
+	 *            the email to search for
+	 * @return an Optional containing the entity if found
+	 */
+	java.util.Optional<UserJpaEntity> findByEmail(String email);
 }

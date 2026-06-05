@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -17,9 +18,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.user.application.port.in.GetUserUseCase;
 import com.example.demo.user.application.port.in.RegisterUserUseCase;
+import com.example.demo.user.domain.model.Profile;
 import com.example.demo.user.domain.model.User;
+import com.example.demo.common.security.SecurityConfig;
 
 @WebMvcTest(UserController.class)
+@Import(SecurityConfig.class)
 class UserControllerTest {
 
 	@Autowired
@@ -33,18 +37,21 @@ class UserControllerTest {
 
 	@Test
 	void shouldRegisterUserSuccessfully() throws Exception {
-		User user = new User("uuid-123", "Alice", "Smith", 1L);
+		User user = new User("uuid-123", "alice@example.com", "pwd", new Profile("Alice", "Smith"), 1L);
 		when(registerUserUseCase.registerUser(any(RegisterUserUseCase.RegisterUserCommand.class))).thenReturn(user);
 
 		String jsonPayload = """
 				{
+				    "email": "alice@example.com",
+				    "password": "password",
 				    "name": "Alice",
 				    "surname": "Smith"
 				}
 				""";
 
-		mockMvc.perform(post("/api/users").contentType(MediaType.APPLICATION_JSON).content(jsonPayload))
+		mockMvc.perform(post("/api/users/register").contentType(MediaType.APPLICATION_JSON).content(jsonPayload))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.id").value("uuid-123"))
+				.andExpect(jsonPath("$.email").value("alice@example.com"))
 				.andExpect(jsonPath("$.name").value("Alice")).andExpect(jsonPath("$.surname").value("Smith"));
 
 		verify(registerUserUseCase).registerUser(any(RegisterUserUseCase.RegisterUserCommand.class));
@@ -52,7 +59,7 @@ class UserControllerTest {
 
 	@Test
 	void shouldGetUserByIdSuccessfully() throws Exception {
-		User user = new User("uuid-123", "Alice", "Smith", 1L);
+		User user = new User("uuid-123", "alice@example.com", "pwd", new Profile("Alice", "Smith"), 1L);
 		when(getUserUseCase.getUserById("uuid-123")).thenReturn(user);
 
 		mockMvc.perform(get("/api/users/uuid-123")).andExpect(status().isOk())

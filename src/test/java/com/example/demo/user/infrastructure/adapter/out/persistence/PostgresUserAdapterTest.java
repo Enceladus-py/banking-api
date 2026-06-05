@@ -15,7 +15,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.demo.user.domain.model.Profile;
 import com.example.demo.user.domain.model.User;
+import com.example.demo.user.infrastructure.adapter.out.persistence.entity.ProfileJpaEntity;
 import com.example.demo.user.infrastructure.adapter.out.persistence.entity.UserJpaEntity;
 import com.example.demo.user.infrastructure.adapter.out.persistence.repository.SpringDataUserRepository;
 
@@ -35,30 +37,36 @@ class PostgresUserAdapterTest {
 	@Test
 	void shouldSaveUserSuccessfully() {
 		String id = UUID.randomUUID().toString();
-		User user = new User(id, "John", "Doe", 1L);
-		UserJpaEntity savedEntity = new UserJpaEntity(UUID.fromString(id), "John", "Doe", 1L);
+		User user = new User(id, "john@example.com", "pwd", new Profile("John", "Doe"), 1L);
+		UserJpaEntity savedEntity = new UserJpaEntity(UUID.fromString(id), "john@example.com", "pwd", 1L);
+		ProfileJpaEntity profileEntity = new ProfileJpaEntity(UUID.fromString(user.getProfile().getId()), savedEntity, "John", "Doe");
+		savedEntity.setProfile(profileEntity);
 
 		when(repository.save(any(UserJpaEntity.class))).thenReturn(savedEntity);
 
 		User savedUser = adapter.save(user);
 
 		assertEquals(id, savedUser.getId());
-		assertEquals("John", savedUser.getName());
-		assertEquals("Doe", savedUser.getSurname());
+		assertEquals("john@example.com", savedUser.getEmail());
+		assertEquals("John", savedUser.getProfile().getName());
+		assertEquals("Doe", savedUser.getProfile().getSurname());
 		assertEquals(1L, savedUser.getVersion());
 
 		ArgumentCaptor<UserJpaEntity> captor = ArgumentCaptor.forClass(UserJpaEntity.class);
 		verify(repository, times(1)).save(captor.capture());
 		UserJpaEntity captured = captor.getValue();
 		assertEquals(UUID.fromString(id), captured.getId());
-		assertEquals("John", captured.getName());
-		assertEquals("Doe", captured.getSurname());
+		assertEquals("john@example.com", captured.getEmail());
+		assertEquals("John", captured.getProfile().getName());
+		assertEquals("Doe", captured.getProfile().getSurname());
 	}
 
 	@Test
 	void shouldFindUserById() {
 		String id = UUID.randomUUID().toString();
-		UserJpaEntity entity = new UserJpaEntity(UUID.fromString(id), "Jane", "Smith", 2L);
+		UserJpaEntity entity = new UserJpaEntity(UUID.fromString(id), "jane@example.com", "pwd", 2L);
+		ProfileJpaEntity profileEntity = new ProfileJpaEntity(UUID.randomUUID(), entity, "Jane", "Smith");
+		entity.setProfile(profileEntity);
 
 		when(repository.findById(UUID.fromString(id))).thenReturn(Optional.of(entity));
 
@@ -66,9 +74,25 @@ class PostgresUserAdapterTest {
 
 		assertTrue(result.isPresent());
 		assertEquals(id, result.get().getId());
-		assertEquals("Jane", result.get().getName());
-		assertEquals("Smith", result.get().getSurname());
+		assertEquals("jane@example.com", result.get().getEmail());
+		assertEquals("Jane", result.get().getProfile().getName());
+		assertEquals("Smith", result.get().getProfile().getSurname());
 		assertEquals(2L, result.get().getVersion());
+	}
+
+	@Test
+	void shouldFindUserByEmail() {
+		String id = UUID.randomUUID().toString();
+		UserJpaEntity entity = new UserJpaEntity(UUID.fromString(id), "jane@example.com", "pwd", 2L);
+		ProfileJpaEntity profileEntity = new ProfileJpaEntity(UUID.randomUUID(), entity, "Jane", "Smith");
+		entity.setProfile(profileEntity);
+
+		when(repository.findByEmail("jane@example.com")).thenReturn(Optional.of(entity));
+
+		Optional<User> result = adapter.findByEmail("jane@example.com");
+
+		assertTrue(result.isPresent());
+		assertEquals("jane@example.com", result.get().getEmail());
 	}
 
 	@Test

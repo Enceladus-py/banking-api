@@ -25,4 +25,13 @@ public interface UserRepository {
 	 * @return an Optional containing the User if found, or empty
 	 */
 	Optional<User> findById(String id);
+
+	/**
+	 * Finds a user by their unique email.
+	 *
+	 * @param email
+	 *            the user email
+	 * @return an Optional containing the User if found, or empty
+	 */
+	Optional<User> findByEmail(String email);
 }

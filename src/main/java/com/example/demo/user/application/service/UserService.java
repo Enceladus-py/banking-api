@@ -1,5 +1,7 @@
 package com.example.demo.user.application.service;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import com.example.demo.common.application.annotation.TransactionalUseCase;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.user.application.port.in.GetUserUseCase;
@@ -14,21 +16,28 @@ import com.example.demo.user.domain.model.User;
 public class UserService implements RegisterUserUseCase, GetUserUseCase {
 
 	private final UserRepository userRepository;
+	private final PasswordEncoder passwordEncoder;
 
 	/**
-	 * Constructs a new UserService with the specified user repository.
+	 * Constructs a new UserService with the specified user repository and password encoder.
 	 *
 	 * @param userRepository
 	 *            the user repository outbound port
+	 * @param passwordEncoder
+	 *            the Spring Security password encoder
 	 */
-	public UserService(UserRepository userRepository) {
+	public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
 		this.userRepository = userRepository;
+		this.passwordEncoder = passwordEncoder;
 	}
 
 	@Override
 	public User registerUser(RegisterUserCommand command) {
-		// The Domain model generates its own UUID and trims the strings
-		User user = new User(command.name(), command.surname());
+		if (userRepository.findByEmail(command.email()).isPresent()) {
+			throw new IllegalArgumentException("Email is already in use");
+		}
+		String encodedPassword = passwordEncoder.encode(command.password());
+		User user = new User(command.email(), encodedPassword, command.name(), command.surname());
 		return userRepository.save(user);
 	}
 

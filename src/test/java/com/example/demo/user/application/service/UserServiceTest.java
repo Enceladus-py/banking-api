@@ -11,10 +11,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.user.application.port.in.RegisterUserUseCase.RegisterUserCommand;
 import com.example.demo.user.application.port.out.UserRepository;
+import com.example.demo.user.domain.model.Profile;
 import com.example.demo.user.domain.model.User;
 
 @ExtendWith(MockitoExtension.class)
@@ -23,25 +25,41 @@ class UserServiceTest {
 	@Mock
 	private UserRepository userRepository;
 
+	@Mock
+	private PasswordEncoder passwordEncoder;
+
 	@InjectMocks
 	private UserService userService;
 
 	@Test
 	void shouldRegisterUserSuccessfully() {
-		RegisterUserCommand command = new RegisterUserCommand("Alice", "Smith");
+		RegisterUserCommand command = new RegisterUserCommand("alice@example.com", "password", "Alice", "Smith");
+		when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.empty());
+		when(passwordEncoder.encode("password")).thenReturn("encoded_password");
 		when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
 		User result = userService.registerUser(command);
 
 		assertNotNull(result.getId());
-		assertEquals("Alice", result.getName());
-		assertEquals("Smith", result.getSurname());
+		assertEquals("alice@example.com", result.getEmail());
+		assertEquals("encoded_password", result.getPassword());
+		assertEquals("Alice", result.getProfile().getName());
+		assertEquals("Smith", result.getProfile().getSurname());
 		verify(userRepository, times(1)).save(any(User.class));
 	}
 
 	@Test
+	void shouldThrowExceptionWhenEmailAlreadyInUse() {
+		RegisterUserCommand command = new RegisterUserCommand("alice@example.com", "password", "Alice", "Smith");
+		User existingUser = new User("USER-1", "alice@example.com", "pwd", new Profile("A", "B"), 1L);
+		when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(existingUser));
+
+		assertThrows(IllegalArgumentException.class, () -> userService.registerUser(command));
+	}
+
+	@Test
 	void shouldGetUserById() {
-		User existingUser = new User("USER-1", "Alice", "Smith", 1L);
+		User existingUser = new User("USER-1", "alice@example.com", "pwd", new Profile("Alice", "Smith"), 1L);
 		when(userRepository.findById("USER-1")).thenReturn(Optional.of(existingUser));
 
 		User result = userService.getUserById("USER-1");

@@ -24,11 +24,14 @@ public class UserJpaEntity {
 	@Id
 	private UUID id;
 
-	@Column(nullable = false)
-	private String name;
+	@Column(nullable = false, unique = true)
+	private String email;
 
 	@Column(nullable = false)
-	private String surname;
+	private String password;
+
+	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private ProfileJpaEntity profile;
 
 	@Version
 	private Long version;
@@ -38,17 +41,17 @@ public class UserJpaEntity {
 	 *
 	 * @param id
 	 *            the user ID
-	 * @param name
-	 *            the user's first name
-	 * @param surname
-	 *            the user's last name
+	 * @param email
+	 *            the user's email
+	 * @param password
+	 *            the user's hashed password
 	 * @param version
 	 *            the database version
 	 */
-	public UserJpaEntity(UUID id, String name, String surname, Long version) {
+	public UserJpaEntity(UUID id, String email, String password, Long version) {
 		this.id = id;
-		this.name = name;
-		this.surname = surname;
+		this.email = email;
+		this.password = password;
 		this.version = version;
 	}
 }
