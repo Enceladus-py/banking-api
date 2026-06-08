@@ -1,17 +1,32 @@
+server:
+  port: 8080
+
 spring:
+  # Database configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bank_db
+    username: bank_user
+    password: bank_password
+    driver-class-name: org.postgresql.Driver
+
   sql:
     init:
       mode: always
+
   jpa:
     hibernate:
       # 'validate' checks that the schema matches entity mappings but never alters it.
-      # Use Flyway/Liquibase or schema.sql for schema changes.
+      # Use schema.sql for initial setup/changes.
       ddl-auto: validate
     # Show the generated SQL in your terminal so you can see it working
     show-sql: true
+    # Disable Open-In-View pattern to avoid session holding and performance warnings
+    open-in-view: false
     properties:
       hibernate:
         "[format_sql]": true
+
+  # Default Spring Boot Kafka configuration
   kafka:
     bootstrap-servers: localhost:9092
     producer:
@@ -22,3 +37,28 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+# Custom configuration properties
+
+# Security / JWT configurations
+security:
+  jwt:
+    # A secure 256-bit key for signing tokens
+    secret-key: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
+    # Expiration time for access tokens (24 hours in milliseconds)
+    expiration-time: 86400000
+    # Expiration time for refresh tokens (7 days in milliseconds)
+    refresh-expiration-time: 604800000
+
+# Kafka retry and backoff properties for the consumer error handler
+kafka:
+  backoff:
+    initialInterval: 1000   # Initial delay before the first retry in milliseconds
+    multiplier: 2.0         # Multiplication factor for each subsequent retry delay
+    maxInterval: 10000      # Maximum wait interval between retries in milliseconds
+    maxElapsedTime: 15000   # Maximum total time to retry before sending to DLQ in milliseconds
+
+# Outbox event scheduler settings
+outbox:
+  scheduler:
+    delay: 3000             # Polling delay in milliseconds for processing pending outbox events

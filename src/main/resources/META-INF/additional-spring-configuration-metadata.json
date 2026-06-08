@@ -1,0 +1,52 @@
+{
+  "properties": [
+    {
+      "name": "security.jwt.secret-key",
+      "type": "java.lang.String",
+      "description": "A secure 256-bit key for signing JWT tokens.",
+      "defaultValue": "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
+    },
+    {
+      "name": "security.jwt.expiration-time",
+      "type": "java.lang.Long",
+      "description": "Expiration time for access tokens in milliseconds.",
+      "defaultValue": 86400000
+    },
+    {
+      "name": "security.jwt.refresh-expiration-time",
+      "type": "java.lang.Long",
+      "description": "Expiration time for refresh tokens in milliseconds.",
+      "defaultValue": 604800000
+    },
+    {
+      "name": "kafka.backoff.initialInterval",
+      "type": "java.lang.Long",
+      "description": "Initial delay before the first retry in milliseconds for Kafka consumer.",
+      "defaultValue": 1000
+    },
+    {
+      "name": "kafka.backoff.multiplier",
+      "type": "java.lang.Double",
+      "description": "Multiplication factor for each subsequent retry delay.",
+      "defaultValue": 2.0
+    },
+    {
+      "name": "kafka.backoff.maxInterval",
+      "type": "java.lang.Long",
+      "description": "Maximum wait interval between retries in milliseconds.",
+      "defaultValue": 10000
+    },
+    {
+      "name": "kafka.backoff.maxElapsedTime",
+      "type": "java.lang.Long",
+      "description": "Maximum total elapsed time to retry before sending message to DLQ in milliseconds.",
+      "defaultValue": 15000
+    },
+    {
+      "name": "outbox.scheduler.delay",
+      "type": "java.lang.Long",
+      "description": "Polling delay in milliseconds for processing pending outbox events.",
+      "defaultValue": 100
+    }
+  ]
+}
