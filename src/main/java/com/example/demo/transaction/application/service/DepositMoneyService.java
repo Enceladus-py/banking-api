@@ -53,7 +53,7 @@ public class DepositMoneyService implements DepositMoneyUseCase {
 		}
 
 		// Create and Save PENDING Ledger Record
-		TransactionRecord pendingTx = new TransactionRecord(null, // Deposits have no source
+		TransactionRecord pendingTx = TransactionRecord.createNew(null, // Deposits have no source
 				account.getAccountNumber(), // Target is this account
 				command.amount(), TransactionType.DEPOSIT);
 		transactionRecordRepository.save(pendingTx);

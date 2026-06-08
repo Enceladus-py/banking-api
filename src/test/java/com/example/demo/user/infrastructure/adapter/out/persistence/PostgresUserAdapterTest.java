@@ -37,7 +37,7 @@ class PostgresUserAdapterTest {
 	@Test
 	void shouldSaveUserSuccessfully() {
 		String id = UUID.randomUUID().toString();
-		User user = new User(id, "john@example.com", "pwd", new Profile("John", "Doe"), 1L);
+		User user = User.reconstitute(id, "john@example.com", "pwd", Profile.createNew("John", "Doe"), 1L);
 		UserJpaEntity savedEntity = new UserJpaEntity(UUID.fromString(id), "john@example.com", "pwd", 1L);
 		ProfileJpaEntity profileEntity = new ProfileJpaEntity(UUID.fromString(user.getProfile().getId()), savedEntity,
 				"John", "Doe", null, null);

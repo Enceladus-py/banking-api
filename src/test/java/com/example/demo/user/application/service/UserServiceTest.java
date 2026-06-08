@@ -51,7 +51,7 @@ class UserServiceTest {
 	@Test
 	void shouldThrowExceptionWhenEmailAlreadyInUse() {
 		RegisterUserCommand command = new RegisterUserCommand("alice@example.com", "password", "Alice", "Smith");
-		User existingUser = new User("USER-1", "alice@example.com", "pwd", new Profile("A", "B"), 1L);
+		User existingUser = User.reconstitute("USER-1", "alice@example.com", "pwd", Profile.createNew("A", "B"), 1L);
 		when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(existingUser));
 
 		assertThrows(IllegalArgumentException.class, () -> userService.registerUser(command));
@@ -59,7 +59,8 @@ class UserServiceTest {
 
 	@Test
 	void shouldGetUserById() {
-		User existingUser = new User("USER-1", "alice@example.com", "pwd", new Profile("Alice", "Smith"), 1L);
+		User existingUser = User.reconstitute("USER-1", "alice@example.com", "pwd", Profile.createNew("Alice", "Smith"),
+				1L);
 		when(userRepository.findById("USER-1")).thenReturn(Optional.of(existingUser));
 
 		User result = userService.getUserById("USER-1");

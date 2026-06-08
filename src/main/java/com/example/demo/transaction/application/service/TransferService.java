@@ -69,7 +69,7 @@ public class TransferService implements TransferMoneyUseCase {
 				.orElseThrow(() -> new EntityNotFoundException("Target account not found"));
 
 		// Create PENDING ledger entry — the outbox scheduler will settle it
-		TransactionRecord pendingTx = new TransactionRecord(command.sourceAccountNumber(),
+		TransactionRecord pendingTx = TransactionRecord.createNew(command.sourceAccountNumber(),
 				command.targetAccountNumber(), command.amount(), TransactionType.TRANSFER);
 		transactionRecordRepository.save(pendingTx);
 

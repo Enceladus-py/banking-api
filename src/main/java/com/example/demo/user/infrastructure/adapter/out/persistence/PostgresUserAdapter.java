@@ -57,10 +57,10 @@ public class PostgresUserAdapter implements UserRepository {
 	}
 
 	private User mapToDomain(UserJpaEntity entity) {
-		Profile profile = new Profile(entity.getProfile().getId().toString(), entity.getProfile().getName(),
+		Profile profile = Profile.reconstitute(entity.getProfile().getId().toString(), entity.getProfile().getName(),
 				entity.getProfile().getSurname(), entity.getProfile().getMobileNumber(),
 				entity.getProfile().getAddress());
-		return new User(entity.getId().toString(), entity.getEmail(), entity.getPassword(), profile,
+		return User.reconstitute(entity.getId().toString(), entity.getEmail(), entity.getPassword(), profile,
 				entity.getVersion());
 	}
 }

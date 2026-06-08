@@ -58,7 +58,7 @@ class PostgresTransactionAdapterTest {
 	@Test
 	void shouldPersistTransactionRecordSuccessfully() {
 		// Arrange
-		TransactionRecord record = new TransactionRecord("SOURCE1234", "TARGET1234", new BigDecimal("100.00"),
+		TransactionRecord record = TransactionRecord.createNew("SOURCE1234", "TARGET1234", new BigDecimal("100.00"),
 				TransactionType.TRANSFER);
 
 		// Act

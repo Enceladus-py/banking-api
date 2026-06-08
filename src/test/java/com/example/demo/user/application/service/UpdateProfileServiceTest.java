@@ -33,7 +33,8 @@ class UpdateProfileServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		user = new User("user-1", "test@test.com", "pass", new Profile("profile-1", "John", "Doe", null, null), 1L);
+		user = User.reconstitute("user-1", "test@test.com", "pass",
+				Profile.reconstitute("profile-1", "John", "Doe", null, null), 1L);
 	}
 
 	@Test

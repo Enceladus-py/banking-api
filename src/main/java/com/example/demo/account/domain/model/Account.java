@@ -37,7 +37,27 @@ public class Account {
 	}
 
 	/**
-	 * Constructor for recreating an account (re-hydration) or new creation.
+	 * Reconstitutes an Account from persistent storage.
+	 *
+	 * @param id
+	 *            the unique account ID
+	 * @param ownerId
+	 *            the owner's user ID
+	 * @param accountNumber
+	 *            the 10-digit account number
+	 * @param balance
+	 *            the account balance
+	 * @param version
+	 *            the optimistic locking version
+	 * @return the reconstituted Account
+	 */
+	public static Account reconstitute(String id, String ownerId, String accountNumber, BigDecimal balance,
+			Long version) {
+		return new Account(id, ownerId, accountNumber, balance, version);
+	}
+
+	/**
+	 * Private constructor used by static factory methods.
 	 *
 	 * @param id
 	 *            the unique account ID
@@ -50,7 +70,7 @@ public class Account {
 	 * @param version
 	 *            the optimistic locking version
 	 */
-	public Account(String id, String ownerId, String accountNumber, BigDecimal balance, Long version) {
+	private Account(String id, String ownerId, String accountNumber, BigDecimal balance, Long version) {
 		this.id = id;
 		this.ownerId = ownerId;
 		this.accountNumber = accountNumber;

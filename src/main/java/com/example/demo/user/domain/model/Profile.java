@@ -17,15 +17,22 @@ public class Profile {
 	private String address;
 
 	/**
-	 * Creates a new profile with a generated ID.
+	 * Factory method to create a new profile with a generated ID.
 	 *
 	 * @param name
 	 *            the user's first name
 	 * @param surname
 	 *            the user's last name
+	 * @return the newly created Profile
 	 */
-	public Profile(String name, String surname) {
-		this(UUID.randomUUID().toString(), name, surname, null, null);
+	public static Profile createNew(String name, String surname) {
+		if (name == null || name.isBlank()) {
+			throw new IllegalArgumentException("Name cannot be null or empty");
+		}
+		if (surname == null || surname.isBlank()) {
+			throw new IllegalArgumentException("Surname cannot be null or empty");
+		}
+		return new Profile(UUID.randomUUID().toString(), name, surname, null, null);
 	}
 
 	/**
@@ -41,14 +48,16 @@ public class Profile {
 	 *            the user's mobile number
 	 * @param address
 	 *            the user's address
+	 * @return the reconstituted Profile
 	 */
-	public Profile(String id, String name, String surname, String mobileNumber, String address) {
-		if (name == null || name.isBlank()) {
-			throw new IllegalArgumentException("Name cannot be null or empty");
-		}
-		if (surname == null || surname.isBlank()) {
-			throw new IllegalArgumentException("Surname cannot be null or empty");
-		}
+	public static Profile reconstitute(String id, String name, String surname, String mobileNumber, String address) {
+		return new Profile(id, name, surname, mobileNumber, address);
+	}
+
+	/**
+	 * Private constructor used by static factory methods.
+	 */
+	private Profile(String id, String name, String surname, String mobileNumber, String address) {
 		this.id = id;
 		this.name = name.trim();
 		this.surname = surname.trim();

@@ -59,7 +59,7 @@ class TransactionModuleTest {
 
 	@Test
 	void shouldInitiateDepositAndReturnPendingRecord() {
-		Account account = new Account("id-a", OWNER, ACC_A, BigDecimal.ZERO, 1L);
+		Account account = Account.reconstitute("id-a", OWNER, ACC_A, BigDecimal.ZERO, 1L);
 		when(accountOperationsPort.findByAccountNumber(ACC_A)).thenReturn(Optional.of(account));
 
 		TransactionRecord result = depositMoneyUseCase
@@ -72,7 +72,7 @@ class TransactionModuleTest {
 
 	@Test
 	void shouldInitiateWithdrawalAndReturnPendingRecord() {
-		Account account = new Account("id-a", OWNER, ACC_A, new BigDecimal("500.00"), 1L);
+		Account account = Account.reconstitute("id-a", OWNER, ACC_A, new BigDecimal("500.00"), 1L);
 		when(accountOperationsPort.findByAccountNumber(ACC_A)).thenReturn(Optional.of(account));
 
 		TransactionRecord result = withdrawMoneyUseCase
@@ -85,8 +85,8 @@ class TransactionModuleTest {
 
 	@Test
 	void shouldInitiateTransferAndReturnPendingRecord() {
-		Account source = new Account("id-a", OWNER, ACC_A, new BigDecimal("300.00"), 1L);
-		Account target = new Account("id-b", "other-user", ACC_B, BigDecimal.ZERO, 1L);
+		Account source = Account.reconstitute("id-a", OWNER, ACC_A, new BigDecimal("300.00"), 1L);
+		Account target = Account.reconstitute("id-b", "other-user", ACC_B, BigDecimal.ZERO, 1L);
 		when(accountOperationsPort.findByAccountNumber(ACC_A)).thenReturn(Optional.of(source));
 		when(accountOperationsPort.findByAccountNumber(ACC_B)).thenReturn(Optional.of(target));
 
@@ -110,7 +110,7 @@ class TransactionModuleTest {
 
 	@Test
 	void shouldRejectTransferWhenCallerIsNotOwner() {
-		Account source = new Account("id-a", OWNER, ACC_A, new BigDecimal("300.00"), 1L);
+		Account source = Account.reconstitute("id-a", OWNER, ACC_A, new BigDecimal("300.00"), 1L);
 		when(accountOperationsPort.findByAccountNumber(ACC_A)).thenReturn(Optional.of(source));
 
 		assertThatThrownBy(() -> transferMoneyUseCase

@@ -79,7 +79,7 @@ public class PostgresTransactionAdapter implements TransactionRecordRepository {
 	}
 
 	private TransactionRecord toDomainModel(TransactionJpaEntity entity) {
-		return new TransactionRecord(entity.getId().toString(), entity.getSourceAccountNumber(),
+		return TransactionRecord.reconstitute(entity.getId().toString(), entity.getSourceAccountNumber(),
 				entity.getTargetAccountNumber(), entity.getAmount(), entity.getType(), entity.getTimestamp(),
 				entity.getStatus(), entity.getFailureReason());
 	}

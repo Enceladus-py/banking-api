@@ -53,7 +53,7 @@ public class WithdrawMoneyService implements WithdrawMoneyUseCase {
 		}
 
 		// Create and Save PENDING Ledger Record
-		TransactionRecord pendingTx = new TransactionRecord(account.getAccountNumber(), // Source is this account
+		TransactionRecord pendingTx = TransactionRecord.createNew(account.getAccountNumber(), // Source is this account
 				null, // Withdrawals have no target
 				command.amount(), TransactionType.WITHDRAWAL);
 		transactionRecordRepository.save(pendingTx);

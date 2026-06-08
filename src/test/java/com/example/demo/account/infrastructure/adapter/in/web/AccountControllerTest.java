@@ -51,7 +51,7 @@ class AccountControllerTest {
 	@Test
 	void shouldReturn200WhenAccountIsCreated() throws Exception {
 		// 1. Arrange: Prepare the mock response from the Domain
-		Account mockDomainAccount = new Account("uuid-1", "USER-123", "ACC1234567", BigDecimal.ZERO, 1L);
+		Account mockDomainAccount = Account.reconstitute("uuid-1", "USER-123", "ACC1234567", BigDecimal.ZERO, 1L);
 		when(createAccountUseCase.createAccount(any(CreateAccountCommand.class))).thenReturn(mockDomainAccount);
 
 		// 2 & 3. Act & Assert: Send request with authenticated user
@@ -80,7 +80,7 @@ class AccountControllerTest {
 	void shouldReturn200AndAccountDetailsWhenGettingAccount() throws Exception {
 		String accountNumber = "1234567890";
 		String requesterId = "USER-123";
-		Account mockAccount = new Account("uuid-1", requesterId, accountNumber, new BigDecimal("250.00"), 1L);
+		Account mockAccount = Account.reconstitute("uuid-1", requesterId, accountNumber, new BigDecimal("250.00"), 1L);
 
 		when(getAccountUseCase.getAccount(accountNumber, requesterId)).thenReturn(mockAccount);
 
@@ -97,7 +97,7 @@ class AccountControllerTest {
 	@Test
 	void shouldReturn200AndAccountsWhenGettingAccounts() throws Exception {
 		String requesterId = "USER-123";
-		Account mockAccount = new Account("uuid-1", requesterId, "1234567890", new BigDecimal("250.00"), 1L);
+		Account mockAccount = Account.reconstitute("uuid-1", requesterId, "1234567890", new BigDecimal("250.00"), 1L);
 		com.example.demo.common.application.port.in.dto.PageRequest pageRequest = new com.example.demo.common.application.port.in.dto.PageRequest(
 				0, 10);
 		com.example.demo.common.application.port.in.dto.PageResult<Account> mockPageResult = new com.example.demo.common.application.port.in.dto.PageResult<>(

@@ -108,15 +108,13 @@ class UserControllerTest {
 
 	@Test
 	void shouldRegisterUserSuccessfully() throws Exception {
-		com.example.demo.user.domain.model.User user = new com.example.demo.user.domain.model.User("uuid-123",
-				"alice@example.com", "pwd", new Profile("Alice", "Smith"), 1L);
+		com.example.demo.user.domain.model.User user = com.example.demo.user.domain.model.User.reconstitute("uuid-123",
+				"alice@example.com", "pwd", Profile.createNew("Alice", "Smith"), 1L);
 		when(registerUserUseCase.registerUser(any(RegisterUserUseCase.RegisterUserCommand.class))).thenReturn(user);
 
 		String jsonPayload = """
 				{
-				    "email": "alice@example.com",
-				    "password": "password",
-				    "name": "Alice",
+				    "email": "alice@example.com", "password": "password", "name": "Alice",
 				    "surname": "Smith"
 				}
 				""";
@@ -131,8 +129,8 @@ class UserControllerTest {
 
 	@Test
 	void shouldGetUserProfileSuccessfully() throws Exception {
-		com.example.demo.user.domain.model.User user = new com.example.demo.user.domain.model.User("uuid-123",
-				"alice@example.com", "pwd", new Profile("Alice", "Smith"), 1L);
+		com.example.demo.user.domain.model.User user = com.example.demo.user.domain.model.User.reconstitute("uuid-123",
+				"alice@example.com", "pwd", Profile.createNew("Alice", "Smith"), 1L);
 		when(getUserUseCase.getUserById("uuid-123")).thenReturn(user);
 
 		mockMvc.perform(get("/api/users/profile")
@@ -165,9 +163,9 @@ class UserControllerTest {
 				}
 				""";
 
-		com.example.demo.user.domain.model.User updatedUser = new com.example.demo.user.domain.model.User("uuid-123",
-				"alice@example.com", "pwd",
-				new Profile("uuid-profile-1", "Alice", "Smith", "+1234567890", "123 Main St"), 1L);
+		com.example.demo.user.domain.model.User updatedUser = com.example.demo.user.domain.model.User.reconstitute(
+				"uuid-123", "alice@example.com", "pwd",
+				Profile.reconstitute("uuid-profile-1", "Alice", "Smith", "+1234567890", "123 Main St"), 1L);
 
 		when(updateProfileUseCase.updateProfile(any(UpdateProfileUseCase.UpdateProfileCommand.class)))
 				.thenReturn(updatedUser);

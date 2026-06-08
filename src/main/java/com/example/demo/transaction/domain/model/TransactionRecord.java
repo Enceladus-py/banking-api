@@ -59,7 +59,7 @@ public class TransactionRecord {
 	}
 
 	/**
-	 * Constructor for creating a new pending transaction with validations.
+	 * Factory method for creating a new pending transaction with validations.
 	 *
 	 * @param sourceAccountNumber
 	 *            the source account number
@@ -69,16 +69,46 @@ public class TransactionRecord {
 	 *            the transaction amount
 	 * @param type
 	 *            the transaction type
+	 * @return the newly created pending TransactionRecord
 	 */
-	public TransactionRecord(String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
+	public static TransactionRecord createNew(String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
 			TransactionType type) {
-		this(UUID.randomUUID().toString(), sourceAccountNumber, targetAccountNumber, amount, type, LocalDateTime.now(),
-				TransactionStatus.PENDING, null);
+		TransactionRecord record = new TransactionRecord(UUID.randomUUID().toString(), sourceAccountNumber,
+				targetAccountNumber, amount, type, LocalDateTime.now(), TransactionStatus.PENDING, null);
 		validate(sourceAccountNumber, targetAccountNumber, amount, type);
+		return record;
 	}
 
 	/**
-	 * Constructor for database re-hydration and mapping.
+	 * Reconstitutes a TransactionRecord from persistent storage.
+	 *
+	 * @param id
+	 *            the transaction ID
+	 * @param sourceAccountNumber
+	 *            the source account number
+	 * @param targetAccountNumber
+	 *            the target account number
+	 * @param amount
+	 *            the transaction amount
+	 * @param type
+	 *            the transaction type
+	 * @param timestamp
+	 *            the transaction timestamp
+	 * @param status
+	 *            the transaction status
+	 * @param failureReason
+	 *            the reason why the transaction failed, if any
+	 * @return the reconstituted TransactionRecord
+	 */
+	public static TransactionRecord reconstitute(String id, String sourceAccountNumber, String targetAccountNumber,
+			BigDecimal amount, TransactionType type, LocalDateTime timestamp, TransactionStatus status,
+			String failureReason) {
+		return new TransactionRecord(id, sourceAccountNumber, targetAccountNumber, amount, type, timestamp, status,
+				failureReason);
+	}
+
+	/**
+	 * Private constructor used by static factory methods.
 	 *
 	 * @param id
 	 *            the transaction ID
@@ -97,7 +127,7 @@ public class TransactionRecord {
 	 * @param failureReason
 	 *            the reason why the transaction failed, if any
 	 */
-	public TransactionRecord(String id, String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
+	private TransactionRecord(String id, String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
 			TransactionType type, LocalDateTime timestamp, TransactionStatus status, String failureReason) {
 		this.id = id;
 		this.sourceAccountNumber = sourceAccountNumber;

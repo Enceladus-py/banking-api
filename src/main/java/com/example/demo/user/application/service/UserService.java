@@ -38,7 +38,7 @@ public class UserService implements RegisterUserUseCase, GetUserUseCase {
 			throw new IllegalArgumentException("Email is already in use");
 		}
 		String encodedPassword = passwordEncoder.encode(command.password());
-		User user = new User(command.email(), encodedPassword, command.name(), command.surname());
+		User user = User.createNew(command.email(), encodedPassword, command.name(), command.surname());
 		return userRepository.save(user);
 	}
 

@@ -53,7 +53,7 @@ public class PostgresAccountAdapter implements AccountRepository {
 	}
 
 	private Account toDomainModel(AccountJpaEntity entity) {
-		return new Account(entity.getId().toString(), entity.getOwnerId(), entity.getAccountNumber(),
+		return Account.reconstitute(entity.getId().toString(), entity.getOwnerId(), entity.getAccountNumber(),
 				entity.getBalance(), entity.getVersion()); // Re-hydrated with DB version
 	}
 

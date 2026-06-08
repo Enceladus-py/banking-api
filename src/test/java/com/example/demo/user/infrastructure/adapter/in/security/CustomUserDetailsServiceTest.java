@@ -28,7 +28,8 @@ class CustomUserDetailsServiceTest {
 
 	@Test
 	void shouldLoadUserByUsernameSuccessfully() {
-		User user = new User("USER-1", "alice@example.com", "encodedPwd", new Profile("Alice", "Smith"), 1L);
+		User user = User.reconstitute("USER-1", "alice@example.com", "encodedPwd", Profile.createNew("Alice", "Smith"),
+				1L);
 		when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(user));
 
 		UserDetails userDetails = customUserDetailsService.loadUserByUsername("alice@example.com");

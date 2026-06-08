@@ -44,8 +44,8 @@ class AccountModuleTest {
 	@Test
 	void shouldCreateAndRetrieveAccount() {
 		String userId = "user-integration-01";
-		when(getUserUseCase.getUserById(userId)).thenReturn(new User(userId, "alice@example.com", "pwd",
-				new com.example.demo.user.domain.model.Profile("Alice", "Smith"), 1L));
+		when(getUserUseCase.getUserById(userId)).thenReturn(User.reconstitute(userId, "alice@example.com", "pwd",
+				com.example.demo.user.domain.model.Profile.createNew("Alice", "Smith"), 1L));
 
 		Account created = createAccountUseCase.createAccount(new CreateAccountCommand(userId));
 
@@ -58,8 +58,8 @@ class AccountModuleTest {
 	@Test
 	void shouldEnforceOwnershipOnGetAccount() {
 		String ownerId = "user-integration-02";
-		when(getUserUseCase.getUserById(ownerId)).thenReturn(new User(ownerId, "bob@example.com", "pwd",
-				new com.example.demo.user.domain.model.Profile("Bob", "Jones"), 1L));
+		when(getUserUseCase.getUserById(ownerId)).thenReturn(User.reconstitute(ownerId, "bob@example.com", "pwd",
+				com.example.demo.user.domain.model.Profile.createNew("Bob", "Jones"), 1L));
 
 		Account created = createAccountUseCase.createAccount(new CreateAccountCommand(ownerId));
 
