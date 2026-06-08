@@ -40,4 +40,9 @@ class UserTest {
 		assertThrows(IllegalArgumentException.class, () -> new User("john@example.com", "password", "John", "   "));
 		assertThrows(IllegalArgumentException.class, () -> new User("john@example.com", "password", "John", null));
 	}
+
+	@Test
+	void shouldThrowExceptionWhenProfileIsNull() {
+		assertThrows(IllegalArgumentException.class, () -> new User("uuid", "john@example.com", "password", null, 1L));
+	}
 }

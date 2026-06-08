@@ -1,7 +1,6 @@
 package com.example.demo.common.security;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 
@@ -45,5 +44,24 @@ class JwtServiceTest {
 		UserDetails differentUser = new User("other@example.com", "password", Collections.emptyList());
 
 		assertFalse(jwtService.isTokenValid(token, differentUser));
+	}
+
+	@Test
+	void shouldGenerateAndValidateRefreshToken() {
+		ReflectionTestUtils.setField(jwtService, "refreshExpiration", 604800000L);
+		String token = jwtService.generateRefreshToken(userDetails);
+
+		assertNotNull(token);
+		String extractedUsername = jwtService.extractUsername(token);
+		assertEquals("user@example.com", extractedUsername);
+		assertTrue(jwtService.isTokenValid(token, userDetails));
+	}
+
+	@Test
+	void shouldThrowExpiredJwtExceptionWhenTokenExpired() {
+		ReflectionTestUtils.setField(jwtService, "jwtExpiration", -10000L);
+		String token = jwtService.generateToken(userDetails);
+
+		assertThrows(io.jsonwebtoken.ExpiredJwtException.class, () -> jwtService.isTokenValid(token, userDetails));
 	}
 }

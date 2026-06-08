@@ -181,4 +181,37 @@ class UserControllerTest {
 
 		verify(updateProfileUseCase).updateProfile(any(UpdateProfileUseCase.UpdateProfileCommand.class));
 	}
+
+	@Test
+	void shouldReturn401WhenRefreshTokenUsernameIsNull() throws Exception {
+		String jsonPayload = """
+				{
+				    "refreshToken": "invalid.refresh.token"
+				}
+				""";
+
+		when(jwtService.extractUsername("invalid.refresh.token")).thenReturn(null);
+
+		mockMvc.perform(post("/api/users/refresh").contentType(MediaType.APPLICATION_JSON).content(jsonPayload))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void shouldReturn401WhenRefreshTokenIsInvalid() throws Exception {
+		String jsonPayload = """
+				{
+				    "refreshToken": "invalid.refresh.token"
+				}
+				""";
+
+		UserDetails userDetails = User.builder().username("alice@example.com").password("password").authorities("USER")
+				.build();
+
+		when(jwtService.extractUsername("invalid.refresh.token")).thenReturn("alice@example.com");
+		when(userDetailsService.loadUserByUsername("alice@example.com")).thenReturn(userDetails);
+		when(jwtService.isTokenValid("invalid.refresh.token", userDetails)).thenReturn(false);
+
+		mockMvc.perform(post("/api/users/refresh").contentType(MediaType.APPLICATION_JSON).content(jsonPayload))
+				.andExpect(status().isUnauthorized());
+	}
 }

@@ -119,4 +119,23 @@ class CommandValidationTest {
 		assertThrows(IllegalArgumentException.class,
 				() -> new RegisterUserUseCase.RegisterUserCommand("alice@example.com", "password", "Alice", ""));
 	}
+
+	@Test
+	void shouldCreateValidUpdateProfileCommand() {
+		com.example.demo.user.application.port.in.UpdateProfileUseCase.UpdateProfileCommand command = new com.example.demo.user.application.port.in.UpdateProfileUseCase.UpdateProfileCommand(
+				"USER-1", "+123456", "Main St");
+		assertEquals("USER-1", command.userId());
+		assertEquals("+123456", command.mobileNumber());
+		assertEquals("Main St", command.address());
+	}
+
+	@Test
+	void shouldThrowExceptionWhenUpdateProfileCommandHasInvalidParameters() {
+		assertThrows(NullPointerException.class,
+				() -> new com.example.demo.user.application.port.in.UpdateProfileUseCase.UpdateProfileCommand(null,
+						"+123456", "Main St"));
+		assertThrows(IllegalArgumentException.class,
+				() -> new com.example.demo.user.application.port.in.UpdateProfileUseCase.UpdateProfileCommand("   ",
+						"+123456", "Main St"));
+	}
 }
