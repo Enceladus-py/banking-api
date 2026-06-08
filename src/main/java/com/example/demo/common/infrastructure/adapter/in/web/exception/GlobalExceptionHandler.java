@@ -1,8 +1,7 @@
 package com.example.demo.common.infrastructure.adapter.in.web.exception;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.example.demo.common.domain.exception.DomainException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
+import com.example.demo.common.infrastructure.adapter.in.web.dto.ErrorResponse;
 
 /**
  * Global REST controller advice to handle all application exceptions and map
@@ -34,10 +34,8 @@ public class GlobalExceptionHandler {
 	 * @return response containing error details
 	 */
 	@ExceptionHandler(EntityNotFoundException.class)
-	public ResponseEntity<Map<String, Object>> handleEntityNotFoundException(EntityNotFoundException ex) {
-		Map<String, Object> body = new HashMap<>();
-		body.put("timestamp", LocalDateTime.now());
-		body.put("message", ex.getMessage());
+	public ResponseEntity<ErrorResponse> handleEntityNotFoundException(EntityNotFoundException ex) {
+		ErrorResponse body = new ErrorResponse(LocalDateTime.now(), ex.getMessage());
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
 	}
 
@@ -49,10 +47,8 @@ public class GlobalExceptionHandler {
 	 * @return response containing error details
 	 */
 	@ExceptionHandler(DomainException.class)
-	public ResponseEntity<Map<String, Object>> handleDomainException(DomainException ex) {
-		Map<String, Object> body = new HashMap<>();
-		body.put("timestamp", LocalDateTime.now());
-		body.put("message", ex.getMessage());
+	public ResponseEntity<ErrorResponse> handleDomainException(DomainException ex) {
+		ErrorResponse body = new ErrorResponse(LocalDateTime.now(), ex.getMessage());
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
 	}
 
@@ -64,10 +60,8 @@ public class GlobalExceptionHandler {
 	 * @return response containing error details
 	 */
 	@ExceptionHandler(IllegalArgumentException.class)
-	public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
-		Map<String, Object> body = new HashMap<>();
-		body.put("timestamp", LocalDateTime.now());
-		body.put("message", ex.getMessage());
+	public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
+		ErrorResponse body = new ErrorResponse(LocalDateTime.now(), ex.getMessage());
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
 	}
 
@@ -79,10 +73,8 @@ public class GlobalExceptionHandler {
 	 * @return response containing error details
 	 */
 	@ExceptionHandler(IllegalStateException.class)
-	public ResponseEntity<Map<String, Object>> handleIllegalStateException(IllegalStateException ex) {
-		Map<String, Object> body = new HashMap<>();
-		body.put("timestamp", LocalDateTime.now());
-		body.put("message", ex.getMessage());
+	public ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException ex) {
+		ErrorResponse body = new ErrorResponse(LocalDateTime.now(), ex.getMessage());
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
 	}
 
@@ -94,10 +86,8 @@ public class GlobalExceptionHandler {
 	 * @return response containing error details
 	 */
 	@ExceptionHandler(SecurityException.class)
-	public ResponseEntity<Map<String, Object>> handleSecurityException(SecurityException ex) {
-		Map<String, Object> body = new HashMap<>();
-		body.put("timestamp", LocalDateTime.now());
-		body.put("message", ex.getMessage());
+	public ResponseEntity<ErrorResponse> handleSecurityException(SecurityException ex) {
+		ErrorResponse body = new ErrorResponse(LocalDateTime.now(), ex.getMessage());
 
 		// Returns 403 Forbidden when a user tries to touch an account they don't own
 		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
@@ -111,17 +101,13 @@ public class GlobalExceptionHandler {
 	 * @return response containing error details
 	 */
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-
-		Map<String, Object> body = new HashMap<>();
-		body.put("timestamp", LocalDateTime.now());
-		body.put("message", "Validation failed");
+	public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
 
 		// Extract all the specific field errors into a clean list
-		java.util.List<String> errors = ex.getBindingResult().getFieldErrors().stream()
+		List<String> errors = ex.getBindingResult().getFieldErrors().stream()
 				.map(error -> error.getField() + ": " + error.getDefaultMessage()).toList();
 
-		body.put("errors", errors);
+		ErrorResponse body = new ErrorResponse(LocalDateTime.now(), "Validation failed", errors);
 
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
 	}
