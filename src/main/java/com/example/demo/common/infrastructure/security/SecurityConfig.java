@@ -16,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
  * Global Security Configuration.
  */
@@ -93,6 +95,9 @@ public class SecurityConfig {
 						.permitAll().anyRequest().authenticated())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authenticationProvider(authenticationProvider())
+				.exceptionHandling(
+						exceptions -> exceptions.authenticationEntryPoint((request, response, authException) -> response
+								.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage())))
 				.addFilterBefore(new JwtAuthenticationFilter(jwtService, userDetailsService),
 						UsernamePasswordAuthenticationFilter.class);
 		return http.build();

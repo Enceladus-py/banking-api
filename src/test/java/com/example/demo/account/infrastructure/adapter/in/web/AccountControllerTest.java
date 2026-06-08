@@ -64,13 +64,13 @@ class AccountControllerTest {
 	}
 
 	@Test
-	void shouldReturn403WhenUnauthenticated() throws Exception {
+	void shouldReturn401WhenUnauthenticated() throws Exception {
 		// Act & Assert: Attempting to call the endpoint without the authentication
 		// header
-		mockMvc.perform(post("/api/accounts")).andExpect(status().isForbidden()); // Spring Security automatically
-																					// blocks
-																					// requests missing
-																					// required headers
+		mockMvc.perform(post("/api/accounts")).andExpect(status().isUnauthorized()); // Spring Security automatically
+																						// blocks
+																						// requests missing
+																						// required headers
 
 		// Ensure use case is never called
 		verify(createAccountUseCase, never()).createAccount(any());

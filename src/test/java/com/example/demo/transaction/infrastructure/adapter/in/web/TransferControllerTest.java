@@ -75,7 +75,7 @@ class TransferControllerTest {
 	}
 
 	@Test
-	void shouldReturn403WhenUnauthenticated() throws Exception {
+	void shouldReturn401WhenUnauthenticated() throws Exception {
 		String validPayload = """
 				{
 				    "sourceAccountNumber": "1111111111",
@@ -86,7 +86,7 @@ class TransferControllerTest {
 
 		// Attempting to call the endpoint without the authentication header
 		mockMvc.perform(post("/api/transfers").contentType(MediaType.APPLICATION_JSON).content(validPayload))
-				.andExpect(status().isForbidden());
+				.andExpect(status().isUnauthorized());
 
 		verify(transferMoneyUseCase, never()).transfer(any());
 	}
