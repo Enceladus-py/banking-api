@@ -22,7 +22,7 @@ class PageRequestTest {
 	}
 
 	@Test
-	void shouldThrowExceptionWhenPageSizeIsZeroOrNegative() {
+	void shouldThrowExceptionWhenPageSizeIsInvalid() {
 		IllegalArgumentException exception1 = assertThrows(IllegalArgumentException.class, () -> {
 			new PageRequest(0, 0);
 		});
@@ -32,5 +32,10 @@ class PageRequestTest {
 			new PageRequest(0, -5);
 		});
 		assertEquals("Page size must not be less than one", exception2.getMessage());
+
+		IllegalArgumentException exception3 = assertThrows(IllegalArgumentException.class, () -> {
+			new PageRequest(0, 101);
+		});
+		assertEquals("Page size cannot exceed 100", exception3.getMessage());
 	}
 }

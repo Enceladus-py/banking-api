@@ -22,5 +22,7 @@ public record PageRequest(int pageNumber, int pageSize) {
 			throw new IllegalArgumentException("Page number cannot be less than zero");
 		if (pageSize < 1)
 			throw new IllegalArgumentException("Page size must not be less than one");
+		if (pageSize > 100)
+			throw new IllegalArgumentException("Page size cannot exceed 100");
 	}
 }
