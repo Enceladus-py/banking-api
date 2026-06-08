@@ -73,10 +73,9 @@ public class TransactionRecord {
 	 */
 	public static TransactionRecord createNew(String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
 			TransactionType type) {
-		TransactionRecord record = new TransactionRecord(UUID.randomUUID().toString(), sourceAccountNumber,
-				targetAccountNumber, amount, type, LocalDateTime.now(), TransactionStatus.PENDING, null);
 		validate(sourceAccountNumber, targetAccountNumber, amount, type);
-		return record;
+		return new TransactionRecord(UUID.randomUUID().toString(), sourceAccountNumber, targetAccountNumber, amount,
+				type, LocalDateTime.now(), TransactionStatus.PENDING, null);
 	}
 
 	/**
