@@ -1,7 +1,7 @@
 package com.example.demo.transaction.infrastructure.adapter.in.web.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import com.example.demo.transaction.domain.model.TransactionRecord;
 import com.example.demo.transaction.domain.model.TransactionRecord.TransactionStatus;
@@ -36,7 +36,7 @@ public record TransactionResponse(
 		@Schema(description = "The 10-digit target account number", example = "0987654321") String targetAccountNumber,
 		@Schema(description = "The transaction amount", example = "100.00") BigDecimal amount,
 		@Schema(description = "The transaction type") TransactionType type,
-		@Schema(description = "The timestamp when the transaction occurred") LocalDateTime timestamp,
+		@Schema(description = "The timestamp when the transaction occurred") Instant timestamp,
 		@Schema(description = "The current status of the transaction") TransactionStatus status,
 		@Schema(description = "The failure reason, if the transaction failed") String failureReason) {
 

@@ -1,6 +1,6 @@
 package com.example.demo.transaction.infrastructure.adapter.out.persistence.entity;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import com.example.demo.transaction.domain.event.EventType;
@@ -43,7 +43,7 @@ public class OutboxEventJpaEntity {
 	private String payload;
 
 	@Column(name = "created_at", nullable = false)
-	private LocalDateTime createdAt;
+	private Instant createdAt;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)

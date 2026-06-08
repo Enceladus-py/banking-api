@@ -1,6 +1,6 @@
 package com.example.demo.transaction.infrastructure.adapter.out.persistence.entity;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import jakarta.persistence.*;
@@ -27,5 +27,5 @@ public class ProcessedEventJpaEntity {
 	private UUID id; // Event ID
 
 	@Column(name = "processed_at", nullable = false)
-	private LocalDateTime processedAt;
+	private Instant processedAt;
 }

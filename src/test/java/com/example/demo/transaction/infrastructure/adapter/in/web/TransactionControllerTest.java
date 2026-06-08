@@ -115,7 +115,7 @@ class TransactionControllerTest {
 		com.example.demo.transaction.domain.model.TransactionRecord tx = com.example.demo.transaction.domain.model.TransactionRecord
 				.reconstitute(txId, "ACC-SRC", "ACC-TGT", new java.math.BigDecimal("50.00"),
 						com.example.demo.transaction.domain.model.TransactionRecord.TransactionType.TRANSFER,
-						java.time.LocalDateTime.now(),
+						java.time.Instant.now(),
 						com.example.demo.transaction.domain.model.TransactionRecord.TransactionStatus.COMPLETED, null);
 
 		when(getTransactionUseCase.getTransaction(eq(txId), eq(requesterId))).thenReturn(tx);
@@ -134,7 +134,7 @@ class TransactionControllerTest {
 		String accountNumber = "A1B2C3D4E5";
 		String requesterId = "USER-123";
 		TransactionRecord updatedTx = TransactionRecord.reconstitute("tx-id", null, accountNumber,
-				new BigDecimal("100.00"), TransactionRecord.TransactionType.DEPOSIT, java.time.LocalDateTime.now(),
+				new BigDecimal("100.00"), TransactionRecord.TransactionType.DEPOSIT, java.time.Instant.now(),
 				TransactionRecord.TransactionStatus.PENDING, null);
 
 		when(depositMoneyUseCase.deposit(any(DepositCommand.class))).thenReturn(updatedTx);
@@ -259,7 +259,7 @@ class TransactionControllerTest {
 		String accountNumber = "1122334455";
 		String requesterId = "USER-123";
 		TransactionRecord expectedTx = TransactionRecord.reconstitute("tx-id", accountNumber, null,
-				new BigDecimal("150.00"), TransactionRecord.TransactionType.WITHDRAWAL, java.time.LocalDateTime.now(),
+				new BigDecimal("150.00"), TransactionRecord.TransactionType.WITHDRAWAL, java.time.Instant.now(),
 				TransactionRecord.TransactionStatus.PENDING, null);
 
 		when(withdrawMoneyUseCase.withdraw(any(WithdrawMoneyUseCase.WithdrawCommand.class))).thenReturn(expectedTx);

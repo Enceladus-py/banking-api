@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -65,8 +64,7 @@ class ProcessTransactionServiceTest {
 		String txId = "tx-123";
 		String accountNumber = "A1B2C3D4E5";
 		TransactionRecord pendingTx = TransactionRecord.reconstitute(txId, null, accountNumber,
-				new BigDecimal("100.00"), TransactionType.DEPOSIT, LocalDateTime.now(), TransactionStatus.PENDING,
-				null);
+				new BigDecimal("100.00"), TransactionType.DEPOSIT, Instant.now(), TransactionStatus.PENDING, null);
 		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(), null,
 				accountNumber, new BigDecimal("100.00"), TransactionType.DEPOSIT, "USER-123");
 		Account targetAccount = Account.reconstitute("uuid-123", "USER-123", accountNumber, BigDecimal.ZERO, 1L);
@@ -96,7 +94,7 @@ class ProcessTransactionServiceTest {
 		String txId = "tx-456";
 		String accountNumber = "A1B2C3D4E5";
 		TransactionRecord pendingTx = TransactionRecord.reconstitute(txId, accountNumber, null, new BigDecimal("50.00"),
-				TransactionType.WITHDRAWAL, LocalDateTime.now(), TransactionStatus.PENDING, null);
+				TransactionType.WITHDRAWAL, Instant.now(), TransactionStatus.PENDING, null);
 		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(),
 				accountNumber, null, new BigDecimal("50.00"), TransactionType.WITHDRAWAL, "USER-123");
 		Account sourceAccount = Account.reconstitute("uuid-123", "USER-123", accountNumber, new BigDecimal("100.00"),
@@ -126,8 +124,7 @@ class ProcessTransactionServiceTest {
 		String txId = "tx-789";
 		String accountNumber = "A1B2C3D4E5";
 		TransactionRecord pendingTx = TransactionRecord.reconstitute(txId, accountNumber, null,
-				new BigDecimal("150.00"), TransactionType.WITHDRAWAL, LocalDateTime.now(), TransactionStatus.PENDING,
-				null);
+				new BigDecimal("150.00"), TransactionType.WITHDRAWAL, Instant.now(), TransactionStatus.PENDING, null);
 		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(),
 				accountNumber, null, new BigDecimal("150.00"), TransactionType.WITHDRAWAL, "USER-123");
 		Account sourceAccount = Account.reconstitute("uuid-123", "USER-123", accountNumber, new BigDecimal("100.00"),
@@ -172,8 +169,7 @@ class ProcessTransactionServiceTest {
 		String txId = "tx-123";
 		String accountNumber = "A1B2C3D4E5";
 		TransactionRecord pendingTx = TransactionRecord.reconstitute(txId, null, accountNumber,
-				new BigDecimal("100.00"), TransactionType.DEPOSIT, LocalDateTime.now(), TransactionStatus.PENDING,
-				null);
+				new BigDecimal("100.00"), TransactionType.DEPOSIT, Instant.now(), TransactionStatus.PENDING, null);
 		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(), null,
 				accountNumber, new BigDecimal("100.00"), TransactionType.DEPOSIT, "USER-123");
 
@@ -200,7 +196,7 @@ class ProcessTransactionServiceTest {
 		String txId = "tx-456";
 		String accountNumber = "A1B2C3D4E5";
 		TransactionRecord pendingTx = TransactionRecord.reconstitute(txId, accountNumber, null, new BigDecimal("50.00"),
-				TransactionType.WITHDRAWAL, LocalDateTime.now(), TransactionStatus.PENDING, null);
+				TransactionType.WITHDRAWAL, Instant.now(), TransactionStatus.PENDING, null);
 		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(),
 				accountNumber, null, new BigDecimal("50.00"), TransactionType.WITHDRAWAL, "USER-123");
 
@@ -228,8 +224,7 @@ class ProcessTransactionServiceTest {
 		String sourceAccountNumber = "A1B2C3D4E5"; // First alphabetically
 		String targetAccountNumber = "X9Y8Z7W6V5"; // Second alphabetically
 		TransactionRecord pendingTx = TransactionRecord.reconstitute(txId, sourceAccountNumber, targetAccountNumber,
-				new BigDecimal("50.00"), TransactionType.TRANSFER, LocalDateTime.now(), TransactionStatus.PENDING,
-				null);
+				new BigDecimal("50.00"), TransactionType.TRANSFER, Instant.now(), TransactionStatus.PENDING, null);
 		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(),
 				sourceAccountNumber, targetAccountNumber, new BigDecimal("50.00"), TransactionType.TRANSFER,
 				"USER-123");
@@ -266,8 +261,7 @@ class ProcessTransactionServiceTest {
 		String sourceAccountNumber = "X9Y8Z7W6V5"; // Second alphabetically
 		String targetAccountNumber = "A1B2C3D4E5"; // First alphabetically
 		TransactionRecord pendingTx = TransactionRecord.reconstitute(txId, sourceAccountNumber, targetAccountNumber,
-				new BigDecimal("50.00"), TransactionType.TRANSFER, LocalDateTime.now(), TransactionStatus.PENDING,
-				null);
+				new BigDecimal("50.00"), TransactionType.TRANSFER, Instant.now(), TransactionStatus.PENDING, null);
 		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(),
 				sourceAccountNumber, targetAccountNumber, new BigDecimal("50.00"), TransactionType.TRANSFER,
 				"USER-123");
@@ -304,8 +298,7 @@ class ProcessTransactionServiceTest {
 		String sourceAccountNumber = "A1B2C3D4E5";
 		String targetAccountNumber = "X9Y8Z7W6V5";
 		TransactionRecord pendingTx = TransactionRecord.reconstitute(txId, sourceAccountNumber, targetAccountNumber,
-				new BigDecimal("50.00"), TransactionType.TRANSFER, LocalDateTime.now(), TransactionStatus.PENDING,
-				null);
+				new BigDecimal("50.00"), TransactionType.TRANSFER, Instant.now(), TransactionStatus.PENDING, null);
 		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(),
 				sourceAccountNumber, targetAccountNumber, new BigDecimal("50.00"), TransactionType.TRANSFER,
 				"USER-123");
@@ -335,8 +328,7 @@ class ProcessTransactionServiceTest {
 		String sourceAccountNumber = "A1B2C3D4E5";
 		String targetAccountNumber = "X9Y8Z7W6V5";
 		TransactionRecord pendingTx = TransactionRecord.reconstitute(txId, sourceAccountNumber, targetAccountNumber,
-				new BigDecimal("50.00"), TransactionType.TRANSFER, LocalDateTime.now(), TransactionStatus.PENDING,
-				null);
+				new BigDecimal("50.00"), TransactionType.TRANSFER, Instant.now(), TransactionStatus.PENDING, null);
 		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(),
 				sourceAccountNumber, targetAccountNumber, new BigDecimal("50.00"), TransactionType.TRANSFER,
 				"USER-123");
@@ -368,7 +360,7 @@ class ProcessTransactionServiceTest {
 	void shouldIgnoreProcessingWhenTransactionAlreadyProcessed() {
 		String txId = "tx-789";
 		TransactionRecord completedTx = TransactionRecord.reconstitute(txId, null, "ACC123", new BigDecimal("100.00"),
-				TransactionType.DEPOSIT, LocalDateTime.now(), TransactionStatus.COMPLETED, null);
+				TransactionType.DEPOSIT, Instant.now(), TransactionStatus.COMPLETED, null);
 		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(), null,
 				"ACC123", new BigDecimal("100.00"), TransactionType.DEPOSIT, "USER-123");
 
@@ -387,8 +379,7 @@ class ProcessTransactionServiceTest {
 		String txId = "tx-123";
 		String accountNumber = "A1B2C3D4E5";
 		TransactionRecord pendingTx = TransactionRecord.reconstitute(txId, null, accountNumber,
-				new BigDecimal("100.00"), TransactionType.DEPOSIT, LocalDateTime.now(), TransactionStatus.PENDING,
-				null);
+				new BigDecimal("100.00"), TransactionType.DEPOSIT, Instant.now(), TransactionStatus.PENDING, null);
 		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(), null,
 				accountNumber, new BigDecimal("100.00"), TransactionType.DEPOSIT, "USER-123");
 

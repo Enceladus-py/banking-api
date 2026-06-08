@@ -1,7 +1,7 @@
 package com.example.demo.transaction.infrastructure.adapter.out.persistence.entity;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import org.springframework.data.domain.Persistable;
@@ -46,7 +46,7 @@ public class TransactionJpaEntity implements Persistable<UUID> {
 	private TransactionType type;
 
 	@Column(nullable = false)
-	private LocalDateTime timestamp;
+	private Instant timestamp;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)

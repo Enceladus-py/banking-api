@@ -1,6 +1,6 @@
 package com.example.demo.transaction.infrastructure.adapter.out.persistence;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -37,7 +37,7 @@ public class PostgresProcessedEventAdapter implements ProcessedEventPort {
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public boolean saveIfAbsent(UUID eventId) {
 		try {
-			repository.saveAndFlush(new ProcessedEventJpaEntity(eventId, LocalDateTime.now()));
+			repository.saveAndFlush(new ProcessedEventJpaEntity(eventId, Instant.now()));
 			return true;
 		} catch (DataIntegrityViolationException e) {
 			log.warn("Event {} has already been processed. Ignoring duplicate.", eventId);

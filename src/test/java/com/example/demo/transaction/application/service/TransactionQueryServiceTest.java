@@ -60,7 +60,7 @@ class TransactionQueryServiceTest {
 	@Test
 	void shouldRetrieveTransactionByIdWhenAuthorizedAsSource() {
 		TransactionRecord tx = TransactionRecord.reconstitute("tx-123", "1234567890", "0987654321",
-				new BigDecimal("100"), TransactionRecord.TransactionType.TRANSFER, java.time.LocalDateTime.now(),
+				new BigDecimal("100"), TransactionRecord.TransactionType.TRANSFER, java.time.Instant.now(),
 				TransactionRecord.TransactionStatus.PENDING, null);
 		Account sourceAccount = Account.createNew("USER-1", "1234567890");
 		Account targetAccount = Account.createNew("USER-2", "0987654321");
@@ -77,7 +77,7 @@ class TransactionQueryServiceTest {
 	@Test
 	void shouldRetrieveTransactionByIdWhenAuthorizedAsTarget() {
 		TransactionRecord tx = TransactionRecord.reconstitute("tx-123", "1234567890", "0987654321",
-				new BigDecimal("100"), TransactionRecord.TransactionType.TRANSFER, java.time.LocalDateTime.now(),
+				new BigDecimal("100"), TransactionRecord.TransactionType.TRANSFER, java.time.Instant.now(),
 				TransactionRecord.TransactionStatus.PENDING, null);
 		Account sourceAccount = Account.createNew("USER-1", "1234567890");
 		Account targetAccount = Account.createNew("USER-2", "0987654321");
@@ -94,7 +94,7 @@ class TransactionQueryServiceTest {
 	@Test
 	void shouldBlockRetrievingTransactionByIdForUnauthorizedUser() {
 		TransactionRecord tx = TransactionRecord.reconstitute("tx-123", "1234567890", "0987654321",
-				new BigDecimal("100"), TransactionRecord.TransactionType.TRANSFER, java.time.LocalDateTime.now(),
+				new BigDecimal("100"), TransactionRecord.TransactionType.TRANSFER, java.time.Instant.now(),
 				TransactionRecord.TransactionStatus.PENDING, null);
 		Account sourceAccount = Account.createNew("USER-1", "1234567890");
 		Account targetAccount = Account.createNew("USER-2", "0987654321");
@@ -109,7 +109,7 @@ class TransactionQueryServiceTest {
 	@Test
 	void shouldBlockRetrievingTransactionByIdWhenAccountsAreDeleted() {
 		TransactionRecord tx = TransactionRecord.reconstitute("tx-123", "1234567890", "0987654321",
-				new BigDecimal("100"), TransactionRecord.TransactionType.TRANSFER, java.time.LocalDateTime.now(),
+				new BigDecimal("100"), TransactionRecord.TransactionType.TRANSFER, java.time.Instant.now(),
 				TransactionRecord.TransactionStatus.PENDING, null);
 
 		when(transactionRecordRepository.findById("tx-123")).thenReturn(Optional.of(tx));
@@ -139,7 +139,7 @@ class TransactionQueryServiceTest {
 	@Test
 	void shouldRetrieveDepositTransactionWhenAuthorizedAsTarget() {
 		TransactionRecord tx = TransactionRecord.reconstitute("tx-123", null, "0987654321", new BigDecimal("100"),
-				TransactionRecord.TransactionType.DEPOSIT, java.time.LocalDateTime.now(),
+				TransactionRecord.TransactionType.DEPOSIT, java.time.Instant.now(),
 				TransactionRecord.TransactionStatus.PENDING, null);
 		Account targetAccount = Account.createNew("USER-2", "0987654321");
 
@@ -154,7 +154,7 @@ class TransactionQueryServiceTest {
 	@Test
 	void shouldRetrieveWithdrawalTransactionWhenAuthorizedAsSource() {
 		TransactionRecord tx = TransactionRecord.reconstitute("tx-123", "1234567890", null, new BigDecimal("100"),
-				TransactionRecord.TransactionType.WITHDRAWAL, java.time.LocalDateTime.now(),
+				TransactionRecord.TransactionType.WITHDRAWAL, java.time.Instant.now(),
 				TransactionRecord.TransactionStatus.PENDING, null);
 		Account sourceAccount = Account.createNew("USER-1", "1234567890");
 

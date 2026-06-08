@@ -31,7 +31,7 @@ class PostgresProcessedEventAdapterTest {
 		UUID eventId = UUID.randomUUID();
 
 		when(repository.saveAndFlush(any(ProcessedEventJpaEntity.class)))
-				.thenReturn(new ProcessedEventJpaEntity(eventId, java.time.LocalDateTime.now()));
+				.thenReturn(new ProcessedEventJpaEntity(eventId, java.time.Instant.now()));
 
 		boolean result = adapter.saveIfAbsent(eventId);
 

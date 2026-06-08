@@ -3,7 +3,7 @@ package com.example.demo.transaction.infrastructure.adapter.out.persistence;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -35,13 +35,13 @@ class PostgresTransactionAdapterTest {
 	@BeforeEach
 	void setUp() {
 		adapter = new PostgresTransactionAdapter(springDataRepository);
-
-		LocalDateTime baseTime = LocalDateTime.now().minusDays(1);
+		Instant baseTime = Instant.now().minus(1, java.time.temporal.ChronoUnit.DAYS);
 
 		List<TransactionJpaEntity> entities = IntStream.range(0, 5)
 				.mapToObj(i -> TransactionJpaEntity.builder().id(UUID.randomUUID()).sourceAccountNumber(null)
 						.targetAccountNumber(targetAccount).amount(new BigDecimal("10.00"))
-						.type(TransactionType.DEPOSIT).timestamp(baseTime.plusMinutes(i))
+						.type(TransactionType.DEPOSIT)
+						.timestamp(baseTime.plus(i, java.time.temporal.ChronoUnit.MINUTES))
 						.status(TransactionStatus.PENDING).build())
 				.toList();
 
@@ -82,17 +82,19 @@ class PostgresTransactionAdapterTest {
 	void shouldFindTransactionsByAccountNumberSortedByTimestampDesc() {
 		// Arrange
 		String myAccount = "MYACC12345";
-		LocalDateTime now = LocalDateTime.now();
+		Instant now = Instant.now();
 
 		// 1. Older deposit (Target = myAccount)
 		TransactionJpaEntity tx1 = TransactionJpaEntity.builder().id(UUID.randomUUID()).sourceAccountNumber(null)
 				.targetAccountNumber(myAccount).amount(new BigDecimal("50.00")).type(TransactionType.DEPOSIT)
-				.timestamp(now.minusDays(2)).status(TransactionStatus.COMPLETED).build();
+				.timestamp(now.minus(2, java.time.temporal.ChronoUnit.DAYS)).status(TransactionStatus.COMPLETED)
+				.build();
 
 		// 2. Newer withdrawal (Source = myAccount)
 		TransactionJpaEntity tx2 = TransactionJpaEntity.builder().id(UUID.randomUUID()).sourceAccountNumber(myAccount)
 				.targetAccountNumber(null).amount(new BigDecimal("20.00")).type(TransactionType.WITHDRAWAL)
-				.timestamp(now.minusDays(1)).status(TransactionStatus.COMPLETED).build();
+				.timestamp(now.minus(1, java.time.temporal.ChronoUnit.DAYS)).status(TransactionStatus.COMPLETED)
+				.build();
 
 		// 3. Unrelated transaction
 		TransactionJpaEntity tx3 = TransactionJpaEntity.builder().id(UUID.randomUUID())

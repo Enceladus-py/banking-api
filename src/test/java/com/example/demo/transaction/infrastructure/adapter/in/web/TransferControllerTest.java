@@ -54,7 +54,7 @@ class TransferControllerTest {
 		String requesterId = "USER-123";
 
 		TransactionRecord expectedTx = TransactionRecord.reconstitute("tx-id", "1111111111", "2222222222",
-				new BigDecimal("100.50"), TransactionRecord.TransactionType.TRANSFER, java.time.LocalDateTime.now(),
+				new BigDecimal("100.50"), TransactionRecord.TransactionType.TRANSFER, java.time.Instant.now(),
 				TransactionRecord.TransactionStatus.PENDING, null);
 		when(transferMoneyUseCase.transfer(any(TransferMoneyUseCase.TransferCommand.class))).thenReturn(expectedTx);
 

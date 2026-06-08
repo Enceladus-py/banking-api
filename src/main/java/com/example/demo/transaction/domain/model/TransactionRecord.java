@@ -1,7 +1,7 @@
 package com.example.demo.transaction.domain.model;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -18,7 +18,7 @@ public class TransactionRecord {
 	private final String targetAccountNumber; // Can be null for direct withdrawals
 	private final BigDecimal amount;
 	private final TransactionType type;
-	private final LocalDateTime timestamp;
+	private final Instant timestamp;
 	private final TransactionStatus status;
 	private final String failureReason;
 
@@ -75,7 +75,7 @@ public class TransactionRecord {
 			TransactionType type) {
 		validate(sourceAccountNumber, targetAccountNumber, amount, type);
 		return new TransactionRecord(UUID.randomUUID().toString(), sourceAccountNumber, targetAccountNumber, amount,
-				type, LocalDateTime.now(), TransactionStatus.PENDING, null);
+				type, Instant.now(), TransactionStatus.PENDING, null);
 	}
 
 	/**
@@ -100,7 +100,7 @@ public class TransactionRecord {
 	 * @return the reconstituted TransactionRecord
 	 */
 	public static TransactionRecord reconstitute(String id, String sourceAccountNumber, String targetAccountNumber,
-			BigDecimal amount, TransactionType type, LocalDateTime timestamp, TransactionStatus status,
+			BigDecimal amount, TransactionType type, Instant timestamp, TransactionStatus status,
 			String failureReason) {
 		return new TransactionRecord(id, sourceAccountNumber, targetAccountNumber, amount, type, timestamp, status,
 				failureReason);
@@ -127,7 +127,7 @@ public class TransactionRecord {
 	 *            the reason why the transaction failed, if any
 	 */
 	private TransactionRecord(String id, String sourceAccountNumber, String targetAccountNumber, BigDecimal amount,
-			TransactionType type, LocalDateTime timestamp, TransactionStatus status, String failureReason) {
+			TransactionType type, Instant timestamp, TransactionStatus status, String failureReason) {
 		this.id = id;
 		this.sourceAccountNumber = sourceAccountNumber;
 		this.targetAccountNumber = targetAccountNumber;

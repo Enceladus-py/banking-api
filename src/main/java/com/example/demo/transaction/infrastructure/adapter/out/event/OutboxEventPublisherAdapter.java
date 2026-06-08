@@ -1,6 +1,6 @@
 package com.example.demo.transaction.infrastructure.adapter.out.event;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import org.springframework.stereotype.Component;
 
@@ -42,8 +42,8 @@ public class OutboxEventPublisherAdapter implements EventPublisher {
 			String payload = objectMapper.writeValueAsString(event);
 			OutboxEventJpaEntity entity = OutboxEventJpaEntity.builder().id(event.eventId())
 					.aggregateType(AggregateType.TRANSACTION).aggregateId(event.transactionId())
-					.eventType(event.eventType()).payload(payload).createdAt(LocalDateTime.now())
-					.status(OutboxStatus.PENDING).build();
+					.eventType(event.eventType()).payload(payload).createdAt(Instant.now()).status(OutboxStatus.PENDING)
+					.build();
 			outboxRepository.save(entity);
 		} catch (JacksonException e) {
 			throw new RuntimeException("Failed to serialize event: " + event.eventId(), e);
