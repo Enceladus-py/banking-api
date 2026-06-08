@@ -20,8 +20,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
+import com.example.demo.transaction.application.port.out.EventPublisher;
 import com.example.demo.transaction.application.port.out.ProcessedEventPort;
 import com.example.demo.transaction.application.port.out.TransactionRecordRepository;
+import com.example.demo.transaction.domain.event.TransactionCompletedEvent;
+import com.example.demo.transaction.domain.event.TransactionEvent;
+import com.example.demo.transaction.domain.event.TransactionFailedEvent;
 import com.example.demo.transaction.domain.event.TransactionPendingEvent;
 import com.example.demo.transaction.domain.model.TransactionRecord;
 import com.example.demo.transaction.domain.model.TransactionRecord.TransactionStatus;
@@ -39,15 +43,21 @@ class ProcessTransactionServiceTest {
 	@Mock
 	private ProcessedEventPort processedEventPort;
 
+	@Mock
+	private EventPublisher eventPublisher;
+
 	private ProcessTransactionService processTransactionService;
 
 	@Captor
 	private ArgumentCaptor<TransactionRecord> transactionCaptor;
 
+	@Captor
+	private ArgumentCaptor<TransactionEvent> eventCaptor;
+
 	@BeforeEach
 	void setUp() {
 		processTransactionService = new ProcessTransactionService(accountOperationsPort, transactionRecordRepository,
-				processedEventPort);
+				processedEventPort, eventPublisher);
 	}
 
 	@Test
@@ -74,6 +84,10 @@ class ProcessTransactionServiceTest {
 		assertEquals(txId, finalTx.getId());
 		assertEquals(TransactionStatus.COMPLETED, finalTx.getStatus());
 		assertNull(finalTx.getFailureReason());
+
+		verify(eventPublisher, times(1)).publish(eventCaptor.capture());
+		TransactionCompletedEvent completedEvent = (TransactionCompletedEvent) eventCaptor.getValue();
+		assertEquals(txId, completedEvent.transactionId());
 	}
 
 	@Test
@@ -99,6 +113,10 @@ class ProcessTransactionServiceTest {
 		TransactionRecord finalTx = transactionCaptor.getValue();
 		assertEquals(txId, finalTx.getId());
 		assertEquals(TransactionStatus.COMPLETED, finalTx.getStatus());
+
+		verify(eventPublisher, times(1)).publish(eventCaptor.capture());
+		TransactionCompletedEvent completedEvent = (TransactionCompletedEvent) eventCaptor.getValue();
+		assertEquals(txId, completedEvent.transactionId());
 	}
 
 	@Test
@@ -124,6 +142,11 @@ class ProcessTransactionServiceTest {
 		assertEquals(txId, finalTx.getId());
 		assertEquals(TransactionStatus.FAILED, finalTx.getStatus());
 		assertEquals("Insufficient funds", finalTx.getFailureReason());
+
+		verify(eventPublisher, times(1)).publish(eventCaptor.capture());
+		TransactionFailedEvent failedEvent = (TransactionFailedEvent) eventCaptor.getValue();
+		assertEquals(txId, failedEvent.transactionId());
+		assertEquals("Insufficient funds", failedEvent.failureReason());
 	}
 
 	@Test
@@ -137,6 +160,7 @@ class ProcessTransactionServiceTest {
 
 		assertThrows(EntityNotFoundException.class, () -> processTransactionService.process(event));
 		verify(accountOperationsPort, never()).lockAndLoad(anyString());
+		verify(eventPublisher, never()).publish(any());
 	}
 
 	@Test
@@ -159,6 +183,11 @@ class ProcessTransactionServiceTest {
 		assertEquals(txId, finalTx.getId());
 		assertEquals(TransactionStatus.FAILED, finalTx.getStatus());
 		assertEquals("Target account not found", finalTx.getFailureReason());
+
+		verify(eventPublisher, times(1)).publish(eventCaptor.capture());
+		TransactionFailedEvent failedEvent = (TransactionFailedEvent) eventCaptor.getValue();
+		assertEquals(txId, failedEvent.transactionId());
+		assertEquals("Target account not found", failedEvent.failureReason());
 	}
 
 	@Test
@@ -181,6 +210,11 @@ class ProcessTransactionServiceTest {
 		assertEquals(txId, finalTx.getId());
 		assertEquals(TransactionStatus.FAILED, finalTx.getStatus());
 		assertEquals("Source account not found", finalTx.getFailureReason());
+
+		verify(eventPublisher, times(1)).publish(eventCaptor.capture());
+		TransactionFailedEvent failedEvent = (TransactionFailedEvent) eventCaptor.getValue();
+		assertEquals(txId, failedEvent.transactionId());
+		assertEquals("Source account not found", failedEvent.failureReason());
 	}
 
 	@Test
@@ -213,6 +247,10 @@ class ProcessTransactionServiceTest {
 		TransactionRecord finalTx = transactionCaptor.getValue();
 		assertEquals(txId, finalTx.getId());
 		assertEquals(TransactionStatus.COMPLETED, finalTx.getStatus());
+
+		verify(eventPublisher, times(1)).publish(eventCaptor.capture());
+		TransactionCompletedEvent completedEvent = (TransactionCompletedEvent) eventCaptor.getValue();
+		assertEquals(txId, completedEvent.transactionId());
 	}
 
 	@Test
@@ -245,6 +283,10 @@ class ProcessTransactionServiceTest {
 		TransactionRecord finalTx = transactionCaptor.getValue();
 		assertEquals(txId, finalTx.getId());
 		assertEquals(TransactionStatus.COMPLETED, finalTx.getStatus());
+
+		verify(eventPublisher, times(1)).publish(eventCaptor.capture());
+		TransactionCompletedEvent completedEvent = (TransactionCompletedEvent) eventCaptor.getValue();
+		assertEquals(txId, completedEvent.transactionId());
 	}
 
 	@Test
@@ -271,6 +313,11 @@ class ProcessTransactionServiceTest {
 		assertEquals(txId, finalTx.getId());
 		assertEquals(TransactionStatus.FAILED, finalTx.getStatus());
 		assertEquals("Account not found: " + sourceAccountNumber, finalTx.getFailureReason());
+
+		verify(eventPublisher, times(1)).publish(eventCaptor.capture());
+		TransactionFailedEvent failedEvent = (TransactionFailedEvent) eventCaptor.getValue();
+		assertEquals(txId, failedEvent.transactionId());
+		assertEquals("Account not found: " + sourceAccountNumber, failedEvent.failureReason());
 	}
 
 	@Test
@@ -300,6 +347,11 @@ class ProcessTransactionServiceTest {
 		assertEquals(txId, finalTx.getId());
 		assertEquals(TransactionStatus.FAILED, finalTx.getStatus());
 		assertEquals("Account not found: " + targetAccountNumber, finalTx.getFailureReason());
+
+		verify(eventPublisher, times(1)).publish(eventCaptor.capture());
+		TransactionFailedEvent failedEvent = (TransactionFailedEvent) eventCaptor.getValue();
+		assertEquals(txId, failedEvent.transactionId());
+		assertEquals("Account not found: " + targetAccountNumber, failedEvent.failureReason());
 	}
 
 	@Test
@@ -317,6 +369,7 @@ class ProcessTransactionServiceTest {
 
 		verify(accountOperationsPort, never()).lockAndLoad(anyString());
 		verify(transactionRecordRepository, never()).save(any());
+		verify(eventPublisher, never()).publish(any());
 	}
 
 	@Test
@@ -337,6 +390,7 @@ class ProcessTransactionServiceTest {
 		assertEquals("Database lock timeout", exception.getMessage());
 
 		verify(transactionRecordRepository, never()).save(any());
+		verify(eventPublisher, never()).publish(any());
 	}
 
 	@Test
@@ -352,5 +406,6 @@ class ProcessTransactionServiceTest {
 		verify(transactionRecordRepository, never()).findById(anyString());
 		verify(accountOperationsPort, never()).lockAndLoad(anyString());
 		verify(transactionRecordRepository, never()).save(any());
+		verify(eventPublisher, never()).publish(any());
 	}
 }

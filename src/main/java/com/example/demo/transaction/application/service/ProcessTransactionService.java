@@ -1,12 +1,18 @@
 package com.example.demo.transaction.application.service;
 
+import java.time.Instant;
+import java.util.UUID;
+
 import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.application.annotation.TransactionalUseCase;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.transaction.application.port.in.ProcessTransactionUseCase;
+import com.example.demo.transaction.application.port.out.EventPublisher;
 import com.example.demo.transaction.application.port.out.ProcessedEventPort;
 import com.example.demo.transaction.application.port.out.TransactionRecordRepository;
+import com.example.demo.transaction.domain.event.TransactionCompletedEvent;
+import com.example.demo.transaction.domain.event.TransactionFailedEvent;
 import com.example.demo.transaction.domain.event.TransactionPendingEvent;
 import com.example.demo.transaction.domain.model.TransactionRecord;
 import com.example.demo.transaction.domain.model.TransactionRecord.TransactionStatus;
@@ -24,6 +30,7 @@ public class ProcessTransactionService implements ProcessTransactionUseCase {
 	private final AccountOperationsPort accountOperationsPort;
 	private final TransactionRecordRepository transactionRecordRepository;
 	private final ProcessedEventPort processedEventPort;
+	private final EventPublisher eventPublisher;
 
 	/**
 	 * Constructs a new ProcessTransactionService with the specified ports.
@@ -34,12 +41,16 @@ public class ProcessTransactionService implements ProcessTransactionUseCase {
 	 *            the repository for transaction ledger records
 	 * @param processedEventPort
 	 *            the port for checking event idempotency
+	 * @param eventPublisher
+	 *            the publisher for transaction events
 	 */
 	public ProcessTransactionService(AccountOperationsPort accountOperationsPort,
-			TransactionRecordRepository transactionRecordRepository, ProcessedEventPort processedEventPort) {
+			TransactionRecordRepository transactionRecordRepository, ProcessedEventPort processedEventPort,
+			EventPublisher eventPublisher) {
 		this.accountOperationsPort = accountOperationsPort;
 		this.transactionRecordRepository = transactionRecordRepository;
 		this.processedEventPort = processedEventPort;
+		this.eventPublisher = eventPublisher;
 	}
 
 	@Override
@@ -102,11 +113,18 @@ public class ProcessTransactionService implements ProcessTransactionUseCase {
 			transactionRecordRepository.save(tx.complete());
 			log.info("Transaction {} successfully completed", tx.getId());
 
+			// Publish TransactionCompletedEvent
+			eventPublisher.publish(new TransactionCompletedEvent(UUID.randomUUID(), tx.getId(), Instant.now()));
+
 		} catch (com.example.demo.common.domain.exception.DomainException e) {
 			// Business rule violations (Insufficient Funds, Account Not Found).
 			// These are terminal. We mark the transaction as FAILED permanently.
 			log.error("Transaction {} failed due to business rule: {}", tx.getId(), e.getMessage());
 			transactionRecordRepository.save(tx.fail(e.getMessage()));
+
+			// Publish TransactionFailedEvent
+			eventPublisher
+					.publish(new TransactionFailedEvent(UUID.randomUUID(), tx.getId(), Instant.now(), e.getMessage()));
 
 			// Note: We do NOT rethrow. By returning normally, the Outbox Scheduler
 			// will mark the event as PUBLISHED, preventing useless retries.
