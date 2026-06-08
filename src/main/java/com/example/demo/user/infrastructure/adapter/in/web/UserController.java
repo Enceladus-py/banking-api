@@ -9,8 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.demo.common.security.CustomUserDetails;
-import com.example.demo.common.security.JwtService;
+import com.example.demo.common.infrastructure.security.CustomUserDetails;
+import com.example.demo.common.infrastructure.security.JwtService;
 import com.example.demo.user.application.port.in.GetUserUseCase;
 import com.example.demo.user.application.port.in.RegisterUserUseCase;
 import com.example.demo.user.application.port.in.UpdateProfileUseCase;

@@ -23,8 +23,8 @@ import com.example.demo.account.application.port.in.CreateAccountUseCase.CreateA
 import com.example.demo.account.application.port.in.GetAccountUseCase;
 import com.example.demo.account.application.port.in.GetAccountsUseCase;
 import com.example.demo.account.domain.model.Account;
-import com.example.demo.common.security.CustomUserDetails;
-import com.example.demo.common.security.SecurityConfig;
+import com.example.demo.common.infrastructure.security.CustomUserDetails;
+import com.example.demo.common.infrastructure.security.SecurityConfig;
 
 @WebMvcTest(AccountController.class)
 @Import(SecurityConfig.class)
@@ -43,7 +43,7 @@ class AccountControllerTest {
 	private GetAccountsUseCase getAccountsUseCase;
 
 	@MockitoBean
-	private com.example.demo.common.security.JwtService jwtService;
+	private com.example.demo.common.infrastructure.security.JwtService jwtService;
 
 	@MockitoBean
 	private org.springframework.security.core.userdetails.UserDetailsService userDetailsService;

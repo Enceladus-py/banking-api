@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.common.security.CustomUserDetails;
+import com.example.demo.common.infrastructure.security.CustomUserDetails;
 import com.example.demo.user.application.port.out.UserRepository;
 import com.example.demo.user.domain.model.User;
 

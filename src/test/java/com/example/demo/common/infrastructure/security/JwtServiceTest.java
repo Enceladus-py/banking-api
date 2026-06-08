@@ -1,4 +1,4 @@
-package com.example.demo.common.security;
+package com.example.demo.common.infrastructure.security;
 
 import static org.junit.jupiter.api.Assertions.*;
 

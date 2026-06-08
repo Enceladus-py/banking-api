@@ -25,9 +25,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.demo.common.domain.exception.EntityNotFoundException;
-import com.example.demo.common.security.CustomUserDetails;
-import com.example.demo.common.security.JwtService;
-import com.example.demo.common.security.SecurityConfig;
+import com.example.demo.common.infrastructure.security.CustomUserDetails;
+import com.example.demo.common.infrastructure.security.JwtService;
+import com.example.demo.common.infrastructure.security.SecurityConfig;
 import com.example.demo.user.application.port.in.GetUserUseCase;
 import com.example.demo.user.application.port.in.RegisterUserUseCase;
 import com.example.demo.user.application.port.in.UpdateProfileUseCase;

@@ -32,7 +32,7 @@ class UserModuleTest {
 	org.springframework.security.authentication.AuthenticationManager authenticationManager;
 
 	@MockitoBean
-	com.example.demo.common.security.JwtService jwtService;
+	com.example.demo.common.infrastructure.security.JwtService jwtService;
 
 	@Test
 	void shouldRegisterAndRetrieveUser() {

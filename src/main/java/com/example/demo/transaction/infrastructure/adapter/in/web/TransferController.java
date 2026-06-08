@@ -4,7 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.demo.common.security.CustomUserDetails;
+import com.example.demo.common.infrastructure.security.CustomUserDetails;
 import com.example.demo.transaction.application.port.in.TransferMoneyUseCase;
 import com.example.demo.transaction.infrastructure.adapter.in.web.dto.TransactionResponse;
 import com.example.demo.transaction.infrastructure.adapter.in.web.dto.TransferRequest;

@@ -1,4 +1,4 @@
-package com.example.demo.common.config;
+package com.example.demo.common.infrastructure.config;
 
 import org.springframework.context.annotation.Configuration;
 

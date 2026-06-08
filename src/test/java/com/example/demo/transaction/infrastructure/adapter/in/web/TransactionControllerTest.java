@@ -26,8 +26,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.example.demo.common.application.port.in.dto.PageRequest;
 import com.example.demo.common.application.port.in.dto.PageResult;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
-import com.example.demo.common.security.CustomUserDetails;
-import com.example.demo.common.security.SecurityConfig;
+import com.example.demo.common.infrastructure.security.CustomUserDetails;
+import com.example.demo.common.infrastructure.security.SecurityConfig;
 import com.example.demo.transaction.application.port.in.DepositMoneyUseCase;
 import com.example.demo.transaction.application.port.in.DepositMoneyUseCase.DepositCommand;
 import com.example.demo.transaction.application.port.in.GetAccountTransactionsUseCase;
@@ -54,7 +54,7 @@ class TransactionControllerTest {
 	private GetTransactionUseCase getTransactionUseCase;
 
 	@MockitoBean
-	private com.example.demo.common.security.JwtService jwtService;
+	private com.example.demo.common.infrastructure.security.JwtService jwtService;
 
 	@MockitoBean
 	private org.springframework.security.core.userdetails.UserDetailsService userDetailsService;

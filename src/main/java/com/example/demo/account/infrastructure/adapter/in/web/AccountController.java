@@ -11,7 +11,7 @@ import com.example.demo.account.domain.model.Account;
 import com.example.demo.account.infrastructure.adapter.in.web.dto.AccountResponse;
 import com.example.demo.common.application.port.in.dto.PageRequest;
 import com.example.demo.common.application.port.in.dto.PageResult;
-import com.example.demo.common.security.CustomUserDetails;
+import com.example.demo.common.infrastructure.security.CustomUserDetails;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

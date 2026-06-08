@@ -1,4 +1,4 @@
-package com.example.demo.common.security;
+package com.example.demo.common.infrastructure.security;
 
 import java.util.Date;
 import java.util.HashMap;

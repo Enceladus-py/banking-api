@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.common.application.port.in.dto.PageRequest;
 import com.example.demo.common.application.port.in.dto.PageResult;
-import com.example.demo.common.security.CustomUserDetails;
+import com.example.demo.common.infrastructure.security.CustomUserDetails;
 import com.example.demo.transaction.application.port.in.DepositMoneyUseCase;
 import com.example.demo.transaction.application.port.in.GetAccountTransactionsUseCase;
 import com.example.demo.transaction.application.port.in.GetTransactionUseCase;

@@ -95,7 +95,7 @@ class TransactionOutboxIntegrationTest {
 	}
 
 	@Autowired
-	private com.example.demo.common.security.JwtService jwtService;
+	private com.example.demo.common.infrastructure.security.JwtService jwtService;
 
 	@Test
 	void shouldProcessDepositOutboxEventAsynchronously() throws Exception {
