@@ -15,6 +15,7 @@ import com.example.demo.account.application.port.in.CreateAccountUseCase;
 import com.example.demo.account.application.port.in.CreateAccountUseCase.CreateAccountCommand;
 import com.example.demo.account.application.port.in.GetAccountUseCase;
 import com.example.demo.account.domain.model.Account;
+import com.example.demo.common.domain.exception.AccessDeniedException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.user.application.port.in.GetUserUseCase;
 import com.example.demo.user.domain.model.User;
@@ -64,7 +65,7 @@ class AccountModuleTest {
 		Account created = createAccountUseCase.createAccount(new CreateAccountCommand(ownerId));
 
 		assertThatThrownBy(() -> getAccountUseCase.getAccount(created.getAccountNumber(), "attacker-id"))
-				.isInstanceOf(SecurityException.class).hasMessage("You are not authorized to view this account");
+				.isInstanceOf(AccessDeniedException.class).hasMessage("You are not authorized to view this account");
 	}
 
 	@Test

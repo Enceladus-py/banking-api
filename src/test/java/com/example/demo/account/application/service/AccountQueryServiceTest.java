@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.demo.account.application.port.out.AccountRepository;
 import com.example.demo.account.domain.model.Account;
+import com.example.demo.common.domain.exception.AccessDeniedException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,11 +38,11 @@ class AccountQueryServiceTest {
 	}
 
 	@Test
-	void shouldThrowSecurityExceptionWhenUnauthorized() {
+	void shouldThrowAccessDeniedExceptionWhenUnauthorized() {
 		Account account = Account.createNew("USER-1", "1234567890");
 		when(accountRepository.findByAccountNumber("1234567890")).thenReturn(Optional.of(account));
 
-		assertThrows(SecurityException.class, () -> accountQueryService.getAccount("1234567890", "HACKER"));
+		assertThrows(AccessDeniedException.class, () -> accountQueryService.getAccount("1234567890", "HACKER"));
 	}
 
 	@Test

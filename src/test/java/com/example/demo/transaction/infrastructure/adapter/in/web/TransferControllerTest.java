@@ -20,6 +20,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.demo.account.domain.exception.InsufficientFundsException;
+import com.example.demo.common.domain.exception.AccessDeniedException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.common.infrastructure.security.CustomUserDetails;
 import com.example.demo.common.infrastructure.security.SecurityConfig;
@@ -102,7 +103,7 @@ class TransferControllerTest {
 				""";
 
 		when(transferMoneyUseCase.transfer(any(TransferMoneyUseCase.TransferCommand.class)))
-				.thenThrow(new SecurityException("You are not authorized to transfer money from this account"));
+				.thenThrow(new AccessDeniedException("You are not authorized to transfer money from this account"));
 
 		mockMvc.perform(post("/api/transfers")
 				.with(user(new CustomUserDetails("HACKER-ID", "test@test.com", "pass", Collections.emptyList())))

@@ -17,6 +17,7 @@ import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.application.port.in.dto.PageRequest;
 import com.example.demo.common.application.port.in.dto.PageResult;
+import com.example.demo.common.domain.exception.AccessDeniedException;
 import com.example.demo.transaction.application.port.out.TransactionRecordRepository;
 import com.example.demo.transaction.domain.model.TransactionRecord;
 
@@ -52,7 +53,7 @@ class TransactionQueryServiceTest {
 
 		when(accountOperationsPort.findByAccountNumber("ACC-123456")).thenReturn(Optional.of(account));
 
-		assertThrows(SecurityException.class, () -> service.getTransactions("ACC-123456", pageRequest, "HACKER"));
+		assertThrows(AccessDeniedException.class, () -> service.getTransactions("ACC-123456", pageRequest, "HACKER"));
 
 		verify(transactionRecordRepository, never()).findByAccountNumber(anyString(), any());
 	}
@@ -103,7 +104,7 @@ class TransactionQueryServiceTest {
 		when(accountOperationsPort.findByAccountNumber("1234567890")).thenReturn(Optional.of(sourceAccount));
 		when(accountOperationsPort.findByAccountNumber("0987654321")).thenReturn(Optional.of(targetAccount));
 
-		assertThrows(SecurityException.class, () -> service.getTransaction("tx-123", "HACKER"));
+		assertThrows(AccessDeniedException.class, () -> service.getTransaction("tx-123", "HACKER"));
 	}
 
 	@Test
@@ -116,7 +117,7 @@ class TransactionQueryServiceTest {
 		when(accountOperationsPort.findByAccountNumber("1234567890")).thenReturn(Optional.empty());
 		when(accountOperationsPort.findByAccountNumber("0987654321")).thenReturn(Optional.empty());
 
-		assertThrows(SecurityException.class, () -> service.getTransaction("tx-123", "USER-1"));
+		assertThrows(AccessDeniedException.class, () -> service.getTransaction("tx-123", "USER-1"));
 	}
 
 	@Test

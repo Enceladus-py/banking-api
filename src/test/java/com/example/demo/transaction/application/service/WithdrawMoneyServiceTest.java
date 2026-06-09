@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
+import com.example.demo.common.domain.exception.AccessDeniedException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.transaction.application.port.in.WithdrawMoneyUseCase.WithdrawCommand;
 import com.example.demo.transaction.application.port.out.EventPublisher;
@@ -79,7 +80,7 @@ class WithdrawMoneyServiceTest {
 	}
 
 	@Test
-	void shouldThrowSecurityExceptionWhenWithdrawingAsWrongUser() {
+	void shouldThrowAccessDeniedExceptionWhenWithdrawingAsWrongUser() {
 		String accountNumber = "1234567890";
 		Account existingAccount = Account.reconstitute("uuid-1", "REAL-OWNER", accountNumber, new BigDecimal("500.00"),
 				1L);
@@ -87,7 +88,7 @@ class WithdrawMoneyServiceTest {
 
 		when(accountOperationsPort.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
 
-		assertThrows(SecurityException.class, () -> {
+		assertThrows(AccessDeniedException.class, () -> {
 			withdrawMoneyService.withdraw(command);
 		});
 

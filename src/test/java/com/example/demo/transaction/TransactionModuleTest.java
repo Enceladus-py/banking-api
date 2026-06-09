@@ -15,6 +15,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
+import com.example.demo.common.domain.exception.AccessDeniedException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.transaction.application.port.in.DepositMoneyUseCase;
 import com.example.demo.transaction.application.port.in.DepositMoneyUseCase.DepositCommand;
@@ -115,6 +116,6 @@ class TransactionModuleTest {
 
 		assertThatThrownBy(() -> transferMoneyUseCase
 				.transfer(new TransferCommand(ACC_A, ACC_B, new BigDecimal("50.00"), "attacker")))
-				.isInstanceOf(SecurityException.class);
+				.isInstanceOf(AccessDeniedException.class);
 	}
 }

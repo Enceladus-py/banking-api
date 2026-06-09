@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.demo.common.application.port.in.dto.PageRequest;
 import com.example.demo.common.application.port.in.dto.PageResult;
+import com.example.demo.common.domain.exception.AccessDeniedException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.common.infrastructure.security.CustomUserDetails;
 import com.example.demo.common.infrastructure.security.SecurityConfig;
@@ -209,7 +210,7 @@ class TransactionControllerTest {
 	void shouldReturn403ForbiddenWhenUserAttemptsToTouchAnotherUsersAccount() throws Exception {
 		// Arrange: Simulate the domain rejecting the action based on ownership
 		when(depositMoneyUseCase.deposit(any(DepositCommand.class)))
-				.thenThrow(new SecurityException("You are not authorized to deposit into this account"));
+				.thenThrow(new AccessDeniedException("You are not authorized to deposit into this account"));
 
 		String jsonPayload = """
 				{
@@ -224,7 +225,7 @@ class TransactionControllerTest {
 				.contentType(MediaType.APPLICATION_JSON).content(jsonPayload)).andExpect(status().isForbidden()) // Ensure
 																													// GlobalExceptionHandler
 																													// maps
-																													// SecurityException
+																													// AccessDeniedException
 																													// to
 																													// 403
 				.andExpect(jsonPath("$.message").value("You are not authorized to deposit into this account"));

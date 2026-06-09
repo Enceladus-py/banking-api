@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.application.annotation.TransactionalUseCase;
+import com.example.demo.common.domain.exception.AccessDeniedException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.transaction.application.port.in.DepositMoneyUseCase;
 import com.example.demo.transaction.application.port.out.EventPublisher;
@@ -49,7 +50,7 @@ public class DepositMoneyService implements DepositMoneyUseCase {
 
 		// Enforce ownership
 		if (!account.isOwnedBy(command.requesterId())) {
-			throw new SecurityException("You are not authorized to deposit into this account");
+			throw new AccessDeniedException("You are not authorized to deposit into this account");
 		}
 
 		// Create and Save PENDING Ledger Record

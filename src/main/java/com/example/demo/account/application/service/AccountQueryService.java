@@ -7,6 +7,7 @@ import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.application.annotation.UseCase;
 import com.example.demo.common.application.port.in.dto.PageRequest;
 import com.example.demo.common.application.port.in.dto.PageResult;
+import com.example.demo.common.domain.exception.AccessDeniedException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 
 /**
@@ -33,7 +34,7 @@ public class AccountQueryService implements GetAccountUseCase, GetAccountsUseCas
 				.orElseThrow(() -> new EntityNotFoundException("Account not found"));
 
 		if (!account.isOwnedBy(requesterId)) {
-			throw new SecurityException("You are not authorized to view this account");
+			throw new AccessDeniedException("You are not authorized to view this account");
 		}
 
 		return account;

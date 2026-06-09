@@ -14,6 +14,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
+import com.example.demo.common.domain.exception.AccessDeniedException;
 import com.example.demo.common.domain.exception.DomainException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.common.infrastructure.adapter.in.web.dto.ErrorResponse;
@@ -69,9 +70,9 @@ class GlobalExceptionHandlerTest {
 	}
 
 	@Test
-	void handleSecurityException() {
-		SecurityException ex = new SecurityException("Forbidden access");
-		ResponseEntity<ErrorResponse> response = handler.handleSecurityException(ex);
+	void handleAccessDeniedException() {
+		AccessDeniedException ex = new AccessDeniedException("Forbidden access");
+		ResponseEntity<ErrorResponse> response = handler.handleAccessDeniedException(ex);
 
 		assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
 		assertNotNull(response.getBody());

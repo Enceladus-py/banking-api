@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.example.demo.common.domain.exception.AccessDeniedException;
 import com.example.demo.common.domain.exception.DomainException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.common.infrastructure.adapter.in.web.dto.ErrorResponse;
@@ -79,14 +80,14 @@ public class GlobalExceptionHandler {
 	}
 
 	/**
-	 * Handles SecurityException and returns 403 status.
+	 * Handles AccessDeniedException and returns 403 status.
 	 *
 	 * @param ex
 	 *            the exception
 	 * @return response containing error details
 	 */
-	@ExceptionHandler(SecurityException.class)
-	public ResponseEntity<ErrorResponse> handleSecurityException(SecurityException ex) {
+	@ExceptionHandler(AccessDeniedException.class)
+	public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
 		ErrorResponse body = new ErrorResponse(Instant.now(), ex.getMessage());
 
 		// Returns 403 Forbidden when a user tries to touch an account they don't own

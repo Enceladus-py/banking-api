@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
+import com.example.demo.common.domain.exception.AccessDeniedException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.transaction.application.port.in.TransferMoneyUseCase.TransferCommand;
 import com.example.demo.transaction.application.port.out.EventPublisher;
@@ -116,7 +117,7 @@ class TransferServiceTest {
 		when(accountOperationsPort.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
 
 		// Act & Assert
-		SecurityException ex = assertThrows(SecurityException.class, () -> transferService
+		AccessDeniedException ex = assertThrows(AccessDeniedException.class, () -> transferService
 				.transfer(new TransferCommand(sourceId, targetId, new BigDecimal("100.00"), "HACKER-ID")));
 
 		assertEquals("You are not authorized to transfer money from this account", ex.getMessage());

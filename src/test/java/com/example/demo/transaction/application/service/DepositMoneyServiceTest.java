@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.demo.account.application.port.in.AccountOperationsPort;
 import com.example.demo.account.domain.model.Account;
+import com.example.demo.common.domain.exception.AccessDeniedException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.transaction.application.port.in.DepositMoneyUseCase.DepositCommand;
 import com.example.demo.transaction.application.port.out.EventPublisher;
@@ -78,14 +79,14 @@ class DepositMoneyServiceTest {
 	}
 
 	@Test
-	void shouldThrowSecurityExceptionWhenDepositingAsWrongUser() {
+	void shouldThrowAccessDeniedExceptionWhenDepositingAsWrongUser() {
 		String accountNumber = "A1B2C3D4E5";
 		Account existingAccount = Account.reconstitute("uuid-123", "REAL-OWNER", accountNumber, BigDecimal.ZERO, 1L);
 		DepositCommand command = new DepositCommand(accountNumber, new BigDecimal("100.00"), "HACKER");
 
 		when(accountOperationsPort.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
 
-		assertThrows(SecurityException.class, () -> {
+		assertThrows(AccessDeniedException.class, () -> {
 			depositMoneyService.deposit(command);
 		});
 

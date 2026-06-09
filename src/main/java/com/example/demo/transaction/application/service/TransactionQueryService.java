@@ -5,6 +5,7 @@ import com.example.demo.account.domain.model.Account;
 import com.example.demo.common.application.annotation.UseCase;
 import com.example.demo.common.application.port.in.dto.PageRequest;
 import com.example.demo.common.application.port.in.dto.PageResult;
+import com.example.demo.common.domain.exception.AccessDeniedException;
 import com.example.demo.common.domain.exception.EntityNotFoundException;
 import com.example.demo.transaction.application.port.in.GetAccountTransactionsUseCase;
 import com.example.demo.transaction.application.port.in.GetTransactionUseCase;
@@ -41,7 +42,7 @@ public class TransactionQueryService implements GetAccountTransactionsUseCase, G
 				.orElseThrow(() -> new EntityNotFoundException("Account not found"));
 
 		if (!account.isOwnedBy(requesterId)) {
-			throw new SecurityException("You are not authorized to view this account's transactions");
+			throw new AccessDeniedException("You are not authorized to view this account's transactions");
 		}
 
 		return transactionRecordRepository.findByAccountNumber(accountNumber, pageRequest);
@@ -70,7 +71,7 @@ public class TransactionQueryService implements GetAccountTransactionsUseCase, G
 		}
 
 		if (!ownsSource && !ownsTarget) {
-			throw new SecurityException("You are not authorized to view this transaction");
+			throw new AccessDeniedException("You are not authorized to view this transaction");
 		}
 
 		return tx;
