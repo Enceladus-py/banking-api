@@ -122,8 +122,8 @@ class TransactionOutboxIntegrationTest {
 		assertEquals(0, BigDecimal.ZERO.compareTo(accountBefore.get().getBalance()));
 
 		// 3. Assert Outbox Record created
-		List<OutboxEventJpaEntity> pendingOutbox = outboxRepository
-				.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING);
+		List<OutboxEventJpaEntity> pendingOutbox = outboxRepository.findAll().stream()
+				.filter(e -> e.getStatus() == OutboxStatus.PENDING).toList();
 		assertFalse(pendingOutbox.isEmpty(), "Outbox event should be created in PENDING state");
 		OutboxEventJpaEntity pendingEvent = pendingOutbox.get(0);
 		assertEquals(EventType.TRANSACTION_PENDING, pendingEvent.getEventType());

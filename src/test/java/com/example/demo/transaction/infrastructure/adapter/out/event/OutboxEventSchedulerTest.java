@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -17,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.Message;
 
@@ -49,7 +50,7 @@ class OutboxEventSchedulerTest {
 
 	@Test
 	void shouldDoNothingWhenNoPendingEvents() {
-		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING))
+		when(outboxRepository.findByStatusOrderByCreatedAtAscWithLock(eq(OutboxStatus.PENDING), any(Pageable.class)))
 				.thenReturn(Collections.emptyList());
 
 		scheduler.publishPendingEvents();
@@ -70,7 +71,8 @@ class OutboxEventSchedulerTest {
 		OutboxEventJpaEntity entity = new OutboxEventJpaEntity(eventId, AggregateType.TRANSACTION, transactionId,
 				EventType.TRANSACTION_PENDING, "{}", Instant.now(), OutboxStatus.PENDING, 0);
 
-		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING)).thenReturn(List.of(entity));
+		when(outboxRepository.findByStatusOrderByCreatedAtAscWithLock(eq(OutboxStatus.PENDING), any(Pageable.class)))
+				.thenReturn(List.of(entity));
 		when(kafkaTemplate.send(any(Message.class))).thenReturn(CompletableFuture.completedFuture(null));
 
 		scheduler.publishPendingEvents();
@@ -86,7 +88,8 @@ class OutboxEventSchedulerTest {
 				.aggregateType(AggregateType.TRANSACTION).aggregateId("tx1").eventType(EventType.TRANSACTION_COMPLETED)
 				.payload("{}").createdAt(Instant.now()).status(OutboxStatus.PENDING).retryCount(0).build();
 
-		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING)).thenReturn(List.of(entity));
+		when(outboxRepository.findByStatusOrderByCreatedAtAscWithLock(eq(OutboxStatus.PENDING), any(Pageable.class)))
+				.thenReturn(List.of(entity));
 
 		TransactionCompletedEvent event = new TransactionCompletedEvent(UUID.randomUUID(), "tx1", Instant.now());
 		when(objectMapper.readValue("{}", TransactionCompletedEvent.class)).thenReturn(event);
@@ -106,7 +109,8 @@ class OutboxEventSchedulerTest {
 				.aggregateType(AggregateType.TRANSACTION).aggregateId("tx1").eventType(EventType.TRANSACTION_FAILED)
 				.payload("{}").createdAt(Instant.now()).status(OutboxStatus.PENDING).retryCount(0).build();
 
-		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING)).thenReturn(List.of(entity));
+		when(outboxRepository.findByStatusOrderByCreatedAtAscWithLock(eq(OutboxStatus.PENDING), any(Pageable.class)))
+				.thenReturn(List.of(entity));
 
 		TransactionFailedEvent event = new TransactionFailedEvent(UUID.randomUUID(), "tx1", Instant.now(), "err");
 		when(objectMapper.readValue("{}", TransactionFailedEvent.class)).thenReturn(event);
@@ -126,7 +130,8 @@ class OutboxEventSchedulerTest {
 				.aggregateType(AggregateType.TRANSACTION).aggregateId("tx1").eventType(EventType.TRANSACTION_PENDING)
 				.payload("{}").createdAt(Instant.now()).status(OutboxStatus.PENDING).retryCount(1).build();
 
-		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING)).thenReturn(List.of(entity));
+		when(outboxRepository.findByStatusOrderByCreatedAtAscWithLock(eq(OutboxStatus.PENDING), any(Pageable.class)))
+				.thenReturn(List.of(entity));
 		when(objectMapper.readValue("{}", TransactionPendingEvent.class))
 				.thenThrow(new RuntimeException("Deserialization error"));
 
@@ -145,7 +150,8 @@ class OutboxEventSchedulerTest {
 				.payload("{}").createdAt(Instant.now()).status(OutboxStatus.PENDING)
 				.retryCount(OutboxEventScheduler.MAX_RETRIES - 1).build();
 
-		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING)).thenReturn(List.of(entity));
+		when(outboxRepository.findByStatusOrderByCreatedAtAscWithLock(eq(OutboxStatus.PENDING), any(Pageable.class)))
+				.thenReturn(List.of(entity));
 
 		scheduler.publishPendingEvents();
 
@@ -155,25 +161,18 @@ class OutboxEventSchedulerTest {
 	}
 
 	@Test
-	void shouldProcessOnlyBatchSizeEvents() {
-		List<OutboxEventJpaEntity> pendingEvents = new ArrayList<>();
-		for (int i = 0; i < OutboxEventScheduler.BATCH_SIZE + 10; i++) {
-			OutboxEventJpaEntity e = OutboxEventJpaEntity.builder().id(UUID.randomUUID())
-					.aggregateType(AggregateType.TRANSACTION).aggregateId("tx" + i)
-					.eventType(EventType.TRANSACTION_PENDING).payload("{}").createdAt(Instant.now())
-					.status(OutboxStatus.PENDING).retryCount(0).build();
-			pendingEvents.add(e);
-		}
-
-		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING)).thenReturn(pendingEvents);
+	void shouldPassBatchSizeToRepository() {
+		when(outboxRepository.findByStatusOrderByCreatedAtAscWithLock(eq(OutboxStatus.PENDING), any(Pageable.class)))
+				.thenReturn(Collections.emptyList());
 
 		scheduler.publishPendingEvents();
 
-		verify(outboxRepository, times(OutboxEventScheduler.BATCH_SIZE)).save(any());
+		verify(outboxRepository).findByStatusOrderByCreatedAtAscWithLock(eq(OutboxStatus.PENDING),
+				eq(PageRequest.of(0, scheduler.batchSize)));
 	}
 	@Test
 	void shouldIgnoreDatabaseShutdownExceptions() {
-		when(outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING))
+		when(outboxRepository.findByStatusOrderByCreatedAtAscWithLock(eq(OutboxStatus.PENDING), any(Pageable.class)))
 				.thenThrow(new org.springframework.dao.DataAccessResourceFailureException("DB is closing"));
 
 		scheduler.publishPendingEvents();

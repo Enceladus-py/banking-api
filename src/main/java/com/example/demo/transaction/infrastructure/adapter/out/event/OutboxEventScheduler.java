@@ -2,6 +2,8 @@ package com.example.demo.transaction.infrastructure.adapter.out.event;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -29,8 +31,8 @@ import tools.jackson.databind.ObjectMapper;
  * visible for manual inspection / alerting.
  *
  * <p>
- * <strong>Batch cap</strong>: at most {@value #BATCH_SIZE} events are processed
- * per tick to bound the work done per scheduler invocation.
+ * <strong>Batch cap</strong>: at most <code>batchSize</code> events are
+ * processed per tick to bound the work done per scheduler invocation.
  */
 @Component
 @Slf4j
@@ -40,7 +42,8 @@ public class OutboxEventScheduler {
 	static final int MAX_RETRIES = 5;
 
 	/** Maximum number of PENDING events processed per scheduler tick. */
-	static final int BATCH_SIZE = 50;
+	@Value("${outbox.scheduler.batch-size:500}")
+	int batchSize = 500;
 
 	private final SpringDataOutboxEventRepository outboxRepository;
 	private final ObjectMapper objectMapper;
@@ -71,7 +74,8 @@ public class OutboxEventScheduler {
 	public void publishPendingEvents() {
 		List<OutboxEventJpaEntity> pendingEvents;
 		try {
-			pendingEvents = outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING);
+			pendingEvents = outboxRepository.findByStatusOrderByCreatedAtAscWithLock(OutboxStatus.PENDING,
+					PageRequest.of(0, batchSize));
 		} catch (org.springframework.dao.DataAccessException e) {
 			// Ignore exceptions caused by database shutdown during tests
 			log.debug("Database might be shutting down: {}", e.getMessage());
@@ -82,14 +86,9 @@ public class OutboxEventScheduler {
 			return;
 		}
 
-		// Cap the batch to avoid unbounded work per tick
-		List<OutboxEventJpaEntity> batch = pendingEvents.size() > BATCH_SIZE
-				? pendingEvents.subList(0, BATCH_SIZE)
-				: pendingEvents;
+		log.info("Found {} pending outbox events to process this tick", pendingEvents.size());
 
-		log.info("Found {} pending outbox events; processing up to {} this tick", pendingEvents.size(), batch.size());
-
-		for (OutboxEventJpaEntity entity : batch) {
+		for (OutboxEventJpaEntity entity : pendingEvents) {
 			try {
 				TransactionEvent event = deserialize(entity);
 				org.springframework.messaging.Message<String> message = org.springframework.messaging.support.MessageBuilder
