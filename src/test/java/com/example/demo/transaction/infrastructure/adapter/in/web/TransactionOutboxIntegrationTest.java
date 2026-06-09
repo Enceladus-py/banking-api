@@ -81,7 +81,7 @@ class TransactionOutboxIntegrationTest {
 
 		// Save test account
 		var accountEntity = new com.example.demo.account.infrastructure.adapter.out.persistence.entity.AccountJpaEntity(
-				UUID.randomUUID(), accountNumber, BigDecimal.ZERO, userId, null);
+				UUID.randomUUID(), accountNumber, BigDecimal.ZERO, userId, false);
 		accountRepository.save(accountEntity);
 	}
 

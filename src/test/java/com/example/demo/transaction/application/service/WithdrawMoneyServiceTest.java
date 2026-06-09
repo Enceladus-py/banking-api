@@ -57,8 +57,7 @@ class WithdrawMoneyServiceTest {
 	void shouldSuccessfullyInitiateWithdrawal() {
 		String requesterId = "USER-123";
 		String accountNumber = "1234567890";
-		Account existingAccount = Account.reconstitute("uuid-1", requesterId, accountNumber, new BigDecimal("500.00"),
-				1L);
+		Account existingAccount = Account.reconstitute("uuid-1", requesterId, accountNumber, new BigDecimal("500.00"));
 		WithdrawCommand command = new WithdrawCommand(accountNumber, new BigDecimal("150.00"), requesterId);
 
 		when(accountOperationsPort.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
@@ -82,8 +81,7 @@ class WithdrawMoneyServiceTest {
 	@Test
 	void shouldThrowAccessDeniedExceptionWhenWithdrawingAsWrongUser() {
 		String accountNumber = "1234567890";
-		Account existingAccount = Account.reconstitute("uuid-1", "REAL-OWNER", accountNumber, new BigDecimal("500.00"),
-				1L);
+		Account existingAccount = Account.reconstitute("uuid-1", "REAL-OWNER", accountNumber, new BigDecimal("500.00"));
 		WithdrawCommand command = new WithdrawCommand(accountNumber, new BigDecimal("150.00"), "HACKER");
 
 		when(accountOperationsPort.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));

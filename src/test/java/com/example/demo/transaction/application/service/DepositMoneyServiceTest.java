@@ -58,7 +58,7 @@ class DepositMoneyServiceTest {
 		String requesterId = "USER-123";
 		String accountNumber = "A1B2C3D4E5";
 		DepositCommand command = new DepositCommand(accountNumber, new BigDecimal("250.00"), requesterId);
-		Account existingAccount = Account.reconstitute("uuid-123", requesterId, accountNumber, BigDecimal.ZERO, 1L);
+		Account existingAccount = Account.reconstitute("uuid-123", requesterId, accountNumber, BigDecimal.ZERO);
 
 		when(accountOperationsPort.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));
 
@@ -81,7 +81,7 @@ class DepositMoneyServiceTest {
 	@Test
 	void shouldThrowAccessDeniedExceptionWhenDepositingAsWrongUser() {
 		String accountNumber = "A1B2C3D4E5";
-		Account existingAccount = Account.reconstitute("uuid-123", "REAL-OWNER", accountNumber, BigDecimal.ZERO, 1L);
+		Account existingAccount = Account.reconstitute("uuid-123", "REAL-OWNER", accountNumber, BigDecimal.ZERO);
 		DepositCommand command = new DepositCommand(accountNumber, new BigDecimal("100.00"), "HACKER");
 
 		when(accountOperationsPort.findByAccountNumber(accountNumber)).thenReturn(Optional.of(existingAccount));

@@ -15,7 +15,7 @@ public class Account {
 	private String ownerId;
 	private String accountNumber;
 	private BigDecimal balance;
-	private final Long version;
+	private boolean isNew;
 
 	/**
 	 * Factory method to create a new bank account with business validations.
@@ -33,7 +33,9 @@ public class Account {
 		if (ownerId == null || ownerId.trim().isBlank()) {
 			throw new IllegalArgumentException("Owner ID cannot be blank");
 		}
-		return new Account(java.util.UUID.randomUUID().toString(), ownerId, accountNumber, BigDecimal.ZERO, null);
+		Account account = new Account(java.util.UUID.randomUUID().toString(), ownerId, accountNumber, BigDecimal.ZERO);
+		account.isNew = true;
+		return account;
 	}
 
 	/**
@@ -47,13 +49,10 @@ public class Account {
 	 *            the 10-digit account number
 	 * @param balance
 	 *            the account balance
-	 * @param version
-	 *            the optimistic locking version
 	 * @return the reconstituted Account
 	 */
-	public static Account reconstitute(String id, String ownerId, String accountNumber, BigDecimal balance,
-			Long version) {
-		return new Account(id, ownerId, accountNumber, balance, version);
+	public static Account reconstitute(String id, String ownerId, String accountNumber, BigDecimal balance) {
+		return new Account(id, ownerId, accountNumber, balance);
 	}
 
 	/**
@@ -67,15 +66,23 @@ public class Account {
 	 *            the 10-digit account number
 	 * @param balance
 	 *            the account balance
-	 * @param version
-	 *            the optimistic locking version
 	 */
-	private Account(String id, String ownerId, String accountNumber, BigDecimal balance, Long version) {
+	private Account(String id, String ownerId, String accountNumber, BigDecimal balance) {
 		this.id = id;
 		this.ownerId = ownerId;
 		this.accountNumber = accountNumber;
 		this.balance = balance;
-		this.version = version;
+		this.isNew = false;
+	}
+
+	/**
+	 * Returns true if this is a newly created account that hasn't been persisted
+	 * yet.
+	 *
+	 * @return true if new
+	 */
+	public boolean isNewAccount() {
+		return isNew;
 	}
 
 	/**

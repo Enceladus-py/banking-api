@@ -70,8 +70,8 @@ class TransferServiceTest {
 		String requesterId = "USER-1";
 		BigDecimal amount = new BigDecimal("150.00");
 
-		Account sourceAccount = Account.reconstitute("uuid-1", requesterId, sourceId, new BigDecimal("500.00"), 1L);
-		Account targetAccount = Account.reconstitute("uuid-2", "USER-2", targetId, new BigDecimal("100.00"), 1L);
+		Account sourceAccount = Account.reconstitute("uuid-1", requesterId, sourceId, new BigDecimal("500.00"));
+		Account targetAccount = Account.reconstitute("uuid-2", "USER-2", targetId, new BigDecimal("100.00"));
 
 		when(accountOperationsPort.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
 		when(accountOperationsPort.findByAccountNumber(targetId)).thenReturn(Optional.of(targetAccount));
@@ -112,7 +112,7 @@ class TransferServiceTest {
 		// Arrange
 		String sourceId = "SRC1234567";
 		String targetId = "TGT1234567";
-		Account sourceAccount = Account.reconstitute("uuid-1", "USER-1", sourceId, new BigDecimal("500.00"), 1L);
+		Account sourceAccount = Account.reconstitute("uuid-1", "USER-1", sourceId, new BigDecimal("500.00"));
 
 		when(accountOperationsPort.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
 
@@ -131,7 +131,7 @@ class TransferServiceTest {
 		String sourceId = "SRC1234567";
 		String targetId = "TGT1234567";
 		String requesterId = "USER-1";
-		Account sourceAccount = Account.reconstitute("uuid-1", requesterId, sourceId, new BigDecimal("500.00"), 1L);
+		Account sourceAccount = Account.reconstitute("uuid-1", requesterId, sourceId, new BigDecimal("500.00"));
 
 		when(accountOperationsPort.findByAccountNumber(sourceId)).thenReturn(Optional.of(sourceAccount));
 		when(accountOperationsPort.findByAccountNumber(targetId)).thenReturn(Optional.empty());

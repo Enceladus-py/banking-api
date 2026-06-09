@@ -48,7 +48,7 @@ class CreateAccountServiceTest {
 				"pwd", com.example.demo.user.domain.model.Profile.createNew("Berat", "Dalsuna"), 1L));
 		when(accountNumberGeneratorPort.getNextAvailableNumber()).thenReturn("1234567890");
 
-		Account mockSavedAccount = Account.reconstitute("uuid-123", requesterId, "1234567890", BigDecimal.ZERO, 1L);
+		Account mockSavedAccount = Account.reconstitute("uuid-123", requesterId, "1234567890", BigDecimal.ZERO);
 		when(accountRepository.save(any(Account.class))).thenReturn(mockSavedAccount);
 
 		Account result = createAccountService.createAccount(command);

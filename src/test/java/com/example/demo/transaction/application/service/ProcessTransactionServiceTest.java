@@ -67,7 +67,7 @@ class ProcessTransactionServiceTest {
 				new BigDecimal("100.00"), TransactionType.DEPOSIT, Instant.now(), TransactionStatus.PENDING, null);
 		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(), null,
 				accountNumber, new BigDecimal("100.00"), TransactionType.DEPOSIT, "USER-123");
-		Account targetAccount = Account.reconstitute("uuid-123", "USER-123", accountNumber, BigDecimal.ZERO, 1L);
+		Account targetAccount = Account.reconstitute("uuid-123", "USER-123", accountNumber, BigDecimal.ZERO);
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(accountNumber)).thenReturn(Optional.of(targetAccount));
@@ -97,8 +97,7 @@ class ProcessTransactionServiceTest {
 				TransactionType.WITHDRAWAL, Instant.now(), TransactionStatus.PENDING, null);
 		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(),
 				accountNumber, null, new BigDecimal("50.00"), TransactionType.WITHDRAWAL, "USER-123");
-		Account sourceAccount = Account.reconstitute("uuid-123", "USER-123", accountNumber, new BigDecimal("100.00"),
-				1L);
+		Account sourceAccount = Account.reconstitute("uuid-123", "USER-123", accountNumber, new BigDecimal("100.00"));
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(accountNumber)).thenReturn(Optional.of(sourceAccount));
@@ -127,8 +126,7 @@ class ProcessTransactionServiceTest {
 				new BigDecimal("150.00"), TransactionType.WITHDRAWAL, Instant.now(), TransactionStatus.PENDING, null);
 		TransactionPendingEvent event = new TransactionPendingEvent(UUID.randomUUID(), txId, Instant.now(),
 				accountNumber, null, new BigDecimal("150.00"), TransactionType.WITHDRAWAL, "USER-123");
-		Account sourceAccount = Account.reconstitute("uuid-123", "USER-123", accountNumber, new BigDecimal("100.00"),
-				1L);
+		Account sourceAccount = Account.reconstitute("uuid-123", "USER-123", accountNumber, new BigDecimal("100.00"));
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(accountNumber)).thenReturn(Optional.of(sourceAccount));
@@ -229,9 +227,9 @@ class ProcessTransactionServiceTest {
 				sourceAccountNumber, targetAccountNumber, new BigDecimal("50.00"), TransactionType.TRANSFER,
 				"USER-123");
 		Account sourceAccount = Account.reconstitute("uuid-1", "USER-123", sourceAccountNumber,
-				new BigDecimal("100.00"), 1L);
-		Account targetAccount = Account.reconstitute("uuid-2", "USER-456", targetAccountNumber, new BigDecimal("20.00"),
-				1L);
+				new BigDecimal("100.00"));
+		Account targetAccount = Account.reconstitute("uuid-2", "USER-456", targetAccountNumber,
+				new BigDecimal("20.00"));
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.of(sourceAccount));
@@ -266,9 +264,9 @@ class ProcessTransactionServiceTest {
 				sourceAccountNumber, targetAccountNumber, new BigDecimal("50.00"), TransactionType.TRANSFER,
 				"USER-123");
 		Account sourceAccount = Account.reconstitute("uuid-1", "USER-123", sourceAccountNumber,
-				new BigDecimal("100.00"), 1L);
-		Account targetAccount = Account.reconstitute("uuid-2", "USER-456", targetAccountNumber, new BigDecimal("20.00"),
-				1L);
+				new BigDecimal("100.00"));
+		Account targetAccount = Account.reconstitute("uuid-2", "USER-456", targetAccountNumber,
+				new BigDecimal("20.00"));
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(targetAccountNumber)).thenReturn(Optional.of(targetAccount));
@@ -333,7 +331,7 @@ class ProcessTransactionServiceTest {
 				sourceAccountNumber, targetAccountNumber, new BigDecimal("50.00"), TransactionType.TRANSFER,
 				"USER-123");
 		Account sourceAccount = Account.reconstitute("uuid-1", "USER-123", sourceAccountNumber,
-				new BigDecimal("100.00"), 1L);
+				new BigDecimal("100.00"));
 
 		when(transactionRecordRepository.findById(txId)).thenReturn(Optional.of(pendingTx));
 		when(accountOperationsPort.lockAndLoad(sourceAccountNumber)).thenReturn(Optional.of(sourceAccount)); // first

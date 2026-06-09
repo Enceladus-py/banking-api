@@ -52,14 +52,14 @@ class AccountTest {
 
 	@Test
 	void shouldWithdrawMoneySuccessfully() {
-		Account account = Account.reconstitute("ID", "USER-1", "ACC-123456", new BigDecimal("100.00"), 1L);
+		Account account = Account.reconstitute("ID", "USER-1", "ACC-123456", new BigDecimal("100.00"));
 		account.withdraw(new BigDecimal("40.00"));
 		assertEquals(new BigDecimal("60.00"), account.getBalance());
 	}
 
 	@Test
 	void shouldThrowExceptionWhenWithdrawalIsInvalid() {
-		Account account = Account.reconstitute("ID", "USER-1", "ACC-123456", new BigDecimal("100.00"), 1L);
+		Account account = Account.reconstitute("ID", "USER-1", "ACC-123456", new BigDecimal("100.00"));
 		assertThrows(IllegalArgumentException.class, () -> account.withdraw(null));
 		assertThrows(IllegalArgumentException.class, () -> account.withdraw(BigDecimal.ZERO));
 		assertThrows(IllegalArgumentException.class, () -> account.withdraw(new BigDecimal("-10.00")));
@@ -67,7 +67,7 @@ class AccountTest {
 
 	@Test
 	void shouldThrowExceptionWhenInsufficientFunds() {
-		Account account = Account.reconstitute("ID", "USER-1", "ACC-123456", new BigDecimal("50.00"), 1L);
+		Account account = Account.reconstitute("ID", "USER-1", "ACC-123456", new BigDecimal("50.00"));
 		assertThrows(InsufficientFundsException.class, () -> account.withdraw(new BigDecimal("100.00")));
 	}
 
@@ -78,16 +78,14 @@ class AccountTest {
 		assertEquals("USER-123", account.getOwnerId());
 		assertEquals("ACC-999999", account.getAccountNumber());
 		assertEquals(BigDecimal.ZERO, account.getBalance());
-		assertNull(account.getVersion());
 	}
 
 	@Test
 	void shouldCreateRehydratedAccountWithMasterConstructorAndNotBeMarkedAsNew() {
-		Account account = Account.reconstitute("ID-123", "USER-123", "ACC-999999", new BigDecimal("250.00"), 1L);
+		Account account = Account.reconstitute("ID-123", "USER-123", "ACC-999999", new BigDecimal("250.00"));
 		assertEquals("ID-123", account.getId());
 		assertEquals("USER-123", account.getOwnerId());
 		assertEquals("ACC-999999", account.getAccountNumber());
 		assertEquals(new BigDecimal("250.00"), account.getBalance());
-		assertEquals(1L, account.getVersion());
 	}
 }

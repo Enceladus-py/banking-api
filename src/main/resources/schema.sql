@@ -80,3 +80,6 @@ CREATE TABLE IF NOT EXISTS profiles (
 -- Migration for existing 'profiles' table
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS mobile_number VARCHAR(255);
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS address TEXT;
+
+-- Drop version column from 'account' table
+ALTER TABLE account DROP COLUMN IF EXISTS version;

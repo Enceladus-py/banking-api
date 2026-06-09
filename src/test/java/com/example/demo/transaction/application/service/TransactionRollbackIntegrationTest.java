@@ -62,7 +62,7 @@ class TransactionRollbackIntegrationTest {
 		var userEntity = new UserJpaEntity(UUID.fromString(userId), "Rollback", "Tester", null);
 		userRepository.save(userEntity);
 
-		var accountEntity = new AccountJpaEntity(UUID.randomUUID(), accountNumber, BigDecimal.ZERO, userId, null);
+		var accountEntity = new AccountJpaEntity(UUID.randomUUID(), accountNumber, BigDecimal.ZERO, userId, false);
 		accountRepository.save(accountEntity);
 	}
 
@@ -129,7 +129,7 @@ class TransactionRollbackIntegrationTest {
 		// Target account needs to exist
 		String targetAccountNumber = "TARGET123";
 		var targetAccountEntity = new AccountJpaEntity(UUID.randomUUID(), targetAccountNumber, BigDecimal.ZERO, userId,
-				null);
+				false);
 		accountRepository.save(targetAccountEntity);
 
 		TransferMoneyUseCase.TransferCommand command = new TransferMoneyUseCase.TransferCommand(accountNumber,

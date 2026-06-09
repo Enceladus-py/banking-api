@@ -36,17 +36,12 @@ public class PostgresAccountAdapter implements AccountRepository {
 	@Override
 	public Account save(Account account) {
 		UUID entityId = UUID.fromString(account.getId());
-
-		// Construct entity directly and map version. Spring Data JPA uses the version
-		// field (null = new)
-		// to decide persist vs merge automatically, avoiding any pre-save SELECT.
 		AccountJpaEntity entity = new AccountJpaEntity();
 		entity.setId(entityId);
 		entity.setOwnerId(account.getOwnerId());
 		entity.setAccountNumber(account.getAccountNumber());
 		entity.setBalance(account.getBalance());
-		entity.setVersion(account.getVersion());
-
+		entity.setNew(account.isNewAccount());
 		AccountJpaEntity savedEntity = repository.saveAndFlush(entity);
 
 		return toDomainModel(savedEntity);
@@ -54,7 +49,7 @@ public class PostgresAccountAdapter implements AccountRepository {
 
 	private Account toDomainModel(AccountJpaEntity entity) {
 		return Account.reconstitute(entity.getId().toString(), entity.getOwnerId(), entity.getAccountNumber(),
-				entity.getBalance(), entity.getVersion()); // Re-hydrated with DB version
+				entity.getBalance());
 	}
 
 	@Override
