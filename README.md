@@ -36,7 +36,7 @@ The outer shell. It adapts external technologies to the core application's ports
 ## ✨ Key Design Decisions
 
 * **Transactional Outbox Pattern & Kafka:** To guarantee data consistency, domain events are saved to an outbox table in the same local transaction as the business entity. A background scheduler publishes these to **Apache Kafka**, where they are processed idempotently.
-* **Strict Security Contract:** Authentication and authorization are enforced via an `X-User-Id` header. The core domain verifies account ownership before executing any mutations.
+* **Strict Security Contract:** Authentication and authorization are enforced via **JWT (JSON Web Tokens)** passed in the `Authorization` header. The core domain verifies account ownership before executing any mutations.
 * **JPA Optimization:** JPA entities implement `Persistable`. The Outbound Port is explicitly split into `insert()` and `update()`, allowing the adapter to control the `isNew` flag, eliminating Hibernate's unnecessary `SELECT` before `INSERT`.
 * **Modularity Verification:** Spring Modulith's test support ensures that architectural and module boundary rules are not violated (dependencies flow inward, modules communicate only via inbound ports).
 
@@ -80,11 +80,14 @@ Available at `http://localhost:8080/swagger-ui.html` and `http://localhost:8080/
 
 | Method | Endpoint | Description | Required Header |
 | --- | --- | --- | --- |
-| POST | `/api/users` | Register a new user | |
-| POST | `/api/accounts` | Create a new bank account | `X-User-Id` |
-| POST | `/api/accounts/deposit` | Deposit money | `X-User-Id` |
-| POST | `/api/accounts/withdraw` | Withdraw money | `X-User-Id` |
-| POST | `/api/transfers` | Transfer between accounts | `X-User-Id` |
-| GET  | `/api/transactions/{acc}` | Get transaction ledger | `X-User-Id` |
+| POST | `/api/users/register` | Register a new user | |
+| POST | `/api/users/login` | Login and get JWT | |
+| POST | `/api/users/refresh` | Refresh JWT | `Authorization` |
+| GET  | `/api/users/profile` | Get user profile | `Authorization` |
+| POST | `/api/accounts` | Create a new bank account | `Authorization` |
+| POST | `/api/accounts/deposit` | Deposit money | `Authorization` |
+| POST | `/api/accounts/withdraw` | Withdraw money | `Authorization` |
+| POST | `/api/transfers` | Transfer between accounts | `Authorization` |
+| GET  | `/api/transactions/{acc}` | Get transaction ledger | `Authorization` |
 
 *(All endpoints require standard JSON payloads matching their respective commands).*
