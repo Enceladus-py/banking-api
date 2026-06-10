@@ -4,9 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import com.fintech.banking.coreapi.account.application.port.in.AccountOperationsPort;
-import com.fintech.banking.coreapi.account.domain.model.Account;
 import com.fintech.banking.coreapi.common.application.annotation.TransactionalUseCase;
-import com.fintech.banking.coreapi.common.domain.exception.AccessDeniedException;
 import com.fintech.banking.coreapi.common.domain.exception.EntityNotFoundException;
 import com.fintech.banking.coreapi.transaction.application.port.in.DepositMoneyUseCase;
 import com.fintech.banking.coreapi.transaction.application.port.out.EventPublisher;
@@ -44,24 +42,21 @@ public class DepositMoneyService implements DepositMoneyUseCase {
 
 	@Override
 	public TransactionRecord deposit(DepositCommand command) {
-		// Fetch the account (No lock needed for initiating the pending state)
-		Account account = accountOperationsPort.findByAccountNumber(command.accountId())
-				.orElseThrow(() -> new EntityNotFoundException("Account not found"));
-
-		// Enforce ownership
-		if (!account.isOwnedBy(command.requesterId())) {
-			throw new AccessDeniedException("You are not authorized to deposit into this account");
-		}
+		// Fetch the account (No lock needed for initiating the pending state) and
+		// enforce ownership
+		accountOperationsPort.findByAccountNumber(command.accountId())
+				.orElseThrow(() -> new EntityNotFoundException("Account not found"))
+				.verifyOwnership(command.requesterId(), "You are not authorized to deposit into this account");
 
 		// Create and Save PENDING Ledger Record
 		TransactionRecord pendingTx = TransactionRecord.createNew(null, // Deposits have no source
-				account.getAccountNumber(), // Target is this account
+				command.accountId(), // Target is this account
 				command.amount(), TransactionType.DEPOSIT);
 		transactionRecordRepository.save(pendingTx);
 
 		// Publish TransactionPendingEvent
 		eventPublisher.publish(new TransactionPendingEvent(UUID.randomUUID(), pendingTx.getId(), Instant.now(), null,
-				account.getAccountNumber(), command.amount(), TransactionType.DEPOSIT, command.requesterId()));
+				command.accountId(), command.amount(), TransactionType.DEPOSIT, command.requesterId()));
 
 		return pendingTx;
 	}

@@ -4,9 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import com.fintech.banking.coreapi.account.application.port.in.AccountOperationsPort;
-import com.fintech.banking.coreapi.account.domain.model.Account;
 import com.fintech.banking.coreapi.common.application.annotation.TransactionalUseCase;
-import com.fintech.banking.coreapi.common.domain.exception.AccessDeniedException;
 import com.fintech.banking.coreapi.common.domain.exception.EntityNotFoundException;
 import com.fintech.banking.coreapi.transaction.application.port.in.WithdrawMoneyUseCase;
 import com.fintech.banking.coreapi.transaction.application.port.out.EventPublisher;
@@ -44,24 +42,21 @@ public class WithdrawMoneyService implements WithdrawMoneyUseCase {
 
 	@Override
 	public TransactionRecord withdraw(WithdrawCommand command) {
-		// Fetch the account (No lock needed for initiating the pending state)
-		Account account = accountOperationsPort.findByAccountNumber(command.accountId())
-				.orElseThrow(() -> new EntityNotFoundException("Account not found"));
-
-		// Enforce ownership
-		if (!account.isOwnedBy(command.requesterId())) {
-			throw new AccessDeniedException("You are not authorized to withdraw from this account");
-		}
+		// Fetch the account (No lock needed for initiating the pending state) and
+		// enforce ownership
+		accountOperationsPort.findByAccountNumber(command.accountId())
+				.orElseThrow(() -> new EntityNotFoundException("Account not found"))
+				.verifyOwnership(command.requesterId(), "You are not authorized to withdraw from this account");
 
 		// Create and Save PENDING Ledger Record
-		TransactionRecord pendingTx = TransactionRecord.createNew(account.getAccountNumber(), // Source is this account
+		TransactionRecord pendingTx = TransactionRecord.createNew(command.accountId(), // Source is this account
 				null, // Withdrawals have no target
 				command.amount(), TransactionType.WITHDRAWAL);
 		transactionRecordRepository.save(pendingTx);
 
 		// Publish TransactionPendingEvent
 		eventPublisher.publish(new TransactionPendingEvent(UUID.randomUUID(), pendingTx.getId(), Instant.now(),
-				account.getAccountNumber(), null, command.amount(), TransactionType.WITHDRAWAL, command.requesterId()));
+				command.accountId(), null, command.amount(), TransactionType.WITHDRAWAL, command.requesterId()));
 
 		return pendingTx;
 	}

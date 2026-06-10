@@ -4,9 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import com.fintech.banking.coreapi.account.application.port.in.AccountOperationsPort;
-import com.fintech.banking.coreapi.account.domain.model.Account;
 import com.fintech.banking.coreapi.common.application.annotation.TransactionalUseCase;
-import com.fintech.banking.coreapi.common.domain.exception.AccessDeniedException;
 import com.fintech.banking.coreapi.common.domain.exception.EntityNotFoundException;
 import com.fintech.banking.coreapi.transaction.application.port.in.TransferMoneyUseCase;
 import com.fintech.banking.coreapi.transaction.application.port.out.EventPublisher;
@@ -58,12 +56,9 @@ public class TransferService implements TransferMoneyUseCase {
 	@Override
 	public TransactionRecord transfer(TransferCommand command) {
 		// Validate source account existence and ownership (no write lock needed yet)
-		Account sourceAccount = accountOperationsPort.findByAccountNumber(command.sourceAccountNumber())
-				.orElseThrow(() -> new EntityNotFoundException("Source account not found"));
-
-		if (!sourceAccount.isOwnedBy(command.requesterId())) {
-			throw new AccessDeniedException("You are not authorized to transfer money from this account");
-		}
+		accountOperationsPort.findByAccountNumber(command.sourceAccountNumber())
+				.orElseThrow(() -> new EntityNotFoundException("Source account not found"))
+				.verifyOwnership(command.requesterId(), "You are not authorized to transfer money from this account");
 
 		// Validate target account existence
 		accountOperationsPort.findByAccountNumber(command.targetAccountNumber())

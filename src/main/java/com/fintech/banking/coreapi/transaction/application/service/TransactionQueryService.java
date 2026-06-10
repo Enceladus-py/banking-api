@@ -38,12 +38,9 @@ public class TransactionQueryService implements GetAccountTransactionsUseCase, G
 	@Override
 	public PageResult<TransactionRecord> getTransactions(String accountNumber, PageRequest pageRequest,
 			String requesterId) {
-		Account account = accountOperationsPort.findByAccountNumber(accountNumber)
-				.orElseThrow(() -> new EntityNotFoundException("Account not found"));
-
-		if (!account.isOwnedBy(requesterId)) {
-			throw new AccessDeniedException("You are not authorized to view this account's transactions");
-		}
+		accountOperationsPort.findByAccountNumber(accountNumber)
+				.orElseThrow(() -> new EntityNotFoundException("Account not found"))
+				.verifyOwnership(requesterId, "You are not authorized to view this account's transactions");
 
 		return transactionRecordRepository.findByAccountNumber(accountNumber, pageRequest);
 	}

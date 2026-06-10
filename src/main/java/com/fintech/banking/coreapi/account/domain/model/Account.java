@@ -3,6 +3,7 @@ package com.fintech.banking.coreapi.account.domain.model;
 import java.math.BigDecimal;
 
 import com.fintech.banking.coreapi.account.domain.exception.InsufficientFundsException;
+import com.fintech.banking.coreapi.common.domain.exception.AccessDeniedException;
 
 import lombok.Getter;
 
@@ -94,6 +95,25 @@ public class Account {
 	 */
 	public boolean isOwnedBy(String userId) {
 		return this.ownerId.equals(userId);
+	}
+
+	/**
+	 * Verifies if this account is owned by the specified user, throwing an
+	 * exception if not.
+	 *
+	 * @param userId
+	 *            the user ID to check
+	 * @param errorMessage
+	 *            the message to use if access is denied
+	 * @return this account for method chaining
+	 * @throws AccessDeniedException
+	 *             if the user does not own the account
+	 */
+	public Account verifyOwnership(String userId, String errorMessage) {
+		if (!isOwnedBy(userId)) {
+			throw new AccessDeniedException(errorMessage);
+		}
+		return this;
 	}
 
 	/**
