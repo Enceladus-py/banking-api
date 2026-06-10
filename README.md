@@ -1,44 +1,49 @@
-# Hexagonal Banking API
+# Hexagonal Banking API with Spring Modulith & Kafka
 
-A robust, scalable banking REST API built with Spring Boot, demonstrating strict **Domain-Driven Design (DDD)** and **Hexagonal Architecture (Ports and Adapters)**.
+A robust, scalable banking REST API built with Spring Boot, demonstrating strict **Domain-Driven Design (DDD)**, **Hexagonal Architecture (Ports and Adapters)**, and **Spring Modulith**.
 
-This project goes beyond standard MVC to enforce strict business rules, isolated domain logic, and high-performance database interactions.
+This project goes beyond standard MVC to enforce strict business rules, isolated domain logic, high-performance database interactions, and resilient event-driven communication.
 
 ## 🏗 Architecture Overview
 
-This application strictly adheres to Hexagonal Architecture, ensuring the core business logic is completely decoupled from frameworks, databases, and UI delivery mechanisms. The codebase is divided into three primary layers:
+This application adheres to Hexagonal Architecture and uses **Spring Modulith** to logically separate bounded contexts. Each business module (e.g., `account`, `transaction`, `user`) is self-contained and enforces strict architectural boundaries.
 
-### 1. Domain Layer (domain)
+### Module Internal Structure
+
+Within each module, the codebase is divided into three primary layers:
+
+### 1. Domain Layer (`domain`)
 
 The heart of the application. It contains pure Java models (Account, User, TransactionRecord).
 
 * **Zero Dependencies:** No Spring annotations, no JPA, no web concepts.
-* **Business Invariants:** Entities strictly protect their own state (e.g., Account.withdraw() throws an IllegalStateException if funds are insufficient).
+* **Business Invariants:** Entities strictly protect their own state (e.g., `Account.withdraw()` throws an exception if funds are insufficient).
 
-### 2. Application Layer (application)
+### 2. Application Layer (`application`)
 
 The orchestrator. It defines the "Ports" (interfaces) that allow the outside world to interact with the Domain.
 
-* **Inbound Ports (Use Cases):** Interfaces defining what the system can do (e.g., DepositMoneyUseCase).
-* **Outbound Ports (SPIs):** Interfaces defining what the system needs from the outside world (e.g., AccountRepository).
+* **Inbound Ports (Use Cases):** Interfaces defining what the system can do (e.g., `DepositMoneyUseCase`).
+* **Outbound Ports (SPIs):** Interfaces defining what the system needs from the outside world (e.g., `AccountRepository`).
 
-### 3. Infrastructure Layer (infrastructure/adapter)
+### 3. Infrastructure Layer (`infrastructure/adapter`)
 
 The outer shell. It adapts external technologies to the core application's ports.
 
-* **Inbound Adapters (Web):** REST Controllers (AccountController, TransferController) that translate HTTP requests and headers into Use Case Commands.
-* **Outbound Adapters (Persistence):** Spring Data JPA repositories and entity mappers. Translates pure Domain objects into database rows and vice versa.
+* **Inbound Adapters:** REST Controllers that translate HTTP requests into Use Case Commands, or Kafka Listeners that consume external events.
+* **Outbound Adapters:** Spring Data JPA repositories translating pure Domain objects into database rows, or Outbox Event publishers for messaging.
 
 ## ✨ Key Design Decisions
 
-* **Strict Security Contract:** Authentication and authorization are enforced via an X-User-Id header. The core domain verifies account ownership before executing any mutations, preventing unauthorized access.
-* **Fail-Fast Validation:** The API does not silently trim or fix malformed client data. Bad data is rejected at the boundary, enforcing strict API contracts.
-* **JPA Optimization (Avoid SELECT before INSERT):** JPA entities implement Persistable. The Outbound Port is explicitly split into insert() and update(), allowing the adapter to control the isNew flag. This eliminates Hibernate's default behavior of executing an unnecessary SELECT query before inserting a new record.
+* **Transactional Outbox Pattern & Kafka:** To guarantee data consistency, domain events are saved to an outbox table in the same local transaction as the business entity. A background scheduler publishes these to **Apache Kafka**, where they are processed idempotently.
+* **Strict Security Contract:** Authentication and authorization are enforced via an `X-User-Id` header. The core domain verifies account ownership before executing any mutations.
+* **JPA Optimization:** JPA entities implement `Persistable`. The Outbound Port is explicitly split into `insert()` and `update()`, allowing the adapter to control the `isNew` flag, eliminating Hibernate's unnecessary `SELECT` before `INSERT`.
+* **Modularity Verification:** Spring Modulith's test support ensures that architectural and module boundary rules are not violated (dependencies flow inward, modules communicate only via inbound ports).
 
 ## 🚀 Getting Started
 
-The project includes a Makefile to simplify local development and deployment.
-Make sure that `mvn spotless:apply` is executed before compiling since there is a check.
+The project includes a `Makefile` to simplify local development and deployment.
+Make sure that `./mvnw spotless:apply` is executed before compiling since there is a code formatting check.
 
 ### Prerequisites
 
@@ -48,7 +53,7 @@ Make sure that `mvn spotless:apply` is executed before compiling since there is 
 
 ### Run via Docker (Recommended)
 
-To spin up the entire environment (the Spring Boot application and the PostgreSQL database) inside isolated containers:
+To spin up the entire environment (the Spring Boot application, PostgreSQL, Kafka, and Kafka UI) inside isolated containers:
 
 ```bash
 make docker
@@ -58,22 +63,28 @@ make docker
 
 ### Run Locally (Dev Mode)
 
-To run the Spring Boot application using your local Java environment (useful for debugging in your IDE):
+To run the Spring Boot application using your local Java environment while spinning up infrastructure via Docker Compose:
 
 ```bash
 make local
 ```
 
-*Note: Ensure your local database is running and configured in application.yml before using this command.*
+*This starts PostgreSQL and Kafka locally, then boots the Spring application with the `local` profile.*
 
-## 📖 API Endpoints
+## 📖 API Documentation & Endpoints
+
+**Swagger UI / OpenAPI Spec:**
+Available at `http://localhost:8080/swagger-ui.html` and `http://localhost:8080/api-docs` when the application is running.
+
+**Core Endpoints:**
 
 | Method | Endpoint | Description | Required Header |
 | --- | --- | --- | --- |
-| POST | /api/accounts | Create a new bank account | X-User-Id |
-| POST | /api/accounts/deposit | Deposit money | X-User-Id |
-| POST | /api/accounts/withdraw | Withdraw money | X-User-Id |
-| POST | /api/transfers | Transfer between accounts | X-User-Id |
-| GET | /api/transactions/{acc} | Get transaction ledger | X-User-Id |
+| POST | `/api/users` | Register a new user | |
+| POST | `/api/accounts` | Create a new bank account | `X-User-Id` |
+| POST | `/api/accounts/deposit` | Deposit money | `X-User-Id` |
+| POST | `/api/accounts/withdraw` | Withdraw money | `X-User-Id` |
+| POST | `/api/transfers` | Transfer between accounts | `X-User-Id` |
+| GET  | `/api/transactions/{acc}` | Get transaction ledger | `X-User-Id` |
 
 *(All endpoints require standard JSON payloads matching their respective commands).*
