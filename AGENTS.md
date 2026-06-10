@@ -11,15 +11,15 @@
 | Key               | Value                                              |
 | ----------------- | -------------------------------------------------- |
 | Name              | Banking Demo API                                   |
-| GroupId            | `com.example`                                      |
-| ArtifactId        | `demo`                                             |
+| GroupId            | `com.fintech.banking`                                      |
+| ArtifactId        | `core-api`                                             |
 | Java version      | **25**                                             |
 | Spring Boot       | **4.0.6**                                          |
 | Spring Modulith   | **2.0.6**                                          |
 | Build tool        | Maven (wrapper: `./mvnw`, Maven 3.9.9)             |
 | Database          | PostgreSQL (prod/local), H2 in-memory (tests)      |
 | Messaging         | Apache Kafka (Confluent CP Kafka 7.5.0)            |
-| Base package      | `com.example.demo`                                 |
+| Base package      | `com.fintech.banking.coreapi`                                 |
 
 ---
 
@@ -77,10 +77,10 @@ make down
 
 The project uses **Hexagonal Architecture** (Ports & Adapters) organized into
 **Spring Modulith modules**. Each business module is a top-level package under
-`com.example.demo`:
+`com.fintech.banking.coreapi`:
 
 ```
-com.example.demo/
+com.fintech.banking.coreapi/
 ├── account/          # Account management module (closed)
 ├── transaction/      # Transaction processing module (closed)
 ├── user/             # User management module (closed)
@@ -162,11 +162,11 @@ Every module has a `package-info.java`:
 ```java
 // Closed module (default) — only exposes application/port/in
 @org.springframework.modulith.ApplicationModule
-package com.example.demo.account;
+package com.fintech.banking.coreapi.account;
 
 // Open module — all sub-packages are accessible
 @org.springframework.modulith.ApplicationModule(type = Type.OPEN)
-package com.example.demo.common;
+package com.fintech.banking.coreapi.common;
 ```
 
 ### Module Tests
@@ -540,7 +540,7 @@ When adding a new entity/feature to an existing module:
 
 When creating a **new module**:
 
-1. [ ] Create the top-level package `com.example.demo.<module>/`
+1. [ ] Create the top-level package `com.fintech.banking.coreapi.<module>/`
 2. [ ] Add `package-info.java` with `@ApplicationModule` annotation
 3. [ ] Follow the internal structure described in Section 3
 4. [ ] Ensure the module test `ModularityTests` still passes

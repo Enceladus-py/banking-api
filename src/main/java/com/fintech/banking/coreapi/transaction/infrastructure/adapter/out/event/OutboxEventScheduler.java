@@ -1,0 +1,134 @@
+package com.fintech.banking.coreapi.transaction.infrastructure.adapter.out.event;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.fintech.banking.coreapi.transaction.domain.event.EventType;
+import com.fintech.banking.coreapi.transaction.domain.event.TransactionCompletedEvent;
+import com.fintech.banking.coreapi.transaction.domain.event.TransactionEvent;
+import com.fintech.banking.coreapi.transaction.domain.event.TransactionFailedEvent;
+import com.fintech.banking.coreapi.transaction.domain.event.TransactionPendingEvent;
+import com.fintech.banking.coreapi.transaction.infrastructure.adapter.out.persistence.entity.OutboxEventJpaEntity;
+import com.fintech.banking.coreapi.transaction.infrastructure.adapter.out.persistence.entity.OutboxStatus;
+import com.fintech.banking.coreapi.transaction.infrastructure.adapter.out.persistence.repository.SpringDataOutboxEventRepository;
+
+import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.ObjectMapper;
+
+/**
+ * Polls the outbox table for PENDING events and dispatches them to Kafka.
+ *
+ * <p>
+ * <strong>Retry policy</strong>: each event is retried up to
+ * {@value #MAX_RETRIES} times. On exhaustion the event is moved to
+ * {@link OutboxStatus#FAILED} so it no longer blocks subsequent events and is
+ * visible for manual inspection / alerting.
+ *
+ * <p>
+ * <strong>Batch cap</strong>: at most <code>batchSize</code> events are
+ * processed per tick to bound the work done per scheduler invocation.
+ */
+@Component
+@Slf4j
+public class OutboxEventScheduler {
+
+	/** Maximum number of dispatch attempts before an event is parked as FAILED. */
+	static final int MAX_RETRIES = 5;
+
+	/** Maximum number of PENDING events processed per scheduler tick. */
+	@Value("${outbox.scheduler.batch-size:500}")
+	int batchSize = 500;
+
+	private final SpringDataOutboxEventRepository outboxRepository;
+	private final ObjectMapper objectMapper;
+	private final KafkaTemplate<String, String> kafkaTemplate;
+
+	/**
+	 * Constructs a new OutboxEventScheduler with the required dependencies.
+	 *
+	 * @param outboxRepository
+	 *            the Spring Data outbox repository
+	 * @param objectMapper
+	 *            the mapper for serialization
+	 * @param kafkaTemplate
+	 *            the Kafka producer template
+	 */
+	public OutboxEventScheduler(SpringDataOutboxEventRepository outboxRepository, ObjectMapper objectMapper,
+			KafkaTemplate<String, String> kafkaTemplate) {
+		this.outboxRepository = outboxRepository;
+		this.objectMapper = objectMapper;
+		this.kafkaTemplate = kafkaTemplate;
+	}
+
+	/**
+	 * Scheduled task to poll and publish pending outbox events.
+	 */
+	@Scheduled(fixedDelayString = "${outbox.scheduler.delay:100}") // Poll every 100 milliseconds (overridable)
+	@Transactional
+	public void publishPendingEvents() {
+		List<OutboxEventJpaEntity> pendingEvents;
+		try {
+			pendingEvents = outboxRepository.findByStatusOrderByCreatedAtAscWithLock(OutboxStatus.PENDING,
+					PageRequest.of(0, batchSize));
+		} catch (org.springframework.dao.DataAccessException e) {
+			// Ignore exceptions caused by database shutdown during tests
+			log.debug("Database might be shutting down: {}", e.getMessage());
+			return;
+		}
+
+		if (pendingEvents.isEmpty()) {
+			return;
+		}
+
+		log.info("Found {} pending outbox events to process this tick", pendingEvents.size());
+
+		for (OutboxEventJpaEntity entity : pendingEvents) {
+			try {
+				TransactionEvent event = deserialize(entity);
+				org.springframework.messaging.Message<String> message = org.springframework.messaging.support.MessageBuilder
+						.withPayload(entity.getPayload())
+						.setHeader(org.springframework.kafka.support.KafkaHeaders.TOPIC, "transaction-events")
+						.setHeader(org.springframework.kafka.support.KafkaHeaders.KEY, event.transactionId())
+						.setHeader("eventType", entity.getEventType().name()).build();
+				kafkaTemplate.send(message).get();
+
+				// Mark as PUBLISHED so it is not processed again
+				entity.setStatus(OutboxStatus.PUBLISHED);
+				outboxRepository.save(entity);
+
+			} catch (Exception e) {
+				int attempts = entity.getRetryCount() + 1;
+				entity.setRetryCount(attempts);
+
+				if (attempts >= MAX_RETRIES) {
+					log.error(
+							"Outbox event {} has failed {} times — marking as FAILED. Manual intervention required. Error: {}",
+							entity.getId(), attempts, e.getMessage(), e);
+					entity.setStatus(OutboxStatus.FAILED);
+				} else {
+					log.warn("Outbox event {} failed (attempt {}/{}). Will retry on next tick. Error: {}",
+							entity.getId(), attempts, MAX_RETRIES, e.getMessage());
+				}
+
+				outboxRepository.save(entity);
+			}
+		}
+	}
+
+	private TransactionEvent deserialize(OutboxEventJpaEntity entity) throws Exception {
+		EventType eventType = entity.getEventType();
+		String payload = entity.getPayload();
+
+		return switch (eventType) {
+			case TRANSACTION_PENDING -> objectMapper.readValue(payload, TransactionPendingEvent.class);
+			case TRANSACTION_COMPLETED -> objectMapper.readValue(payload, TransactionCompletedEvent.class);
+			case TRANSACTION_FAILED -> objectMapper.readValue(payload, TransactionFailedEvent.class);
+		};
+	}
+}
