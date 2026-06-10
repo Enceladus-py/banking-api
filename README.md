@@ -91,3 +91,7 @@ Available at `http://localhost:8080/swagger-ui.html` and `http://localhost:8080/
 | GET  | `/api/transactions/{acc}` | Get transaction ledger | `Authorization` |
 
 *(All endpoints require standard JSON payloads matching their respective commands).*
+
+## Presentation
+
+You can find the presentation [here](https://docs.google.com/presentation/d/1iG0XoW5Oz2vF8JDNDIScYzqoGzPl8HDYGn5Lu3MOCxk/edit?usp=sharing).
